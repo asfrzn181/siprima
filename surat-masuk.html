@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SiPrima — Surat Masuk</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/overrides.css">
+  <link rel="stylesheet" href="assets/css/disposition.css">
+  <link rel="stylesheet" href="assets/css/autocomplete.css">
+  <style>
+    .filter-grid{display:grid;grid-template-columns:2fr repeat(4,1fr) auto;gap:1rem;align-items:end}.filter-grid label{display:grid;gap:.35rem}.filter-search{min-width:220px}.filter-actions{display:flex;gap:.5rem}.wide{grid-column:1/-1}.check-grid{display:flex;flex-wrap:wrap;gap:.65rem 1rem;margin:.25rem 0 .5rem}.check-option{display:flex;align-items:center;gap:.45rem;font-weight:500}.check-option input{width:auto}.pagination{display:flex;justify-content:center;align-items:center;gap:1rem;margin-top:1rem}.badge.danger{color:#9b1c1c;background:#fee4e2}.compact{margin:.15rem 0;font-size:.85rem}@media(max-width:1000px){.filter-grid{grid-template-columns:repeat(2,1fr)}.filter-search{grid-column:1/-1}}@media(max-width:600px){.filter-grid{grid-template-columns:1fr}.filter-search{min-width:0}.filter-actions{grid-column:1/-1}}
+  </style>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="page-container">
+    <section class="page-heading">
+      <div><p class="eyebrow">Agenda</p><h1>Surat masuk</h1><p class="muted">Cari dan kelola agenda surat yang masuk ke sekretariat.</p></div>
+      <button id="new-button" class="button primary" type="button" hidden>+ Surat masuk</button>
+    </section>
+
+    <section class="panel filter-panel">
+      <form id="filter-form" class="filter-grid">
+        <label class="filter-search">Pencarian<input name="search" type="search" placeholder="No. surat, hal, atau asal"></label>
+        <label>Sifat<select name="sifat"><option value="semua">Semua</option><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
+        <label>Status<select name="status"><option value="semua">Semua</option><option value="Baru">Baru</option><option value="Didisposisikan">Didisposisikan</option><option value="Selesai">Selesai</option></select></label>
+        <label>Terima mulai<input name="tglMulai" type="date"></label>
+        <label>Terima sampai<input name="tglSelesai" type="date"></label>
+        <div class="filter-actions"><button class="button primary" type="submit">Terapkan</button><button id="reset-filter" class="button secondary" type="button">Reset</button></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading"><div><h2>Daftar surat</h2><p id="list-note" class="muted compact">Memuat…</p></div><div class="filter-actions"><button id="export-button" class="button secondary" type="button">Ekspor Excel</button><button id="refresh-button" class="button secondary" type="button">Muat ulang</button></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Agenda</th><th>Tanggal</th><th>No. surat</th><th>Asal</th><th>Hal</th><th>Sifat</th><th>Status</th><th></th></tr></thead><tbody id="surat-body"></tbody></table></div>
+      <div class="pagination"><button id="previous-button" class="button secondary" type="button" disabled>Sebelumnya</button><span id="page-label" class="muted">Halaman 1</span><button id="next-button" class="button secondary" type="button" disabled>Berikutnya</button></div>
+    </section>
+
+    <section id="form-panel" class="modal-panel" hidden><div class="modal-card">
+      <div class="panel-heading"><div><h2 id="form-title">Tambah surat masuk</h2><p id="form-note" class="muted"></p></div><button id="close-form" class="button secondary" type="button">Tutup</button></div>
+      <form id="surat-form" class="form-grid" novalidate>
+        <input name="id" type="hidden">
+        <label>Tanggal terima<input name="tglTerima" type="date" required></label>
+        <label>Tanggal surat<input name="tglSurat" type="date" required></label>
+        <label>No. surat<input name="noSurat" maxlength="120" placeholder="Ketik kode atau nama klasifikasi" required></label>
+        <label>Asal<input name="asal" maxlength="160" required></label>
+        <label class="wide">Hal<input name="hal" maxlength="200" required></label>
+        <label class="wide">Isi ringkas<textarea name="isiRingkas" rows="4" maxlength="2000" required></textarea></label>
+        <label>Sifat<select name="sifat"><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
+        <fieldset id="access-fieldset" class="wide" hidden><legend>Bidang yang boleh melihat surat rahasia</legend><div id="access-options" class="check-grid"></div><small class="muted">Pilih minimal satu bidang untuk surat rahasia.</small></fieldset>
+        <fieldset id="disposition-fieldset" class="wide" hidden><legend>Disposisi bidang</legend><div id="disposition-options" class="check-grid"></div><label>Diputuskan oleh<select name="diputuskanOleh"><option>Kadis</option><option>Sekretaris</option><option>Lainnya</option></select></label><label>Catatan disposisi<textarea name="catatanDisposisi" rows="2" maxlength="1000"></textarea></label></fieldset>
+        <label id="file-label" class="wide">Scan surat (PDF/JPG/PNG, maksimal 5 MB)<input name="scan" type="file" accept="application/pdf,image/jpeg,image/png"></label>
+        <div class="form-actions wide"><button id="save-button" class="button primary" type="submit">Simpan</button><button id="disposition-button" class="button secondary" type="submit" data-action="disposition" hidden>Simpan dan Disposisikan</button><button id="download-button" class="button secondary" type="button" hidden>Unduh scan</button><a id="file-link" class="button secondary" target="_blank" rel="noopener" hidden>Buka link Drive</a></div>
+        <p id="form-error" class="form-error wide" role="alert" hidden></p>
+      </form>
+    </div></section>
+  </main>
+  <script type="module">
+    import { requireAuth } from './js/services/auth.js';
+    import { getAppSettings, listMasterBidang, searchMasterNomorByCode, listSuratMasuk, listSuratMasukForExport, createSuratMasuk, updateSuratMasuk, saveDisposisi } from './js/services/db.js';
+    import { uploadScan, downloadScan, openDownloadedScan } from './js/services/drive.js';
+    import { renderShell, badge, showToast } from './js/components/ui.js';
+    import { exportRowsToExcel } from './js/utils.js';
+    import { createAutocomplete } from './js/components/autocomplete.js';
+    import { Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+
+    const session = await requireAuth();
+    if (session.profile.role === 'bidang') {
+      window.location.replace('./surat-keluar.html');
+      throw new Error('Akses dibatasi untuk bidang.');
+    }
+    renderShell({ active: 'masuk', session });
+    const canCreate = session.profile.role === 'admin';
+    const canEdit = ['admin', 'pimpinan'].includes(session.profile.role);
+    const filterForm = document.querySelector('#filter-form');
+    const body = document.querySelector('#surat-body');
+    const note = document.querySelector('#list-note');
+    const pageLabel = document.querySelector('#page-label');
+    const previousButton = document.querySelector('#previous-button');
+    const nextButton = document.querySelector('#next-button');
+    const formPanel = document.querySelector('#form-panel');
+    const suratForm = document.querySelector('#surat-form');
+    const formTitle = document.querySelector('#form-title');
+    const formNote = document.querySelector('#form-note');
+    const formError = document.querySelector('#form-error');
+    const saveButton = document.querySelector('#save-button');
+    const dispositionButton = document.querySelector('#disposition-button');
+    const downloadButton = document.querySelector('#download-button');
+    const fileLink = document.querySelector('#file-link');
+    const fileLabel = document.querySelector('#file-label');
+    const noSuratInput = suratForm.elements.noSurat;
+    createAutocomplete({ input: noSuratInput, loadSuggestions: (keyword) => searchMasterNomorByCode(keyword, 5), renderItem: (item) => { const wrapper = document.createElement('span'); const code = document.createElement('strong'); code.textContent = item.kode || '—'; const name = document.createElement('small'); name.textContent = item.nama || 'Tanpa keterangan'; wrapper.append(code, name); return wrapper; }, formatSelected: (item) => item.kode || '', onSelect: (item) => { noSuratInput.value = item.kode || ''; } });
+    let activeFilters = { sifat: 'semua', status: 'semua' };
+    let page = 1;
+    let cursors = [];
+    let cursorHistory = [[]];
+    let nextCursors = [];
+    let currentFileId = '';
+    let settings = {};
+    let masterBidang = [];
+
+    const formatDate = (value) => {
+      const date = value?.toDate ? value.toDate() : new Date(value);
+      if (Number.isNaN(date.getTime())) return '—';
+      return new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
+    };
+    const inputDate = (value) => {
+      const date = value?.toDate ? value.toDate() : new Date(value);
+      if (Number.isNaN(date.getTime())) return '';
+      const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date).reduce((acc, part) => { acc[part.type] = part.value; return acc; }, {});
+      return `${parts.year}-${parts.month}-${parts.day}`;
+    };
+    const parseInputDate = (value) => new Date(`${value}T00:00:00+07:00`);
+    const clearFormError = () => { formError.textContent = ''; formError.hidden = true; };
+    const showFormError = (message) => { formError.textContent = message; formError.hidden = false; };
+    const showTableMessage = (message) => { const row = document.createElement('tr'); const cell = document.createElement('td'); cell.colSpan = 8; cell.textContent = message; row.append(cell); body.replaceChildren(row); };
+    const renderCheckOptions = (containerId, name, selected = []) => {
+      const options = document.querySelector(containerId); options.replaceChildren();
+      const activeBidang = [...new Map(masterBidang.filter((item) => item.aktif !== false && item.kode && item.nama).map((item) => [item.kode, item])).values()].sort((a, b) => String(a.kode).localeCompare(String(b.kode), 'id', { numeric: true }));
+      if (!activeBidang.length) { const message = document.createElement('span'); message.className = 'muted'; message.textContent = 'Master bidang aktif belum tersedia.'; options.append(message); return; }
+      activeBidang.forEach((item) => { const label = document.createElement('label'); label.className = 'check-option'; const input = document.createElement('input'); input.type = 'checkbox'; input.name = name; input.value = item.kode; input.checked = selected.includes(item.kode); const text = document.createElement('span'); text.textContent = `${item.kode} — ${item.nama}`; label.append(input, text); options.append(label); });
+    };
+    const setAccessOptions = (selected = [], disposition = []) => {
+      const options = document.querySelector('#access-options'); options.replaceChildren();
+      renderCheckOptions('#access-options', 'aksesBidang', selected); renderCheckOptions('#disposition-options', 'tujuanBidang', disposition);
+    };
+    const renderRows = (items) => {
+      body.replaceChildren();
+      if (!items.length) return showTableMessage('Tidak ada surat yang sesuai filter.');
+      items.forEach((item) => {
+        const row = document.createElement('tr');
+        [item.noAgenda, formatDate(item.tglTerima), item.noSurat, item.asal, item.hal].forEach((value) => { const cell = document.createElement('td'); cell.textContent = value || '—'; row.append(cell); });
+        const sifatCell = document.createElement('td'); sifatCell.append(badge(item.sifat === 'rahasia' ? 'Rahasia' : 'Biasa', item.sifat === 'rahasia' ? 'danger' : 'muted')); row.append(sifatCell);
+        const statusCell = document.createElement('td'); statusCell.append(badge(item.status || 'Baru', item.status === 'Selesai' ? 'success' : 'muted')); row.append(statusCell);
+        const actionCell = document.createElement('td'); const view = document.createElement('button'); view.className = 'button small secondary'; view.type = 'button'; view.textContent = 'Detail'; view.addEventListener('click', () => openForm(item, !canEdit)); actionCell.append(view); row.append(actionCell); body.append(row);
+      });
+    };
+    const loadList = async () => {
+      showTableMessage('Memuat…'); note.textContent = 'Memuat daftar surat…';
+      try {
+        const result = await listSuratMasuk(session, activeFilters, cursors);
+        renderRows(result.items); nextCursors = result.nextCursors; nextButton.disabled = !result.hasNext; previousButton.disabled = page === 1; pageLabel.textContent = result.searchMode ? 'Hasil pencarian' : `Halaman ${page}`; note.textContent = `${result.items.length} surat ditampilkan${result.searchMode ? ' (pencarian awalan)' : ''}.`;
+      } catch (error) { showTableMessage(error.message || 'Gagal memuat daftar surat.'); note.textContent = 'Gagal memuat data.'; }
+    };
+    const setReadOnly = (readOnly) => { suratForm.querySelectorAll('input, select, textarea').forEach((field) => { field.disabled = readOnly || (field.name === 'scan' && !canCreate); }); saveButton.hidden = readOnly; dispositionButton.hidden = readOnly || !canEdit; fileLabel.hidden = readOnly || !canCreate; };
+    const openForm = (item = null, readOnly = false) => {
+      clearFormError(); suratForm.reset(); currentFileId = item?.fileId || '';
+      formPanel.hidden = false; formTitle.textContent = item ? (readOnly ? 'Detail surat masuk' : 'Ubah surat masuk') : 'Tambah surat masuk'; formNote.textContent = item ? `Nomor agenda ${item.noAgenda}.` : 'Nomor agenda dibuat otomatis saat disimpan.';
+      const existingTargets = item?.disposisi?.kepada || item?.aksesBidang || []; suratForm.elements.id.value = item?.id || ''; suratForm.tglTerima.value = inputDate(item?.tglTerima || new Date()); suratForm.tglSurat.value = inputDate(item?.tglSurat || new Date()); suratForm.noSurat.value = item?.noSurat || ''; suratForm.asal.value = item?.asal || ''; suratForm.hal.value = item?.hal || ''; suratForm.isiRingkas.value = item?.isiRingkas || ''; suratForm.sifat.value = item?.sifat || 'biasa'; setAccessOptions(item?.aksesBidang || [], existingTargets); document.querySelector('#access-fieldset').hidden = suratForm.sifat.value !== 'rahasia'; document.querySelector('#disposition-fieldset').hidden = !canEdit; suratForm.diputuskanOleh.value = item?.disposisi?.diputuskanOleh || 'Kadis'; suratForm.catatanDisposisi.value = item?.disposisi?.catatan || ''; downloadButton.hidden = !currentFileId; fileLink.hidden = !item?.fileUrl; fileLink.href = item?.fileUrl || '#'; setReadOnly(readOnly); formPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    const collectPayload = () => { const access = [...document.querySelectorAll('input[name="aksesBidang"]:checked')].map((input) => input.value); return { tglTerima: Timestamp.fromDate(parseInputDate(suratForm.tglTerima.value)), tglSurat: Timestamp.fromDate(parseInputDate(suratForm.tglSurat.value)), noSurat: suratForm.noSurat.value.trim(), asal: suratForm.asal.value.trim(), hal: suratForm.hal.value.trim(), isiRingkas: suratForm.isiRingkas.value.trim(), sifat: suratForm.sifat.value, aksesBidang: access, fileId: currentFileId, fileUrl: '' }; };
+    document.querySelector('#new-button').hidden = !canCreate;
+    document.querySelector('#new-button').addEventListener('click', () => openForm());
+    document.querySelector('#close-form').addEventListener('click', () => { formPanel.hidden = true; });
+    suratForm.sifat.addEventListener('change', () => { document.querySelector('#access-fieldset').hidden = suratForm.sifat.value !== 'rahasia'; });
+    filterForm.addEventListener('submit', async (event) => { event.preventDefault(); const data = Object.fromEntries(new FormData(filterForm)); activeFilters = { ...data, tglMulai: data.tglMulai ? parseInputDate(data.tglMulai) : null, tglSelesai: data.tglSelesai ? new Date(`${data.tglSelesai}T23:59:59+07:00`) : null }; page = 1; cursors = []; cursorHistory = [[]]; await loadList(); });
+    document.querySelector('#reset-filter').addEventListener('click', async () => { filterForm.reset(); activeFilters = { sifat: 'semua', status: 'semua' }; page = 1; cursors = []; cursorHistory = [[]]; await loadList(); });
+    document.querySelector('#refresh-button').addEventListener('click', loadList);
+    document.querySelector('#export-button').addEventListener('click', async () => { try { const result = await listSuratMasukForExport(session, activeFilters); const rows = result.items.map((item) => ({ 'No. Agenda': item.noAgenda, 'Tanggal Terima': formatDate(item.tglTerima), 'Tanggal Surat': formatDate(item.tglSurat), 'No. Surat': item.noSurat, Asal: item.asal, Hal: item.hal, 'Isi Ringkas': item.isiRingkas, Sifat: item.sifat, Status: item.status })); await exportRowsToExcel(rows, 'surat-masuk.xlsx', 'Surat Masuk'); } catch (error) { showToast(error.message || 'Ekspor gagal.'); } });
+    previousButton.addEventListener('click', async () => { if (page <= 1) return; page -= 1; cursors = cursorHistory[page - 1] || []; await loadList(); });
+    nextButton.addEventListener('click', async () => { if (!nextCursors.length) return; cursorHistory[page] = nextCursors; cursors = nextCursors; page += 1; await loadList(); });
+    suratForm.addEventListener('submit', async (event) => {
+      event.preventDefault(); clearFormError(); const dispositionRequested = event.submitter?.dataset.action === 'disposition'; if (!suratForm.tglTerima.value || !suratForm.tglSurat.value) return showFormError('Tanggal terima dan tanggal surat wajib diisi.'); const targetCodes = [...document.querySelectorAll('input[name="tujuanBidang"]:checked')].map((input) => input.value); if (dispositionRequested && !targetCodes.length) return showFormError('Pilih minimal satu bidang tujuan disposisi.'); const data = collectPayload(); const file = suratForm.scan.files[0];
+      if (!data.noSurat || !data.asal || !data.hal || !data.isiRingkas) return showFormError('Semua field surat wajib diisi.');
+      if (data.sifat === 'rahasia' && !data.aksesBidang.length) return showFormError('Pilih minimal satu bidang untuk surat rahasia.');
+      if (file && (!['application/pdf','image/jpeg','image/png'].includes(file.type) || file.size > 5 * 1024 * 1024)) return showFormError('Scan harus PDF/JPG/PNG dan maksimal 5 MB.');
+      saveButton.disabled = true;
+      try {
+        const id = suratForm.elements.id.value; let saved;
+        if (id) { await updateSuratMasuk(id, data); saved = { id, ...data }; } else { saved = await createSuratMasuk({ ...data, dibuatOleh: { nama: session.profile.nama || session.user.email } }, session.user.uid); }
+        if (file) { settings = Object.keys(settings).length ? settings : await getAppSettings(); const token = await session.user.getIdToken(); const uploaded = await uploadScan({ endpoint: settings.appsScriptUrl, idToken: token, jenis: 'masuk', suratId: saved.id, file }); await updateSuratMasuk(saved.id, { fileId: uploaded.fileId, fileUrl: uploaded.fileUrl || '' }); }
+        if (dispositionRequested) { await saveDisposisi({ id: saved.id, kepada: targetCodes, diputuskanOleh: suratForm.diputuskanOleh.value, catatan: suratForm.catatanDisposisi.value, actor: { uid: session.user.uid, nama: session.profile.nama || session.user.email } }); }
+        formPanel.hidden = true; showToast(id ? 'Surat masuk diperbarui.' : 'Surat masuk disimpan.'); cursors = []; cursorHistory = [[]]; page = 1; await loadList();
+      } catch (error) { showFormError(error.message || 'Surat tidak dapat disimpan.'); } finally { saveButton.disabled = false; }
+    });
+    downloadButton.addEventListener('click', async () => { try { settings = Object.keys(settings).length ? settings : await getAppSettings(); const token = await session.user.getIdToken(); const result = await downloadScan({ endpoint: settings.appsScriptUrl, idToken: token, jenis: 'masuk', suratId: suratForm.elements.id.value }); openDownloadedScan(result); } catch (error) { showFormError(error.message || 'Scan tidak dapat diunduh.'); } });
+    try { [settings, masterBidang] = await Promise.all([getAppSettings(), listMasterBidang()]); } catch { settings = {}; masterBidang = []; }
+    await loadList();
+  </script>
+</body>
+</html>

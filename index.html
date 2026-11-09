@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SiPrima — Masuk</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/overrides.css">
+</head>
+<body class="auth-page">
+  <main class="auth-card" aria-labelledby="judul-login">
+    <div class="brand-mark">S</div>
+    <p class="eyebrow">Sekretariat Dinas</p>
+    <h1 id="judul-login">SiPrima</h1>
+    <p class="muted">Aplikasi agenda surat masuk dan surat keluar.</p>
+    <form id="login-form" class="stack" novalidate>
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="username" required>
+      <label for="password">Kata sandi</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button class="button primary" type="submit">Masuk</button>
+      <p id="login-error" class="form-error" role="alert" hidden></p>
+    </form>
+    <p class="fine-print">Akses hanya untuk akun internal yang dibuat oleh admin.</p>
+  </main>
+  <script type="module">
+    import { signIn, getSession } from './js/services/auth.js';
+    const form = document.querySelector('#login-form');
+    const error = document.querySelector('#login-error');
+    const showError = (message) => { error.textContent = message; error.hidden = false; };
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      error.hidden = true;
+      const email = form.email.value.trim();
+      const password = form.password.value;
+      if (!email || !password) return showError('Email dan kata sandi wajib diisi.');
+      try {
+        await signIn(email, password);
+        const { profile } = await getSession();
+        if (profile?.role === 'bidang') {
+          window.location.href = './surat-keluar.html';
+        } else {
+          window.location.href = './dashboard.html';
+        }
+      } catch (err) {
+        showError(err.message || 'Tidak dapat masuk.');
+      }
+    });
+  </script>
+</body>
+</html>

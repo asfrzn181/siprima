@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SiPrima — Laporan</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/overrides.css">
+  <style>
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr) repeat(2, 1fr) auto;
+      gap: 1rem;
+      align-items: end;
+    }
+    .filter-grid label {
+      display: grid;
+      gap: .35rem;
+    }
+    .filter-actions {
+      display: flex;
+      gap: .5rem;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .badge.danger { color: #9b1c1c; background: #fee4e2; }
+    .badge.warning { color: #7a4b0a; background: #fef3c7; }
+    .compact { margin: .15rem 0; font-size: .85rem; }
+    .results-panel { display: none; }
+    .results-panel.visible { display: block; }
+    .panel-heading .panel-actions { display: flex; gap: .5rem; align-items: center; }
+    @media (max-width: 1100px) {
+      .filter-grid { grid-template-columns: repeat(3, 1fr); }
+      .filter-actions { grid-column: 1 / -1; }
+    }
+    @media (max-width: 700px) {
+      .filter-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .filter-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="page-container">
+
+    <!-- Page heading -->
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">Laporan</p>
+        <h1>Laporan Surat</h1>
+        <p class="muted">Filter berdasarkan rentang tanggal dan ekspor ke Excel.</p>
+      </div>
+    </section>
+
+    <!-- Filter panel -->
+    <section class="panel filter-panel">
+      <form id="filter-form" class="filter-grid" novalidate>
+        <label>
+          Jenis
+          <select name="jenis" id="jenis-select">
+            <option value="keluar">Surat Keluar</option>
+            <option value="masuk">Surat Masuk</option>
+          </select>
+        </label>
+        <label>
+          Tanggal mulai
+          <input name="tglMulai" type="date" required>
+        </label>
+        <label>
+          Tanggal sampai
+          <input name="tglSelesai" type="date" required>
+        </label>
+        <label>
+          Status
+          <select name="status" id="status-select">
+            <option value="semua">Semua</option>
+            <option value="Aktif">Aktif</option>
+            <option value="Dibatalkan">Dibatalkan</option>
+          </select>
+        </label>
+        <label>
+          Sifat
+          <select name="sifat">
+            <option value="semua">Semua</option>
+            <option value="biasa">Biasa</option>
+            <option value="rahasia">Rahasia</option>
+          </select>
+        </label>
+        <div class="filter-actions">
+          <button class="button primary" type="submit">Tampilkan</button>
+          <button id="reset-button" class="button secondary" type="button">Reset</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Summary stats (hidden until first query) -->
+    <div id="stats-row" class="stat-grid" style="display: none; margin-top: 1rem;">
+      <div class="stat-card">
+        <span class="stat-label">Total Surat</span>
+        <strong id="stat-total">0</strong>
+        <small>dalam rentang tanggal</small>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label" id="stat-label-active">Aktif / Baru</span>
+        <strong id="stat-active">0</strong>
+        <small id="stat-active-desc">status aktif atau baru</small>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label" id="stat-label-closed">Dibatalkan / Selesai</span>
+        <strong id="stat-closed">0</strong>
+        <small id="stat-closed-desc">status dibatalkan atau selesai</small>
+      </div>
+    </div>
+
+    <!-- Results panel (hidden until first query) -->
+    <section id="results-panel" class="panel results-panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Hasil laporan</h2>
+          <p id="results-note" class="muted compact">Memuat…</p>
+        </div>
+        <div class="panel-actions">
+          <button id="export-button" class="button secondary" type="button" disabled>Ekspor Excel</button>
+          <button id="refresh-button" class="button secondary" type="button">Muat ulang</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="results-table">
+          <thead id="results-thead"></thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <button id="prev-button" class="button secondary" type="button" disabled>Sebelumnya</button>
+        <span id="page-label" class="muted">Halaman 1</span>
+        <button id="next-button" class="button secondary" type="button" disabled>Berikutnya</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module">
+    import { requireAuth } from './js/services/auth.js';
+    import { getLaporanSuratKeluar, getLaporanSuratMasuk } from './js/services/db.js';
+    import { renderShell, badge, showToast } from './js/components/ui.js';
+    import { exportRowsToExcel } from './js/utils.js';
+    import { Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+
+    const PAGE_SIZE = 20;
+
+    // --- Auth & Shell ---
+    const session = await requireAuth();
+    if (session.profile.role === 'bidang') {
+      window.location.replace('./surat-keluar.html');
+      throw new Error('Akses dibatasi untuk bidang.');
+    }
+    renderShell({ active: 'laporan', session });
+
+    // --- DOM refs ---
+    const filterForm    = document.querySelector('#filter-form');
+    const jenisSelect   = document.querySelector('#jenis-select');
+    const statusSelect  = document.querySelector('#status-select');
+    const statsRow      = document.querySelector('#stats-row');
+    const resultsPanel  = document.querySelector('#results-panel');
+    const resultsNote   = document.querySelector('#results-note');
+    const resultsThead  = document.querySelector('#results-thead');
+    const resultsBody   = document.querySelector('#results-body');
+    const exportButton  = document.querySelector('#export-button');
+    const refreshButton = document.querySelector('#refresh-button');
+    const prevButton    = document.querySelector('#prev-button');
+    const nextButton    = document.querySelector('#next-button');
+    const pageLabel     = document.querySelector('#page-label');
+    const statTotal     = document.querySelector('#stat-total');
+    const statActive    = document.querySelector('#stat-active');
+    const statClosed    = document.querySelector('#stat-closed');
+    const statLabelActive = document.querySelector('#stat-label-active');
+    const statLabelClosed = document.querySelector('#stat-label-closed');
+    const statActiveDesc  = document.querySelector('#stat-active-desc');
+    const statClosedDesc  = document.querySelector('#stat-closed-desc');
+
+    // --- State ---
+    let allItems = [];
+    let currentPage = 1;
+    let activeFilters = {};
+    let activeJenis = 'keluar';
+
+    // --- Helpers ---
+    const formatDate = (value) => {
+      const date = value?.toDate ? value.toDate() : new Date(value);
+      if (Number.isNaN(date.getTime())) return '—';
+      return new Intl.DateTimeFormat('id-ID', {
+        timeZone: 'Asia/Jakarta',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }).format(date);
+    };
+
+    const formatDateRange = (tglMulai, tglSelesai) => {
+      const from = tglMulai ? formatDate(tglMulai) : '…';
+      const to   = tglSelesai ? formatDate(tglSelesai) : '…';
+      return `${from} – ${to}`;
+    };
+
+    const badgeForStatus = (status, jenis) => {
+      if (jenis === 'keluar') {
+        if (status === 'Aktif')      return badge(status, 'success');
+        if (status === 'Dibatalkan') return badge(status, 'danger');
+        return badge(status || '—', 'muted');
+      }
+      // masuk
+      if (status === 'Selesai')        return badge(status, 'success');
+      if (status === 'Didisposisikan') return badge(status, 'warning');
+      if (status === 'Baru')           return badge(status, 'muted');
+      return badge(status || '—', 'muted');
+    };
+
+    const badgeForSifat = (sifat) =>
+      badge(sifat === 'rahasia' ? 'Rahasia' : 'Biasa', sifat === 'rahasia' ? 'danger' : 'muted');
+
+    const totalPages = () => Math.max(1, Math.ceil(allItems.length / PAGE_SIZE));
+
+    // --- Status select options by jenis ---
+    const STATUS_OPTS_KELUAR = [
+      ['semua',      'Semua'],
+      ['Aktif',      'Aktif'],
+      ['Dibatalkan', 'Dibatalkan'],
+    ];
+    const STATUS_OPTS_MASUK = [
+      ['semua',           'Semua'],
+      ['Baru',            'Baru'],
+      ['Didisposisikan',  'Didisposisikan'],
+      ['Selesai',         'Selesai'],
+    ];
+
+    const updateStatusOptions = (jenis) => {
+      const opts = jenis === 'masuk' ? STATUS_OPTS_MASUK : STATUS_OPTS_KELUAR;
+      statusSelect.replaceChildren(
+        ...opts.map(([value, label]) => {
+          const opt = document.createElement('option');
+          opt.value = value;
+          opt.textContent = label;
+          return opt;
+        }),
+      );
+    };
+
+    // --- Table columns ---
+    const COLS_KELUAR = ['No. Surat', 'Tanggal Surat', 'Tujuan', 'Hal', 'Bidang Pembuat', 'Sifat', 'Status'];
+    const COLS_MASUK  = ['No. Agenda', 'Tgl Terima', 'Tgl Surat', 'No. Surat', 'Asal', 'Hal', 'Sifat', 'Status'];
+
+    const renderThead = (jenis) => {
+      const cols = jenis === 'masuk' ? COLS_MASUK : COLS_KELUAR;
+      const tr = document.createElement('tr');
+      cols.forEach((col) => {
+        const th = document.createElement('th');
+        th.textContent = col;
+        tr.append(th);
+      });
+      resultsThead.replaceChildren(tr);
+    };
+
+    const renderCellText = (value) => {
+      const td = document.createElement('td');
+      td.textContent = value || '—';
+      return td;
+    };
+
+    const renderCellEl = (el) => {
+      const td = document.createElement('td');
+      td.append(el);
+      return td;
+    };
+
+    const renderRow = (item, jenis) => {
+      const tr = document.createElement('tr');
+      if (jenis === 'keluar') {
+        tr.append(
+          renderCellText(item.noSurat),
+          renderCellText(formatDate(item.tglSurat)),
+          renderCellText(item.tujuan),
+          renderCellText(item.hal),
+          renderCellText(item.bidangPembuat),
+          renderCellEl(badgeForSifat(item.sifat)),
+          renderCellEl(badgeForStatus(item.status, 'keluar')),
+        );
+      } else {
+        tr.append(
+          renderCellText(item.noAgenda),
+          renderCellText(formatDate(item.tglTerima)),
+          renderCellText(formatDate(item.tglSurat)),
+          renderCellText(item.noSurat),
+          renderCellText(item.asal),
+          renderCellText(item.hal),
+          renderCellEl(badgeForSifat(item.sifat)),
+          renderCellEl(badgeForStatus(item.status, 'masuk')),
+        );
+      }
+      return tr;
+    };
+
+    const showTableMessage = (message) => {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = activeJenis === 'masuk' ? COLS_MASUK.length : COLS_KELUAR.length;
+      td.textContent = message;
+      tr.append(td);
+      resultsBody.replaceChildren(tr);
+    };
+
+    // --- Render a page slice ---
+    const renderPage = () => {
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const slice = allItems.slice(start, start + PAGE_SIZE);
+
+      if (!slice.length) {
+        showTableMessage('Tidak ada data surat untuk filter ini.');
+      } else {
+        resultsBody.replaceChildren(...slice.map((item) => renderRow(item, activeJenis)));
+      }
+
+      const pages = totalPages();
+      pageLabel.textContent = `Halaman ${currentPage} dari ${pages}`;
+      prevButton.disabled = currentPage <= 1;
+      nextButton.disabled = currentPage >= pages;
+    };
+
+    // --- Stats ---
+    const renderStats = (items, jenis) => {
+      const total = items.length;
+      let activeCount = 0;
+      let closedCount = 0;
+
+      if (jenis === 'keluar') {
+        activeCount = items.filter((i) => i.status === 'Aktif').length;
+        closedCount = items.filter((i) => i.status === 'Dibatalkan').length;
+        statLabelActive.textContent   = 'Aktif';
+        statLabelClosed.textContent   = 'Dibatalkan';
+        statActiveDesc.textContent    = 'status aktif';
+        statClosedDesc.textContent    = 'status dibatalkan';
+      } else {
+        activeCount = items.filter((i) => i.status === 'Baru').length;
+        closedCount = items.filter((i) => i.status === 'Selesai').length;
+        statLabelActive.textContent   = 'Baru';
+        statLabelClosed.textContent   = 'Selesai';
+        statActiveDesc.textContent    = 'status baru';
+        statClosedDesc.textContent    = 'status selesai';
+      }
+
+      statTotal.textContent  = total;
+      statActive.textContent = activeCount;
+      statClosed.textContent = closedCount;
+      statsRow.style.display = '';
+    };
+
+    // --- Main load function ---
+    const loadReport = async () => {
+      showTableMessage('Memuat…');
+      exportButton.disabled = true;
+      resultsNote.textContent = 'Memuat data…';
+
+      try {
+        const fn = activeJenis === 'masuk' ? getLaporanSuratMasuk : getLaporanSuratKeluar;
+        const result = await fn(session, activeFilters);
+        allItems = result.items;
+
+        renderStats(allItems, activeJenis);
+        currentPage = 1;
+        renderPage();
+
+        const range = formatDateRange(activeFilters.tglMulai, activeFilters.tglSelesai);
+        resultsNote.textContent = `${allItems.length} surat ditemukan — ${range}`;
+        exportButton.disabled = allItems.length === 0;
+      } catch (error) {
+        showTableMessage(error.message || 'Gagal memuat data laporan.');
+        resultsNote.textContent = 'Terjadi kesalahan saat memuat data.';
+        exportButton.disabled = true;
+      }
+    };
+
+    // --- Export ---
+    const buildExcelRows = (items, jenis) => {
+      if (jenis === 'keluar') {
+        return items.map((item) => ({
+          'No. Surat':      item.noSurat      || '',
+          'Tanggal Surat':  formatDate(item.tglSurat),
+          'Tujuan':         item.tujuan       || '',
+          'Hal':            item.hal          || '',
+          'Bidang Pembuat': item.bidangPembuat || '',
+          'Sifat':          item.sifat        || '',
+          'Status':         item.status       || '',
+        }));
+      }
+      return items.map((item) => ({
+        'No. Agenda':   item.noAgenda  || '',
+        'Tgl Terima':   formatDate(item.tglTerima),
+        'Tgl Surat':    formatDate(item.tglSurat),
+        'No. Surat':    item.noSurat   || '',
+        'Asal':         item.asal      || '',
+        'Hal':          item.hal       || '',
+        'Sifat':        item.sifat     || '',
+        'Status':       item.status    || '',
+      }));
+    };
+
+    // --- Event handlers ---
+
+    jenisSelect.addEventListener('change', () => {
+      updateStatusOptions(jenisSelect.value);
+      // Clear results when jenis changes
+      allItems = [];
+      resultsPanel.classList.remove('visible');
+      statsRow.style.display = 'none';
+    });
+
+    filterForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const data = Object.fromEntries(new FormData(filterForm));
+
+      if (!data.tglMulai) {
+        showToast('Tanggal mulai wajib diisi.');
+        return;
+      }
+      if (!data.tglSelesai) {
+        showToast('Tanggal sampai wajib diisi.');
+        return;
+      }
+      if (data.tglMulai > data.tglSelesai) {
+        showToast('Tanggal mulai tidak boleh lebih dari tanggal sampai.');
+        return;
+      }
+
+      const startDate = new Date(`${data.tglMulai}T00:00:00+07:00`);
+      const endDate = new Date(`${data.tglSelesai}T23:59:59+07:00`);
+      const diffDays = Math.ceil(Math.abs(endDate - startDate) / (1000 * 60 * 60 * 24));
+      if (diffDays > 366) {
+        showToast('Rentang tanggal maksimal 1 tahun (366 hari) untuk menghemat kuota sistem.');
+        return;
+      }
+
+      activeJenis = data.jenis;
+      activeFilters = {
+        tglMulai: startDate,
+        tglSelesai: endDate,
+        status: data.status || 'semua',
+        sifat:  data.sifat  || 'semua',
+      };
+
+      renderThead(activeJenis);
+      resultsPanel.classList.add('visible');
+      await loadReport();
+    });
+
+    document.querySelector('#reset-button').addEventListener('click', () => {
+      filterForm.reset();
+      updateStatusOptions('keluar');
+      allItems = [];
+      activeFilters = {};
+      activeJenis = 'keluar';
+      resultsPanel.classList.remove('visible');
+      statsRow.style.display = 'none';
+    });
+
+    refreshButton.addEventListener('click', loadReport);
+
+    exportButton.addEventListener('click', async () => {
+      if (!allItems.length) return;
+      try {
+        const rows = buildExcelRows(allItems, activeJenis);
+        const jenisLabel = activeJenis === 'masuk' ? 'Surat-Masuk' : 'Surat-Keluar';
+        const filename   = `laporan-${jenisLabel.toLowerCase()}.xlsx`;
+        await exportRowsToExcel(rows, filename, jenisLabel);
+      } catch (error) {
+        showToast(error.message || 'Ekspor gagal.');
+      }
+    });
+
+    prevButton.addEventListener('click', () => {
+      if (currentPage <= 1) return;
+      currentPage -= 1;
+      renderPage();
+    });
+
+    nextButton.addEventListener('click', () => {
+      if (currentPage >= totalPages()) return;
+      currentPage += 1;
+      renderPage();
+    });
+
+    // Initialise status options for default jenis (keluar)
+    updateStatusOptions('keluar');
+  </script>
+</body>
+</html>

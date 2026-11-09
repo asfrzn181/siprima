@@ -1,0 +1,16 @@
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Node / NPM (if any)
+node_modules/
+npm-debug.log*
+
+# Firebase cache
+.firebase/
+

@@ -1,0 +1,82 @@
+#access-fieldset,
+#disposition-fieldset {
+  margin: 1.25rem 0 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: linear-gradient(145deg, #f8fcfe, #ffffff);
+}
+
+#access-fieldset legend,
+#disposition-fieldset legend {
+  padding: 0 .55rem;
+  color: var(--primary-dark, #064b61);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+#access-options,
+#disposition-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: .75rem;
+  margin: .5rem 0 1rem;
+}
+
+#access-options .check-option,
+#disposition-options .check-option {
+  display: flex;
+  align-items: flex-start;
+  gap: .75rem;
+  min-height: 58px;
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  line-height: 1.35;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+#access-options .check-option:hover,
+#disposition-options .check-option:hover {
+  border-color: var(--primary);
+  background: var(--ocean-soft, #eaf6fb);
+  box-shadow: 0 5px 14px #08678818;
+  transform: translateY(-1px);
+}
+
+#access-options .check-option input,
+#disposition-options .check-option input {
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: .1rem 0 0;
+  accent-color: var(--accent, #f28c28);
+}
+
+#access-options .check-option input:checked + span,
+#disposition-options .check-option input:checked + span {
+  color: var(--primary-dark, #064b61);
+  font-weight: 800;
+}
+
+#disposition-fieldset > label {
+  display: grid;
+  gap: .45rem;
+  margin-top: 1rem;
+  font-weight: 750;
+}
+
+#disposition-fieldset textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+@media (max-width: 600px) {
+  #access-options,
+  #disposition-options {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SiPrima — Dashboard</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/overrides.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="page-container">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">Ringkasan</p>
+        <h1>Dashboard</h1>
+        <p id="welcome" class="muted"></p>
+      </div>
+      <button id="refresh" class="button secondary" type="button">Muat ulang</button>
+    </section>
+
+    <section class="stat-grid">
+      <article class="stat-card">
+        <span class="stat-label">Surat masuk baru</span>
+        <strong id="new-count">—</strong>
+        <small>Belum didisposisikan</small>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Total surat masuk</span>
+        <strong id="total-count">—</strong>
+        <small>Agenda surat masuk tercatat</small>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Bulan berjalan</span>
+        <strong id="month-count">—</strong>
+        <small>Surat masuk bulan ini</small>
+      </article>
+    </section>
+  </main>
+
+  <script type="module">
+    import { requireAuth } from './assets/js/auth.js';
+    import { getDashboardStats } from './assets/js/db.js';
+    import { renderShell } from './assets/js/ui.js';
+
+    const session = await requireAuth();
+
+    if (session.profile.role === 'bidang') {
+      window.location.replace('./surat-keluar.html');
+    } else {
+      renderShell({ active: 'dashboard', session });
+      document.querySelector('#welcome').textContent = `Selamat datang, ${session.profile.nama || session.user.email}. Peran: ${session.profile.role}.`;
+
+      const load = async (forceRefresh = false) => {
+        try {
+          const stats = await getDashboardStats(session, forceRefresh);
+          document.querySelector('#new-count').textContent = stats.baru;
+          document.querySelector('#total-count').textContent = stats.total;
+          document.querySelector('#month-count').textContent = stats.bulan;
+        } catch (err) {
+          console.error('Dashboard gagal dimuat:', err);
+        }
+      };
+
+      document.querySelector('#refresh').addEventListener('click', () => load(true));
+      await load();
+    }
+  </script>
+</body>
+</html>
