@@ -77,7 +77,6 @@
   const passwordInput=userForm.elements.password;document.querySelector('#toggle-password').addEventListener('click',()=>{const showing=passwordInput.type==='text';passwordInput.type=showing?'password':'text';document.querySelector('#toggle-password').textContent=showing?'Tampilkan':'Sembunyikan';});userForm.elements.role.addEventListener('change',()=>{const isBidang=userForm.elements.role.value==='bidang';userForm.elements.bidang.disabled=!isBidang;if(!isBidang)userForm.elements.bidang.value='';});userForm.addEventListener('click',()=>{if(userForm.elements.role.value==='bidang')userForm.elements.bidang.disabled=false;});userForm.addEventListener('submit',()=>{if(userForm.elements.role.value==='bidang')userForm.elements.bidang.disabled=false;},true);
 
   // ── Pembersih Nomor Ganda ──────────────────────────────────────────────────
-  const { verifySequence } = await import('./js/services/letter-numbering.js');
   const cleanerBody = document.querySelector('#cleaner-body');
   const cleanerSummary = document.querySelector('#cleaner-summary');
   const cleanerTahun = document.querySelector('#cleaner-tahun');
