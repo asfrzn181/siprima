@@ -26,16 +26,51 @@ Ganti placeholder sebelum digunakan:
 
 ## Master awal
 
-Buat tiga dokumen `masterBidang/{id}` dengan field `kode`, `nama`, `aktif: true`. Buat satu dokumen `masterNomor/surat-biasa`:
+Buat tiga dokumen `masterBidang/{id}` dengan field `kode`, `nama`, `aktif: true`.
+
+Buat dokumen `masterNomor/{id}` terpisah untuk tiap golongan. Masing-masing punya urutan nomor sendiri karena counter disimpan per golongan (SK, SE, LAINNYA).
 
 ```json
 {
-  "nama": "Surat Biasa",
-  "format": "{KODE}/{URUT:3}/{UNIT}/{TAHUN}",
+  "nama": "Surat Keputusan",
+  "golongan": "SK",
+  "format": "{KODE}/SK/{URUT:3}/{UNIT}/{TAHUN}",
   "kode": "800",
-  "unit": "[NAMA DINAS SINGKAT]",
   "resetTahunan": true,
   "urutanPerBidang": false,
   "aktif": true
 }
 ```
+
+```json
+{
+  "nama": "Surat Edaran",
+  "golongan": "SE",
+  "format": "SE/{URUT:3}/{UNIT}/{TAHUN}",
+  "kode": "SE",
+  "resetTahunan": true,
+  "urutanPerBidang": false,
+  "aktif": true
+}
+```
+
+```json
+{
+  "nama": "Surat lainnya",
+  "golongan": "LAINNYA",
+  "format": "{KODE}/{URUT:3}/{UNIT}/{TAHUN}",
+  "kode": "005",
+  "resetTahunan": true,
+  "urutanPerBidang": false,
+  "aktif": true
+}
+```
+
+Catatan penomoran:
+
+- `SK` memakai kode klasifikasi tetap yang ditetapkan pada master SK.
+- `SE` tidak memuat kode klasifikasi; token `{KODE}` otomatis dibuang dari format.
+- `LAINNYA` memakai kode klasifikasi yang dipilih staf saat menginput surat.
+- Ketiga golongan tidak saling memengaruhi urutan. Nomor 012/SK/2026 bukan nomor 012 untuk SE.
+- Variabel format yang didukung: `{KODE}`, `{URUT:n}`, `{UNIT}`, `{TAHUN}`, `{BULAN}`, `{BULAN_ROMAWI}`, `{BIDANG}`, `{GOLONGAN}`.
+

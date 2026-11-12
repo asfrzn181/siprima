@@ -1,6 +1,7 @@
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, query, orderBy, where, limit, startAfter, runTransaction, Timestamp, writeBatch, getCountFromServer } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { db } from './firebase.js';
 import { renderNomorFormat } from './nomor.js';
+import { normalizeGolongan, normalizeFormatGolongan, scopeKeyFor } from './letter-numbering-core.js';
 import { correctLetterNumber, expireReservedLetterNumbers, getLetterNumberByFullNumber, issueLetterNumber, reserveLetterNumber, reuseVoidedLetterNumber, updateLetterMetadata, voidLetterNumber } from './letter-numbering.js';
 export { correctLetterNumber, expireReservedLetterNumbers, getLetterNumberByFullNumber, reserveLetterNumber, reuseVoidedLetterNumber, voidLetterNumber } from './letter-numbering.js';
 export { db };
@@ -222,28 +223,109 @@ export const getMasterBidangByKode = async (kode) => { const normalized = String
 export const listMasterNomor = async () => { const snap = await getDocs(query(collection(db, 'masterNomor'), orderBy('nama'))); return snap.docs.map((item) => ({ id: item.id, ...item.data() })); };
 const masterNomorSearchCache = new Map();
 const masterNomorByIdCache = new Map();
-const normalizeMasterNomor = (item) => ({ id: item.id, ...item, kode: String(item.kode || '').trim(), nama: String(item.nama || '').trim(), aktif: item.aktif !== false });
-const normalizeNomorFormat = (format) => String(format || '').trim() === '{KODE}/{URUT:3}/{UNIT}/BKPSDMD/{TAHUN}' ? '{KODE}/{URUT:3}/BKPSDMD/{UNIT}/{TAHUN}' : String(format || '').trim();
+const normalizeMasterNomor = (item) => ({ id: item.id, ...item, kode: String(item.kode || '').trim(), nama: String(item.nama || '').trim(), golongan: normalizeGolongan(item.golongan), format: normalizeFormatGolongan(item.format, item.golongan), aktif: item.aktif !== false });
+
 export const getMasterNomor = async (id) => { if (!id) return null; if (masterNomorByIdCache.has(id)) return masterNomorByIdCache.get(id); const snap = await getDoc(doc(db, 'masterNomor', id)); if (!snap.exists()) return null; const item = normalizeMasterNomor({ id: snap.id, ...snap.data() }); masterNomorByIdCache.set(id, item); return item; };
 export const searchMasterNomorByCode = async (keyword, maxResults = 5) => { const normalized = String(keyword || '').trim(); if (normalized.length < 3) return []; const cacheKey = `${normalized.toLowerCase()}::${maxResults}`; if (masterNomorSearchCache.has(cacheKey)) return masterNomorSearchCache.get(cacheKey); const nameKeys = [...new Set([normalized, normalized.toUpperCase(), `${normalized.charAt(0).toUpperCase()}${normalized.slice(1).toLowerCase()}`])]; const [codeSnap, ...nameSnaps] = await Promise.all([getDocs(query(collection(db, 'masterNomor'), where('kode', '>=', normalized), where('kode', '<=', `${normalized}\uf8ff`), orderBy('kode'), limit(maxResults))), ...nameKeys.map((nameKey) => getDocs(query(collection(db, 'masterNomor'), where('nama', '>=', nameKey), where('nama', '<=', `${nameKey}\uf8ff`), orderBy('nama'), limit(maxResults))))]); const docs = [codeSnap, ...nameSnaps].flatMap((snap) => snap.docs); const unique = new Map(docs.map((item) => [item.id, normalizeMasterNomor({ id: item.id, ...item.data() })])); const items = [...unique.values()].filter((item) => item.aktif && item.kode && item.nama).sort((a, b) => `${a.kode} ${a.nama}`.localeCompare(`${b.kode} ${b.nama}`, 'id', { numeric: true })).slice(0, maxResults); items.forEach((item) => masterNomorByIdCache.set(item.id, item)); masterNomorSearchCache.set(cacheKey, items); return items; };
-export const previewNomorSurat = async ({ jenisId, bidangKode, tanggal }) => { const master = await getMasterNomor(jenisId); if (!master || !master.aktif) throw new Error('Pilih jenis nomor surat yang aktif.'); const bidangData = await getMasterBidangByKode(bidangKode); if (!bidangData || bidangData.aktif !== true) throw new Error(`Bidang dengan kode ${bidangKode} belum terdaftar atau tidak aktif.`); const date = tanggal instanceof Date ? tanggal : new Date(tanggal); const year = date.getFullYear(); const counterId = `${jenisId}_${year}${master.urutanPerBidang === true ? `_${bidangKode}` : ''}`; const counterSnap = await getDoc(doc(db, 'counters', counterId)); const next = counterSnap.exists() ? Number(counterSnap.data().last || 0) + 1 : 1; return { noSurat: renderNomorFormat(normalizeNomorFormat(master.format), { KODE: master.kode, UNIT: bidangKode, TAHUN: year, BULAN: String(date.getMonth() + 1).padStart(2, '0'), BULAN_ROMAWI: ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'][date.getMonth()], BIDANG: bidangKode, URUT: next }), next, year, unit: bidangKode, unitNama: bidangData.nama }; };
+const jakartaYearMonth = (date) => {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit' })
+    .formatToParts(date).reduce((result, part) => ({ ...result, [part.type]: part.value }), {});
+  return { year: Number(parts.year), month: Number(parts.month) };
+};
+const ROMAN_MONTHS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+
+/** Pratinjau nomor berikutnya tanpa memakai (consume) nomor. Membaca counter transaksional letter_counters. */
+export const previewNomorSurat = async ({ jenisId, bidangKode, tanggal }) => {
+  const master = await getMasterNomor(jenisId);
+  if (!master || !master.aktif) throw new Error('Pilih jenis nomor surat yang aktif.');
+  const bidangData = await getMasterBidangByKode(bidangKode);
+  if (!bidangData || bidangData.aktif !== true) throw new Error(`Bidang dengan kode ${bidangKode} belum terdaftar atau tidak aktif.`);
+  const date = tanggal instanceof Date ? tanggal : new Date(tanggal);
+  const { year, month } = jakartaYearMonth(date);
+  const settings = await getAppSettings();
+  const scope = settings?.numberingScope === 'PER_KLASIFIKASI' ? 'PER_KLASIFIKASI' : 'GLOBAL_PER_TAHUN';
+  const scopeKey = scopeKeyFor({ golongan: master.golongan, kode: master.kode, scope });
+  const counterSnap = await getDoc(doc(db, 'letter_counters', encodeURIComponent(`${year}_${scopeKey}`)));
+  const previous = counterSnap.exists() ? Number(counterSnap.data().last_seq || 0) : 0;
+  const next = previous + 1;
+  return {
+    noSurat: renderNomorFormat(master.format, { KODE: master.kode, GOLONGAN: master.golongan, UNIT: bidangKode, TAHUN: year, BULAN: String(month).padStart(2, '0'), BULAN_ROMAWI: ROMAN_MONTHS[month - 1], BIDANG: bidangKode, URUT: next }),
+    next, previous, year, golongan: master.golongan, scopeKey,
+    unit: bidangKode, unitNama: bidangData.nama
+  };
+};
 export const saveMasterBidang = async (id, data) => { masterBidangCache = null; try { sessionStorage.removeItem('master_bidang_all'); } catch {} return setDoc(doc(db, 'masterBidang', id), data, { merge: true }); };
 export const saveMasterNomor = async (id, data) => { masterNomorByIdCache.delete(id); masterNomorSearchCache.clear(); return setDoc(doc(db, 'masterNomor', id), data); };
 export const saveMasterNomorBatch = async (rows, onProgress = () => {}) => { masterNomorByIdCache.clear(); masterNomorSearchCache.clear(); const chunkSize = 400; let processed = 0; for (let start = 0; start < rows.length; start += chunkSize) { const batch = writeBatch(db); rows.slice(start, start + chunkSize).forEach(({ id, data }) => batch.set(doc(db, 'masterNomor', id), data)); await batch.commit(); processed += Math.min(chunkSize, rows.length - start); onProgress(processed, rows.length); } return processed; };
 export const saveAppSettings = async (data) => { settingsCache = null; try { sessionStorage.removeItem('app_settings'); } catch {} return setDoc(doc(db, 'pengaturan', 'umum'), data, { merge: true }); };
 
 const listVisibleModes = (session, sifat = 'semua') => modeForSession(session, sifat);
+const filterByGolongan = (items, golongan) => {
+  if (!golongan || golongan === 'semua') return items;
+  const target = normalizeGolongan(golongan);
+  return items.filter((item) => normalizeGolongan(item.golongan) === target);
+};
+
 export const listSuratKeluar = async (session, filters = {}, cursors = [], options = {}) => {
   const exportAll = options.exportAll === true;
-  const modes = listVisibleModes(session, filters.sifat || 'semua'); const search = String(filters.search || '').trim(); const results = await Promise.all(modes.map(async (mode, index) => {
-    const constraints = [];
-    if (filters.status && filters.status !== 'semua') constraints.push(where('status', '==', filters.status));
-    if (mode === 'biasa') constraints.push(where('sifat', '==', 'biasa'));
-    if (mode === 'rahasia') { constraints.push(where('sifat', '==', 'rahasia')); if (session.profile.role === 'bidang') constraints.push(where('aksesBidang', 'array-contains', session.profile.bidang)); }
-    if (search) { constraints.push(where('noSurat', '>=', search), where('noSurat', '<=', `${search}\uf8ff`), orderBy('noSurat')); } else { constraints.push(orderBy('tglSurat', 'desc')); if (!exportAll && cursors[index]) constraints.push(startAfter(cursors[index])); if (!exportAll) constraints.push(limit(20)); }
-    const snap = await getDocs(query(collection(db, 'suratKeluar'), ...constraints)); return { docs: snap.docs, hasMore: !search && snap.docs.length === 20 };
+  const modes = listVisibleModes(session, filters.sifat || 'semua');
+  const search = String(filters.search || '').trim();
+  const base = [];
+  if (filters.status && filters.status !== 'semua') base.push(where('status', '==', filters.status));
+  if (filters.tglMulai) base.push(where('tglSurat', '>=', Timestamp.fromDate(filters.tglMulai)));
+  if (filters.tglSelesai) base.push(where('tglSurat', '<=', Timestamp.fromDate(filters.tglSelesai)));
+  const modeConstraints = (mode) => {
+    const list = [...base];
+    if (mode === 'biasa') list.push(where('sifat', '==', 'biasa'));
+    if (mode === 'rahasia') {
+      list.push(where('sifat', '==', 'rahasia'));
+      if (session.profile.role === 'bidang') list.push(where('aksesBidang', 'array-contains', session.profile.bidang));
+    }
+    return list;
+  };
+
+  if (search) {
+    const fields = ['noSurat', 'hal', 'tujuan'];
+    const hits = await Promise.all(fields.flatMap((field) => modes.map((mode) => getDocs(query(
+      collection(db, 'suratKeluar'),
+      ...modeConstraints(mode),
+      where(field, '>=', search),
+      where(field, '<=', `${search}\uf8ff`),
+      orderBy(field),
+      ...(exportAll ? [] : [limit(20)])
+    )))));
+    const unique = new Map();
+    hits.flat().forEach((item) => unique.set(item.id, item));
+    const items = filterByGolongan(
+      [...unique.values()].map(docToSurat).sort((a, b) => toMillis(b.tglSurat) - toMillis(a.tglSurat)),
+      filters.golongan
+    );
+    return { items: exportAll ? items : items.slice(0, 20), nextCursors: [], hasNext: false, searchMode: true };
+  }
+
+  const results = await Promise.all(modes.map(async (mode, index) => {
+    const constraints = [...modeConstraints(mode), orderBy('tglSurat', 'desc')];
+    if (!exportAll && cursors[index]) constraints.push(startAfter(cursors[index]));
+    if (!exportAll) constraints.push(limit(20));
+    const snap = await getDocs(query(collection(db, 'suratKeluar'), ...constraints));
+    return { docs: snap.docs, hasMore: !exportAll && snap.docs.length === 20 };
   }));
-  const unique = new Map(); results.flatMap((result) => result.docs).forEach((item) => unique.set(item.id, item)); const allItems = [...unique.values()].map(docToSurat).sort((a, b) => toMillis(b.tglSurat) - toMillis(a.tglSurat)); const items = exportAll ? allItems : allItems.slice(0, 20); return { items, nextCursors: results.map((result) => result.docs.at(-1) || null), hasNext: !exportAll && results.some((result) => result.hasMore), searchMode: Boolean(search) };
+  const unique = new Map();
+  results.flatMap((result) => result.docs).forEach((item) => unique.set(item.id, item));
+  const allItems = filterByGolongan(
+    [...unique.values()].map(docToSurat).sort((a, b) => toMillis(b.tglSurat) - toMillis(a.tglSurat)),
+    filters.golongan
+  );
+  const items = exportAll ? allItems : allItems.slice(0, 20);
+  return { items, nextCursors: results.map((result) => result.docs.at(-1) || null), hasNext: !exportAll && results.some((result) => result.hasMore), searchMode: false };
+};
+
+/** Deteksi perihal serupa agar input ganda bisa dicegah sebelum nomor terbit. */
+export const findSimilarSuratKeluar = async (perihal, maxResults = 5) => {
+  const term = String(perihal || '').trim();
+  if (term.length < 4) return [];
+  const snap = await getDocs(query(collection(db, 'suratKeluar'), where('hal', '>=', term), where('hal', '<=', `${term}\uf8ff`), orderBy('hal'), limit(maxResults)));
+  return snap.docs.map(docToSurat).filter((item) => item.status !== 'Dibatalkan');
 };
 export const listSuratKeluarForExport = (session, filters = {}) => listSuratKeluar(session, filters, [], { exportAll: true });
 export const getSuratKeluarById = async (id) => { const snap = await getDoc(doc(db, 'suratKeluar', id)); return snap.exists() ? { id: snap.id, ...snap.data() } : null; };
@@ -320,32 +402,48 @@ export const getLaporanSuratMasuk = async (session, filters = {}) => {
 };
 
 export const getDashboardStats = async (session, forceRefresh = false) => {
-  const cacheKey = 'dashboard_stats';
+  const cacheKey = `dashboard_stats_${session.profile.role}_${session.profile.bidang || ''}`;
   if (!forceRefresh) {
     try {
       const stored = sessionStorage.getItem(cacheKey);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Date.now() - parsed.time < 2 * 60 * 1000) {
-          return parsed.data;
-        }
+        if (Date.now() - parsed.time < 2 * 60 * 1000) return parsed.data;
       }
     } catch {}
   }
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfMonthTimestamp = Timestamp.fromDate(startOfMonth);
 
-  const [snapBaru, snapTotal, snapBulan] = await Promise.all([
-    getCountFromServer(query(collection(db, 'suratMasuk'), where('status', '==', 'Baru'))),
-    getCountFromServer(collection(db, 'suratMasuk')),
-    getCountFromServer(query(collection(db, 'suratMasuk'), where('tglTerima', '>=', startOfMonthTimestamp)))
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const dayStamp = Timestamp.fromDate(startOfDay);
+  const monthStamp = Timestamp.fromDate(startOfMonth);
+  const isBidang = session.profile.role === 'bidang';
+
+  const masukScope = isBidang ? [where('aksesBidang', 'array-contains', session.profile.bidang)] : [];
+  const keluarScope = isBidang ? [where('bidangPembuat', '==', session.profile.bidang)] : [];
+
+  const countMasuk = (...extra) => getCountFromServer(query(collection(db, 'suratMasuk'), ...masukScope, ...extra)).then((snap) => snap.data().count);
+  const countKeluar = (...extra) => getCountFromServer(query(collection(db, 'suratKeluar'), ...keluarScope, ...extra)).then((snap) => snap.data().count);
+
+  const [masukHariIni, masukBulan, belumDiproses, keluarHariIni, keluarBulan, masukSnap, keluarSnap] = await Promise.all([
+    countMasuk(where('tglTerima', '>=', dayStamp)),
+    countMasuk(where('tglTerima', '>=', monthStamp)),
+    countMasuk(where('status', '==', 'Baru')),
+    countKeluar(where('tglSurat', '>=', dayStamp)),
+    countKeluar(where('tglSurat', '>=', monthStamp)),
+    getDocs(query(collection(db, 'suratMasuk'), ...masukScope, orderBy('dibuatPada', 'desc'), limit(10))),
+    getDocs(query(collection(db, 'suratKeluar'), ...keluarScope, orderBy('tglSurat', 'desc'), limit(10)))
   ]);
 
   const data = {
-    baru: snapBaru.data().count,
-    total: snapTotal.data().count,
-    bulan: snapBulan.data().count
+    masukHariIni,
+    masukBulan,
+    belumDiproses,
+    keluarHariIni,
+    keluarBulan,
+    suratMasukTerbaru: masukSnap.docs.map(docToSurat),
+    suratKeluarTerbaru: keluarSnap.docs.map(docToSurat)
   };
 
   try {

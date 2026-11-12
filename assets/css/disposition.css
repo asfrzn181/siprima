@@ -1,72 +1,78 @@
+﻿/* ==========================================================================
+   SIPRIMA - fieldset akses & disposisi
+   ========================================================================== */
+
 #access-fieldset,
 #disposition-fieldset {
-  margin: 1.25rem 0 0;
-  padding: 1rem;
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-3);
   border: 1px solid var(--line);
-  border-radius: 16px;
-  background: linear-gradient(145deg, #f8fcfe, #ffffff);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
 }
 
 #access-fieldset legend,
 #disposition-fieldset legend {
-  padding: 0 .55rem;
-  color: var(--primary-dark, #064b61);
-  font-size: 1.05rem;
-  font-weight: 800;
+  padding: 0 var(--sp-1);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
 }
 
 #access-options,
 #disposition-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: .75rem;
-  margin: .5rem 0 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0;
 }
 
 #access-options .check-option,
 #disposition-options .check-option {
   display: flex;
   align-items: flex-start;
-  gap: .75rem;
-  min-height: 58px;
-  padding: .85rem 1rem;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: 10px var(--sp-3);
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
+  border-radius: var(--radius);
+  background: var(--surface);
   color: var(--ink);
-  line-height: 1.35;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
   cursor: pointer;
-  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease, transform .15s ease;
 }
 
 #access-options .check-option:hover,
 #disposition-options .check-option:hover {
-  border-color: var(--primary);
-  background: var(--ocean-soft, #eaf6fb);
-  box-shadow: 0 5px 14px #08678818;
-  transform: translateY(-1px);
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
 }
 
 #access-options .check-option input,
 #disposition-options .check-option input {
   flex: 0 0 auto;
-  width: 1.15rem;
-  height: 1.15rem;
-  margin: .1rem 0 0;
-  accent-color: var(--accent, #f28c28);
+  margin-top: 3px;
 }
 
-#access-options .check-option input:checked + span,
-#disposition-options .check-option input:checked + span {
-  color: var(--primary-dark, #064b61);
-  font-weight: 800;
+#access-options .check-option:has(input:checked),
+#disposition-options .check-option:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+#access-options .check-option:has(input:checked) span,
+#disposition-options .check-option:has(input:checked) span {
+  color: var(--accent-hover);
+  font-weight: 650;
 }
 
 #disposition-fieldset > label {
   display: grid;
-  gap: .45rem;
-  margin-top: 1rem;
-  font-weight: 750;
+  gap: var(--sp-1);
+  margin-top: var(--sp-3);
+  font-weight: 600;
 }
 
 #disposition-fieldset textarea {
@@ -77,6 +83,6 @@
 @media (max-width: 600px) {
   #access-options,
   #disposition-options {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }

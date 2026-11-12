@@ -1,16 +1,314 @@
-:root{--primary:#086788;--primary-dark:#064b61;--accent:#f28c28;--accent-dark:#d96f0b;--ink:#123047;--muted:#587084;--line:#cfe0e8;--surface:#fff;--ocean-soft:#eaf6fb;--orange-soft:#fff3e6}
-body{background:#f3f9fc;color:var(--ink)}.auth-page{background:linear-gradient(135deg,#e7f6fb,#fff7ed)}.brand-mark{background:var(--primary)}.eyebrow{color:var(--primary)}.button.primary{background:var(--primary)}.button.primary:hover{background:var(--primary-dark)}.button.accent{background:var(--accent);color:#fff}.button.accent:hover{background:var(--accent-dark)}.button.secondary{background:var(--ocean-soft);color:var(--primary-dark)}input:focus,select:focus,textarea:focus{outline:3px solid #f28c2833;border-color:var(--accent)}.app-header{border-bottom:3px solid var(--accent)}.nav-links a.active,.nav-links a:hover{background:var(--ocean-soft);color:var(--primary-dark)}.panel,.stat-card{box-shadow:0 8px 24px #0867880d}.modal-panel{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:1rem;background:#12304799;overflow:auto}.modal-panel[hidden]{display:none}.modal-panel>.modal-card{width:min(760px,100%);max-height:calc(100vh - 2rem);overflow:auto;background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--accent);border-radius:16px;padding:1.25rem;box-shadow:0 24px 70px #12304740}.modal-close{margin-left:auto}.tabs{display:flex;gap:.35rem;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:.5rem;margin-bottom:1rem}.tab-button{border:0;background:transparent;color:var(--muted);padding:.65rem .8rem;border-radius:8px;font-weight:750}.tab-button.active,.tab-button:hover{background:var(--ocean-soft);color:var(--primary-dark)}.tab-panel[hidden]{display:none}.admin-toolbar{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem}.table-pagination{display:flex;justify-content:center;align-items:center;gap:1rem;margin-top:1rem}.csv-help{background:var(--orange-soft);border-left:4px solid var(--accent);padding:.65rem .8rem;border-radius:8px;font-size:.85rem;color:#77410a}.check-option input{accent-color:var(--accent)}
-/* Surat keluar masih memakai section lama; tampilkan sebagai kartu modal. */
-#form-panel.panel{position:fixed;z-index:30;inset:1rem auto auto 50%;transform:translateX(-50%);width:min(760px,calc(100% - 2rem));max-height:calc(100vh - 2rem);overflow:auto;margin:0;border-top:5px solid var(--accent);box-shadow:0 24px 70px #12304740}
-#form-panel.panel[hidden]{display:none}
-@media(max-width:700px){.modal-panel{align-items:start;padding:.5rem}.modal-panel>.modal-card{max-height:calc(100vh - 1rem);padding:1rem}#form-panel.panel{inset:.5rem auto auto 50%;width:calc(100% - 1rem);max-height:calc(100vh - 1rem)}.admin-toolbar{align-items:flex-start;flex-direction:column}}
-#access{margin:1rem 0 0;padding:1rem;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,#f8fcfe,#fff)}
-#access legend{padding:0 .55rem;color:var(--primary-dark);font-size:1rem;font-weight:800}
-#access-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin:.5rem 0 1rem}
-#access-options .check-option{display:flex;align-items:flex-start;gap:.75rem;min-height:4rem;padding:.85rem 1rem;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);line-height:1.35;cursor:pointer;transition:border-color .15s ease,background .15s ease,box-shadow .15s ease,transform .15s ease}
-#access-options .check-option:hover{border-color:var(--primary);background:var(--ocean-soft);box-shadow:0 5px 14px #08678818;transform:translateY(-1px)}
-#access-options .check-option input{flex:0 0 auto;width:1.15rem;height:1.15rem;margin:.1rem 0 0;accent-color:var(--accent)}
-#access-options .check-option input:checked + span{color:var(--primary-dark);font-weight:800}
-#access small{display:block;padding-top:.75rem;border-top:1px dashed var(--line);color:var(--muted)}
-@media(max-width:600px){#access-options{grid-template-columns:1fr}}
-.scan-url-field small{font-weight:500}.delivery-state{gap:.4rem}.delivery-check{display:inline-flex!important;width:max-content;max-width:100%;padding:.75rem .9rem!important}
+﻿/* ==========================================================================
+   SIPRIMA - komponen tambahan
+   Tidak ada gradien, bayangan tebal, atau warna kedua. Semua memakai token
+   dari app.css.
+   ========================================================================== */
+
+/* ------------------------------------------------------------------- modal */
+
+.modal-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-4);
+  background: #1a202880;
+  overflow: auto;
+}
+.modal-panel[hidden] { display: none; }
+
+.modal-panel > .modal-card {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: var(--sp-5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 32px #1a20281f;
+}
+
+.modal-close { margin-left: auto; }
+
+#form-panel.panel {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  width: auto;
+  margin: 0;
+  padding: var(--sp-4);
+  border: 0;
+  border-radius: 0;
+  background: #1a202880;
+  overflow: auto;
+}
+
+#form-panel.panel[hidden] { display: none; }
+
+#form-panel.panel > form,
+#form-panel.panel > .modal-card,
+#form-panel.panel > .panel-body {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: var(--sp-5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+/* -------------------------------------------------------------------- tabs */
+
+.tabs {
+  display: flex;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.tab-button {
+  min-height: 36px;
+  padding: 6px var(--sp-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.tab-button:hover { background: var(--surface-alt); color: var(--ink); }
+
+.tab-button.active {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent-hover);
+}
+
+.tab-panel[hidden] { display: none; }
+
+/* --------------------------------------------------------------- tabel data */
+
+.admin-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+  flex-wrap: wrap;
+}
+.admin-toolbar h2 { margin: 0; }
+.admin-toolbar p { margin: var(--sp-1) 0 0; font-size: 13px; color: var(--muted); max-width: 62ch; }
+
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.csv-help {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--accent-line);
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------------ pilihan */
+
+.check-grid,
+#access-options,
+#disposition-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 var(--sp-3);
+}
+
+.check-option,
+#access-options .check-option,
+#disposition-options .check-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: 10px var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.check-option:hover,
+#access-options .check-option:hover,
+#disposition-options .check-option:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.check-option input { flex: 0 0 auto; margin-top: 3px; }
+
+.check-option:has(input:checked),
+#access-options .check-option:has(input:checked),
+#disposition-options .check-option:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.check-option:has(input:checked) span,
+#access-options .check-option:has(input:checked) span,
+#disposition-options .check-option:has(input:checked) span {
+  color: var(--accent-hover);
+  font-weight: 650;
+}
+
+fieldset {
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+#access-fieldset,
+#disposition-fieldset {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+#access-fieldset legend,
+#disposition-fieldset legend {
+  padding: 0 var(--sp-1);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+#access small,
+#access-fieldset small {
+  display: block;
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+#disposition-fieldset > label {
+  display: grid;
+  gap: var(--sp-1);
+  margin-top: var(--sp-3);
+  font-weight: 600;
+}
+
+#disposition-fieldset textarea { min-height: 92px; resize: vertical; }
+
+/* ------------------------------------------------------------- surat keluar */
+
+.scan-url-field small { font-weight: 400; }
+.delivery-state { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.delivery-check { display: inline-flex; width: max-content; max-width: 100%; }
+
+/* Jenis penomoran (SK / SE / Surat lainnya) */
+.golongan-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+}
+
+.golongan-option {
+  display: grid;
+  gap: 2px;
+  padding: 10px var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.golongan-option:hover { border-color: var(--accent-line); background: var(--accent-soft); }
+.golongan-option:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.golongan-option:has(input:checked) .golongan-name { color: var(--accent-hover); }
+
+.golongan-option input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.golongan-name { display: block; font-size: 13.5px; font-weight: 650; color: var(--ink); }
+.golongan-desc { display: block; font-size: 12px; color: var(--muted); }
+
+.golongan-option:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Pratinjau nomor */
+.nomor-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  padding: var(--sp-3);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+.nomor-preview .nomor-value {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+  color: var(--accent-hover);
+  font-variant-numeric: tabular-nums;
+}
+.nomor-preview .nomor-hint { font-size: 12px; color: var(--muted); }
+
+/* Peringatan duplikat */
+.duplicate-warning {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 13px;
+}
+
+/* --------------------------------------------------------------- responsive */
+
+@media (max-width: 700px) {
+  .modal-panel { place-items: start stretch; padding: 0; }
+  .modal-panel > .modal-card { width: 100%; max-height: 100vh; border: 0; border-radius: 0; min-height: 100vh; }
+  #form-panel.panel { padding: 0; }
+  #form-panel.panel > form,
+  #form-panel.panel > .modal-card,
+  #form-panel.panel > .panel-body { width: 100%; max-height: 100vh; min-height: 100vh; border: 0; border-radius: 0; }
+  .admin-toolbar { flex-direction: column; }
+  .check-grid,
+  #access-options,
+  #disposition-options,
+  .golongan-options { grid-template-columns: minmax(0, 1fr); }
+}
