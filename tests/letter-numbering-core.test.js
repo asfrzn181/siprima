@@ -48,7 +48,10 @@ test('format SE tidak menyisakan token kode atau pemisah ganda', () => {
   assert.equal(stripKodeToken('{KODE}/{KODE}/X'), 'X');
   assert.equal(normalizeFormatGolongan('', 'SK'), defaultFormatGolongan('SK'));
   assert.equal(normalizeFormatGolongan('{KODE}/{URUT:3}/{UNIT}/{TAHUN}', 'SE'), '{URUT:3}/{UNIT}/{TAHUN}');
-  assert.equal(normalizeFormatGolongan('{KODE}/SE/{URUT:3}/{UNIT}/{TAHUN}', 'SE'), 'SE/{URUT:3}/{UNIT}/{TAHUN}');
+  assert.equal(
+    normalizeFormatGolongan('{KODE}/SE/{URUT:3}/{UNIT}/{TAHUN}', 'SE'),
+    'SE/{URUT:3}/{UNIT}/{TAHUN}'
+  );
 });
 
 test('scope key memisahkan urutan SK, SE, dan surat lainnya', () => {
@@ -60,11 +63,27 @@ test('scope key memisahkan urutan SK, SE, dan surat lainnya', () => {
 });
 
 test('nomor dirender sesuai golongan', () => {
-  const values = { KODE: '005', GOLONGAN: 'LAINNYA', UNIT: 'BKPSDMD', TAHUN: 2026, BULAN: '02', BULAN_ROMAWI: 'II', URUT: 12 };
+  const values = {
+    KODE: '005',
+    GOLONGAN: 'LAINNYA',
+    UNIT: 'BKPSDMD',
+    TAHUN: 2026,
+    BULAN: '02',
+    BULAN_ROMAWI: 'II',
+    URUT: 12
+  };
   assert.equal(renderNomor('{KODE}/{URUT:3}/{UNIT}/{TAHUN}', values), '005/012/BKPSDMD/2026');
-  assert.equal(renderNomor('{KODE}/SK/{URUT:3}/{UNIT}/{TAHUN}', { ...values, GOLONGAN: 'SK' }), '005/SK/012/BKPSDMD/2026');
-  assert.equal(renderNomor('SE/{URUT:3}/{UNIT}/{TAHUN}', { ...values, GOLONGAN: 'SE' }), 'SE/012/BKPSDMD/2026');
-  assert.equal(renderNomor('{KODE}/SE/{URUT:3}/{UNIT}/{TAHUN}', { ...values, GOLONGAN: 'SE' }), 'SE/012/BKPSDMD/2026');
+  assert.equal(
+    renderNomor('{KODE}/SK/{URUT:3}/{UNIT}/{TAHUN}', { ...values, GOLONGAN: 'SK' }),
+    '005/SK/012/BKPSDMD/2026'
+  );
+  assert.equal(
+    renderNomor('SE/{URUT:3}/{UNIT}/{TAHUN}', { ...values, GOLONGAN: 'SE' }),
+    'SE/012/BKPSDMD/2026'
+  );
+  assert.equal(
+    renderNomor('{KODE}/SE/{URUT:3}/{UNIT}/{TAHUN}', { ...values, GOLONGAN: 'SE' }),
+    'SE/012/BKPSDMD/2026'
+  );
   assert.equal(renderNomor('{URUT:4}/{GOLONGAN}/{TAHUN}', { ...values, URUT: 7 }), '0007/LAINNYA/2026');
 });
-
