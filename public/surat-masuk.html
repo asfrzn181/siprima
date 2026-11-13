@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SiPrima — Surat Masuk</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/overrides.css">
+  <link rel="stylesheet" href="assets/css/disposition.css">
+  <link rel="stylesheet" href="assets/css/autocomplete.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="page-container">
+    <section class="page-heading">
+      <div><p class="eyebrow">Agenda</p><h1>Surat masuk</h1><p class="muted">Cari dan kelola agenda surat yang masuk ke sekretariat.</p></div>
+      <button id="new-button" class="button primary" type="button" hidden>+ Surat masuk</button>
+    </section>
+
+    <section class="panel">
+      <form id="search-form" class="search-bar" role="search">
+        <label class="sr-only" for="global-search">Cari surat masuk</label>
+        <input id="global-search" name="search" type="search" placeholder="Cari nomor surat, perihal, atau asal" autocomplete="off">
+        <button id="search-button" class="button primary" type="submit">Cari</button>
+        <button id="clear-search" class="button secondary" type="button" hidden>Hapus</button>
+      </form>
+
+      <details id="filter-panel" class="filter-panel">
+        <summary>Filter <span id="filter-count" class="filter-count"></span></summary>
+        <form id="filter-form" class="filter-grid">
+          <label>Sifat<select name="sifat"><option value="semua">Semua</option><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
+          <label>Status<select name="status"><option value="semua">Semua</option><option value="Baru">Baru</option><option value="Didisposisikan">Didisposisikan</option><option value="Selesai">Selesai</option></select></label>
+          <label>Terima mulai<input name="tglMulai" type="date"></label>
+          <label>Terima sampai<input name="tglSelesai" type="date"></label>
+          <div class="filter-actions"><button class="button primary" type="submit">Terapkan</button><button id="reset-filter" class="button secondary" type="button">Reset</button></div>
+        </form>
+      </details>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Daftar surat</h2>
+          <p id="list-note">Memuat…</p>
+        </div>
+        <div class="toolbar">
+          <button id="export-button" class="button secondary" type="button">Ekspor Excel</button>
+          <button id="refresh-button" class="button secondary" type="button">Muat ulang</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="card-table">
+          <thead>
+            <tr>
+              <th scope="col">Agenda</th>
+              <th scope="col">Tanggal</th>
+              <th scope="col">Nomor surat</th>
+              <th scope="col">Asal</th>
+              <th scope="col">Perihal</th>
+              <th scope="col">Sifat</th>
+              <th scope="col">Status</th>
+              <th scope="col"><span class="sr-only">Aksi</span></th>
+            </tr>
+          </thead>
+          <tbody id="surat-body"></tbody>
+        </table>
+      </div>
+      <div class="table-pagination">
+        <button id="previous-button" class="button secondary" type="button" disabled>Sebelumnya</button>
+        <span id="page-label" class="muted">Halaman 1</span>
+        <button id="next-button" class="button secondary" type="button" disabled>Berikutnya</button>
+      </div>
+    </section>
+
+    <section id="form-panel" class="modal-panel" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="form-title">
+        <div class="panel-heading">
+          <div>
+            <h2 id="form-title">Tambah surat masuk</h2>
+            <p id="form-note"></p>
+          </div>
+          <button id="close-form" class="button secondary" type="button">Tutup</button>
+        </div>
+        <form id="surat-form" class="form-grid" novalidate>
+          <input name="id" type="hidden">
+          <label>Tanggal terima<input name="tglTerima" type="date" required></label>
+          <label>Tanggal surat<input name="tglSurat" type="date" required></label>
+          <label>Nomor surat<input name="noSurat" maxlength="120" placeholder="Kode atau nama klasifikasi" required><span class="field-hint">Ketik kode klasifikasi untuk memilih dari master.</span></label>
+          <label>Asal<input name="asal" maxlength="160" required></label>
+          <label class="wide">Perihal<input name="hal" maxlength="200" required></label>
+          <label class="wide">Isi ringkas<textarea name="isiRingkas" rows="4" maxlength="2000" required></textarea></label>
+          <label>Sifat<select name="sifat"><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
+          <fieldset id="access-fieldset" class="wide" hidden>
+            <legend>Bidang yang boleh melihat surat rahasia</legend>
+            <div id="access-options" class="check-grid"></div>
+            <small class="field-hint">Pilih minimal satu bidang untuk surat rahasia.</small>
+          </fieldset>
+          <fieldset id="disposition-fieldset" class="wide" hidden>
+            <legend>Disposisi bidang</legend>
+            <div id="disposition-options" class="check-grid"></div>
+            <label>Diputuskan oleh
+              <select name="diputuskanOleh"><option>Kadis</option><option>Sekretaris</option><option>Lainnya</option></select>
+            </label>
+            <label>Catatan disposisi<textarea name="catatanDisposisi" rows="2" maxlength="1000"></textarea></label>
+          </fieldset>
+          <label id="file-label" class="wide">Scan surat (PDF/JPG/PNG, maksimal 5 MB)
+            <input name="scan" type="file" accept="application/pdf,image/jpeg,image/png" capture="environment">
+          </label>
+          <div class="form-actions wide">
+            <button id="save-button" class="button primary" type="submit">Simpan</button>
+            <button id="disposition-button" class="button secondary" type="submit" data-action="disposition" hidden>Simpan dan disposisikan</button>
+            <button id="download-button" class="button secondary" type="button" hidden>Unduh scan</button>
+            <a id="file-link" class="button secondary" target="_blank" rel="noopener" hidden>Buka link Drive</a>
+          </div>
+          <p id="form-error" class="form-error wide" role="alert" hidden></p>
+        </form>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="assets/js/pages/suratMasuk.js"></script>
+</body>
+</html>

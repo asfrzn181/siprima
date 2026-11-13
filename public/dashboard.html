@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SiPrima — Dashboard</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/overrides.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="page-container">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">Ringkasan</p>
+        <h1>Dashboard</h1>
+        <p id="welcome" class="muted"></p>
+      </div>
+      <div class="toolbar">
+        <button id="refresh" class="button secondary" type="button">Muat ulang</button>
+      </div>
+    </section>
+
+    <section class="stat-grid" aria-label="Ringkasan jumlah surat">
+      <article class="stat-card">
+        <span class="stat-label">Surat masuk hari ini</span>
+        <strong id="masuk-hari-ini">—</strong>
+        <small id="masuk-bulan">Bulan ini: —</small>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Surat keluar hari ini</span>
+        <strong id="keluar-hari-ini">—</strong>
+        <small id="keluar-bulan">Bulan ini: —</small>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Belum diproses</span>
+        <strong id="belum-diproses">—</strong>
+        <small>Surat masuk berstatus Baru</small>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <h2>10 surat masuk terbaru</h2>
+          <p>Diurutkan menurut waktu pencatatan.</p>
+        </div>
+        <a class="button secondary small" href="./surat-masuk.html">Buka daftar</a>
+      </div>
+      <div class="table-wrap">
+        <table class="card-table">
+          <thead>
+            <tr>
+              <th scope="col">Nomor surat</th>
+              <th scope="col">Tanggal</th>
+              <th scope="col">Asal</th>
+              <th scope="col">Perihal</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody id="masuk-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <h2>10 surat keluar terbaru</h2>
+          <p>Nomor terbit otomatis saat surat disimpan.</p>
+        </div>
+        <a class="button secondary small" href="./surat-keluar.html">Buka daftar</a>
+      </div>
+      <div class="table-wrap">
+        <table class="card-table">
+          <thead>
+            <tr>
+              <th scope="col">Nomor surat</th>
+              <th scope="col">Tanggal</th>
+              <th scope="col">Tujuan</th>
+              <th scope="col">Perihal</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody id="keluar-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="assets/js/pages/dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SiPrima — Admin</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/overrides.css">
+  <link rel="stylesheet" href="assets/css/forms.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="page-container">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">Konfigurasi</p>
+        <h1>Administrasi</h1>
+        <p class="muted">Kelola akun, master, pengaturan, dan jejak aktivitas.</p>
+      </div>
+    </section>
+
+    <nav class="tabs" aria-label="Menu administrasi">
+      <button class="tab-button active" data-tab="users" type="button">Pengguna</button>
+      <button class="tab-button" data-tab="bidang" type="button">Master Bidang</button>
+      <button class="tab-button" data-tab="nomor" type="button">Master Nomor Surat</button>
+      <button class="tab-button" data-tab="settings" type="button">Pengaturan</button>
+      <button class="tab-button" data-tab="audit" type="button">Audit Log</button>
+      <button class="tab-button" data-tab="cleaner" type="button">Pembersih Nomor Ganda</button>
+    </nav>
+
+    <section id="tab-users" class="tab-panel">
+      <div class="panel">
+        <div class="admin-toolbar">
+          <div><h2>Pengguna</h2><p class="muted">Akun internal yang dapat masuk ke aplikasi.</p></div>
+          <button id="new-user" class="button accent" type="button">+ Tambah pengguna</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nama</th><th>Email</th><th>Peran</th><th>Bidang</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="users-body"></tbody>
+          </table>
+        </div>
+        <div id="users-pager" class="table-pagination"></div>
+      </div>
+    </section>
+
+    <section id="tab-bidang" class="tab-panel" hidden>
+      <div class="panel">
+        <div class="admin-toolbar">
+          <div><h2>Master bidang</h2><p class="muted">Kode bidang digunakan untuk akses rahasia dan disposisi.</p></div>
+          <button id="new-bidang" class="button accent" type="button">+ Tambah bidang</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Kode</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="bidang-body"></tbody>
+          </table>
+        </div>
+        <div id="bidang-pager" class="table-pagination"></div>
+      </div>
+    </section>
+
+    <section id="tab-nomor" class="tab-panel" hidden>
+      <div class="panel">
+        <div class="admin-toolbar">
+          <div>
+            <h2>Master nomor surat</h2>
+            <p class="muted">Format mendukung <code>{KODE}</code>, <code>{URUT:n}</code>, <code>{UNIT}</code>, <code>{TAHUN}</code>, <code>{BULAN}</code>, <code>{BULAN_ROMAWI}</code>, <code>{BIDANG}</code>.</p>
+          </div>
+          <div class="filter-actions">
+            <button id="new-nomor" class="button accent" type="button">+ Tambah jenis</button>
+            <label class="button secondary" for="csv-import">Impor CSV<input id="csv-import" type="file" accept=".csv,text/csv" hidden></label>
+          </div>
+        </div>
+        <p class="csv-help">CSV klasifikasi dapat memakai header <code>KODE,NAMA KLASIFIKASI</code>. Format, reset tahunan, dan status memakai nilai default.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Golongan</th><th>Kode</th><th>Nama klasifikasi</th><th>Format</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="nomor-body"></tbody>
+          </table>
+        </div>
+        <div id="nomor-pager" class="table-pagination"></div>
+      </div>
+    </section>
+
+    <section id="tab-settings" class="tab-panel" hidden>
+      <div class="panel">
+        <h2>Pengaturan umum</h2>
+        <form id="settings-form" class="form-grid">
+          <label>Nama dinas<input name="namaDinas" maxlength="180"></label>
+          <label>URL Web App Apps Script<input name="appsScriptUrl" type="url" maxlength="500"></label>
+          <label>Lingkup counter nomor
+            <select name="numberingScope">
+              <option value="GLOBAL_PER_TAHUN">Satu urutan per tahun</option>
+              <option value="PER_KLASIFIKASI">Urutan per klasifikasi per tahun</option>
+            </select>
+          </label>
+          <label>Masa reservasi (menit)<input name="reservationMinutes" type="number" min="1" max="1440" value="15"></label>
+          <div class="form-actions"><button class="button primary" type="submit">Simpan pengaturan</button></div>
+        </form>
+      </div>
+    </section>
+
+    <section id="tab-audit" class="tab-panel" hidden>
+      <div class="panel">
+        <div class="admin-toolbar">
+          <div><h2>Audit log</h2><p class="muted">Aktivitas perubahan disposisi, tindak lanjut, dan surat keluar.</p></div>
+          <button id="refresh-audit" class="button secondary" type="button">Muat ulang</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Waktu</th><th>Pengguna</th><th>Aksi</th><th>Koleksi</th><th>Doc ID</th></tr></thead>
+            <tbody id="audit-body"></tbody>
+          </table>
+        </div>
+        <div id="audit-pager" class="table-pagination"></div>
+      </div>
+    </section>
+
+    <section id="tab-cleaner" class="tab-panel" hidden>
+      <div class="panel">
+        <div class="admin-toolbar">
+          <div><h2>Pembersih Nomor Ganda</h2><p class="muted">Periksa duplikasi dan inkonsistensi nomor surat keluar per tahun.</p></div>
+        </div>
+        <div class="form-grid" style="max-width:420px;margin-bottom:1.25rem">
+          <label>Tahun pemeriksaan<input id="cleaner-tahun" type="number" min="2020" max="2099"></label>
+          <label>Scope (opsional)<input id="cleaner-scope" type="text" placeholder="Kosongkan untuk semua scope"></label>
+          <div class="form-actions">
+            <button id="cleaner-check" class="button primary" type="button">Periksa Duplikasi</button>
+            <button id="cleaner-reset" class="button secondary" type="button">Reset</button>
+          </div>
+        </div>
+        <div id="cleaner-summary" hidden style="margin-bottom:1rem"></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Jenis Masalah</th><th>No. Urut</th><th>Detail</th><th>Doc ID</th></tr></thead>
+            <tbody id="cleaner-body">
+              <tr><td colspan="4" class="muted" style="text-align:center">Belum diperiksa. Pilih tahun dan klik Periksa Duplikasi.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <section id="user-modal" class="modal-panel" hidden>
+    <div class="modal-card">
+      <div class="panel-heading">
+        <div><h2 id="user-modal-title">Tambah pengguna</h2><p class="muted">Profil dibuat setelah akun Authentication berhasil dibuat.</p></div>
+        <button class="button secondary modal-close" data-close="user-modal" type="button">Tutup</button>
+      </div>
+      <form id="user-form" class="form-grid">
+        <input name="id" type="hidden">
+        <label>Email<input name="email" type="email" maxlength="200" required></label>
+        <label>Kata sandi sementara
+          <span class="password-field">
+            <input name="password" type="password" minlength="6" maxlength="200">
+            <button id="toggle-password" class="button secondary small" type="button">Tampilkan</button>
+          </span>
+        </label>
+        <label>Nama<input name="nama" required maxlength="120"></label>
+        <label>Peran<select name="role"><option value="bidang">Bidang</option><option value="pimpinan">Pimpinan</option><option value="admin">Admin</option></select></label>
+        <label>Kode bidang <span class="muted">(dari master bidang)</span><select name="bidang"><option value="">Pilih bidang</option></select></label>
+        <label>Status aktif<input name="aktif" type="checkbox" checked></label>
+        <div class="form-actions wide"><button class="button primary" type="submit">Simpan pengguna</button></div>
+        <p id="user-error" class="form-error wide" hidden></p>
+      </form>
+    </div>
+  </section>
+
+  <section id="bidang-modal" class="modal-panel" hidden>
+    <div class="modal-card">
+      <div class="panel-heading">
+        <h2>Master bidang</h2>
+        <button class="button secondary modal-close" data-close="bidang-modal" type="button">Tutup</button>
+      </div>
+      <form id="bidang-form" class="form-grid">
+        <input name="id" type="hidden">
+        <label>Kode<input name="kode" maxlength="40" required></label>
+        <label>Nama bidang<input name="nama" maxlength="120" required></label>
+        <label>Status aktif<input name="aktif" type="checkbox" checked></label>
+        <div class="form-actions wide"><button class="button primary" type="submit">Simpan bidang</button></div>
+        <p id="bidang-error" class="form-error wide" hidden></p>
+      </form>
+    </div>
+  </section>
+
+  <section id="nomor-modal" class="modal-panel" hidden>
+    <div class="modal-card">
+      <div class="panel-heading">
+        <div><h2>Master nomor surat</h2><p class="muted">SK, SE, dan surat lainnya memakai urutan nomor terpisah.</p></div>
+        <button class="button secondary modal-close" data-close="nomor-modal" type="button">Tutup</button>
+      </div>
+      <form id="nomor-form" class="form-grid">
+        <input name="id" type="hidden">
+        <label>Nama jenis<input name="nama" required maxlength="120"></label>
+        <label>Golongan
+          <select name="golongan">
+            <option value="SK">SK - Surat Keputusan</option>
+            <option value="SE">SE - Surat Edaran</option>
+            <option value="LAINNYA" selected>Surat lainnya</option>
+          </select>
+        </label>
+        <label>Format
+          <span class="muted">Variabel: {KODE} {URUT:3} {UNIT} {TAHUN} {BULAN} {BULAN_ROMAWI}</span>
+          <input name="format" required maxlength="180" value="{KODE}/{URUT:3}/{UNIT}/{TAHUN}">
+        </label>
+        <label>Kode klasifikasi<input name="kode" required maxlength="40" value="800"></label>
+        <label>Reset tahunan<input name="resetTahunan" type="checkbox" checked></label>
+        <label>Urutan per bidang<input name="urutanPerBidang" type="checkbox"></label>
+        <label>Status aktif<input name="aktif" type="checkbox" checked></label>
+        <p id="nomor-error" class="form-error wide" hidden></p>
+        <div class="form-actions wide"><button class="button primary" type="submit">Simpan jenis nomor</button></div>
+      </form>
+    </div>
+  </section>
+
+  <script type="module" src="assets/js/pages/admin.js"></script>
+</body>
+</html>

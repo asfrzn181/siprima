@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SiPrima — Surat Keluar</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/overrides.css">
+  <link rel="stylesheet" href="assets/css/autocomplete.css">
+  <style>
+    .filter-grid{display:grid;grid-template-columns:2fr repeat(2,1fr) auto;gap:1rem;align-items:end}
+    .filter-grid label{display:grid;gap:.35rem}
+    .filter-actions{display:flex;gap:.5rem}
+    .wide{grid-column:1/-1}
+    .check-grid{display:flex;flex-wrap:wrap;gap:.65rem 1rem}
+    .check-option{display:flex;gap:.45rem;align-items:center;font-weight:500}
+    .check-option input{width:auto}
+    .badge.danger{color:#9b1c1c;background:#fee4e2}
+    @media(max-width:700px){.filter-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="page-container">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">Agenda</p>
+        <h1>Surat keluar</h1>
+        <p class="muted">Nomor terbit otomatis saat surat disimpan.</p>
+      </div>
+      <button id="new-button" class="button primary" type="button">+ Surat keluar</button>
+    </section>
+
+    <section class="panel">
+      <form id="filter-form" class="filter-grid">
+        <label>Pencarian<input name="search" type="search" placeholder="Awalan nomor surat, hal, atau tujuan"></label>
+        <label>Sifat<select name="sifat"><option value="semua">Semua</option><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
+        <label>Status<select name="status"><option value="semua">Semua</option><option value="Aktif">Aktif</option><option value="Dibatalkan">Dibatalkan</option></select></label>
+        <label>Golongan<select name="golongan"><option value="semua">Semua</option><option value="SK">SK</option><option value="SE">SE</option><option value="LAINNYA">Lainnya</option></select></label>
+        <div class="filter-actions"><button class="button primary" type="submit">Terapkan</button><button id="reset-filter" class="button secondary" type="button">Reset</button></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Daftar surat</h2>
+          <p id="list-note" class="muted"></p>
+        </div>
+        <div class="toolbar">
+          <button id="export" class="button secondary" type="button">Ekspor Excel</button>
+          <button id="refresh" class="button secondary" type="button">Muat ulang</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nomor</th><th>Tanggal</th><th>Tujuan</th><th>Hal</th><th>Pembuat</th><th>Sifat</th><th>Status</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="list-body"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button id="prev" class="button secondary" type="button" disabled>Sebelumnya</button>
+        <span id="page-label">Halaman 1</span>
+        <button id="next" class="button secondary" type="button" disabled>Berikutnya</button>
+      </div>
+    </section>
+
+    <section id="form-panel" class="panel" hidden>
+      <div class="panel-heading">
+        <div>
+          <h2 id="form-title">Tambah surat keluar</h2>
+          <p id="form-note" class="muted"></p>
+        </div>
+        <button id="close" class="button secondary" type="button">Tutup</button>
+      </div>
+      <form id="form" class="form-grid">
+        <input name="id" type="hidden">
+        <input name="noSurat" type="hidden">
+        <input name="reservationId" type="hidden">
+        <input name="idempotencyKey" type="hidden">
+        <label>Jenis nomor
+          <input name="nomorCari" placeholder="Ketik kode, contoh 800" autocomplete="off" required>
+          <select name="jenisId" hidden></select>
+        </label>
+        <label>Tanggal surat<input name="tglSurat" type="date" required></label>
+        <label>Bidang pembuat<select name="bidangPembuat" required></select></label>
+        <label>Tujuan<input name="tujuan" maxlength="200" required></label>
+        <label class="wide">Hal<input name="hal" maxlength="200" required></label>
+        <label class="wide">Nomor surat
+          <input name="nomorGenerated" readonly placeholder="Klik Generate Nomor">
+          <span class="form-actions"><button id="generate-number" class="button secondary" type="button">Generate Nomor</button></span>
+        </label>
+        <label class="wide">Isi ringkas<textarea name="isiRingkas" rows="4" maxlength="2000" required></textarea></label>
+        <label>Sifat<select name="sifat"><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
+        <label class="wide">Metode tanda tangan
+          <span class="check-grid">
+            <label class="check-option"><input type="radio" name="tandaTangan" value="TTE" checked><span>TTE</span></label>
+            <label class="check-option"><input type="radio" name="tandaTangan" value="BASAH"><span>BASAH</span></label>
+          </span>
+        </label>
+        <fieldset id="access" class="wide" hidden>
+          <legend>Bidang yang boleh melihat surat rahasia</legend>
+          <div id="access-options" class="check-grid"></div>
+          <small class="muted">Bidang pembuat selalu ditambahkan otomatis.</small>
+        </fieldset>
+        <label class="wide">Link dokumen scan
+          <small class="muted">Tempel URL Google Drive atau dokumen lain yang dapat diakses pengguna.</small>
+          <input name="scanUrl" type="url" maxlength="1000" placeholder="https://drive.google.com/...">
+        </label>
+        <label id="file-label" class="wide">Scan final (PDF/JPG/PNG, maksimal 5 MB)
+          <input name="scan" type="file" accept="application/pdf,image/jpeg,image/png">
+        </label>
+        <label class="wide delivery-state">Status pengiriman
+          <span class="check-option delivery-check"><input name="dikirimKeLuar" type="checkbox"><span>Surat sudah dikirim ke pihak luar</span></span>
+        </label>
+        <div class="form-actions wide">
+          <button id="save" class="button primary" type="submit">Simpan dan terbitkan nomor</button>
+          <button id="correct" class="button secondary" type="button" hidden>Koreksi nomor</button>
+          <button id="reuse" class="button secondary" type="button" hidden>Gunakan kembali nomor</button>
+          <a id="file-link" class="button secondary" target="_blank" rel="noopener" hidden>Buka link Drive</a>
+          <button id="download" class="button secondary" type="button" hidden>Unduh scan</button>
+          <button id="cancel" class="button secondary" type="button" hidden>Batalkan surat</button>
+        </div>
+        <p id="error" class="form-error wide" hidden></p>
+      </form>
+    </section>
+  </main>
+  <script type="module" src="assets/js/pages/suratKeluar.js"></script>
+</body>
+</html>

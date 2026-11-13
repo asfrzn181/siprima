@@ -1,0 +1,314 @@
+﻿/* ==========================================================================
+   SIPRIMA - komponen tambahan
+   Tidak ada gradien, bayangan tebal, atau warna kedua. Semua memakai token
+   dari app.css.
+   ========================================================================== */
+
+/* ------------------------------------------------------------------- modal */
+
+.modal-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-4);
+  background: #1a202880;
+  overflow: auto;
+}
+.modal-panel[hidden] { display: none; }
+
+.modal-panel > .modal-card {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: var(--sp-5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 32px #1a20281f;
+}
+
+.modal-close { margin-left: auto; }
+
+#form-panel.panel {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  width: auto;
+  margin: 0;
+  padding: var(--sp-4);
+  border: 0;
+  border-radius: 0;
+  background: #1a202880;
+  overflow: auto;
+}
+
+#form-panel.panel[hidden] { display: none; }
+
+#form-panel.panel > form,
+#form-panel.panel > .modal-card,
+#form-panel.panel > .panel-body {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: var(--sp-5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+/* -------------------------------------------------------------------- tabs */
+
+.tabs {
+  display: flex;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.tab-button {
+  min-height: 36px;
+  padding: 6px var(--sp-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.tab-button:hover { background: var(--surface-alt); color: var(--ink); }
+
+.tab-button.active {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent-hover);
+}
+
+.tab-panel[hidden] { display: none; }
+
+/* --------------------------------------------------------------- tabel data */
+
+.admin-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+  flex-wrap: wrap;
+}
+.admin-toolbar h2 { margin: 0; }
+.admin-toolbar p { margin: var(--sp-1) 0 0; font-size: 13px; color: var(--muted); max-width: 62ch; }
+
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.csv-help {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--accent-line);
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------------ pilihan */
+
+.check-grid,
+#access-options,
+#disposition-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 var(--sp-3);
+}
+
+.check-option,
+#access-options .check-option,
+#disposition-options .check-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: 10px var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.check-option:hover,
+#access-options .check-option:hover,
+#disposition-options .check-option:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.check-option input { flex: 0 0 auto; margin-top: 3px; }
+
+.check-option:has(input:checked),
+#access-options .check-option:has(input:checked),
+#disposition-options .check-option:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.check-option:has(input:checked) span,
+#access-options .check-option:has(input:checked) span,
+#disposition-options .check-option:has(input:checked) span {
+  color: var(--accent-hover);
+  font-weight: 650;
+}
+
+fieldset {
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+#access-fieldset,
+#disposition-fieldset {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+#access-fieldset legend,
+#disposition-fieldset legend {
+  padding: 0 var(--sp-1);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+#access small,
+#access-fieldset small {
+  display: block;
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+#disposition-fieldset > label {
+  display: grid;
+  gap: var(--sp-1);
+  margin-top: var(--sp-3);
+  font-weight: 600;
+}
+
+#disposition-fieldset textarea { min-height: 92px; resize: vertical; }
+
+/* ------------------------------------------------------------- surat keluar */
+
+.scan-url-field small { font-weight: 400; }
+.delivery-state { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.delivery-check { display: inline-flex; width: max-content; max-width: 100%; }
+
+/* Jenis penomoran (SK / SE / Surat lainnya) */
+.golongan-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+}
+
+.golongan-option {
+  display: grid;
+  gap: 2px;
+  padding: 10px var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.golongan-option:hover { border-color: var(--accent-line); background: var(--accent-soft); }
+.golongan-option:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.golongan-option:has(input:checked) .golongan-name { color: var(--accent-hover); }
+
+.golongan-option input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.golongan-name { display: block; font-size: 13.5px; font-weight: 650; color: var(--ink); }
+.golongan-desc { display: block; font-size: 12px; color: var(--muted); }
+
+.golongan-option:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Pratinjau nomor */
+.nomor-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  padding: var(--sp-3);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+.nomor-preview .nomor-value {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+  color: var(--accent-hover);
+  font-variant-numeric: tabular-nums;
+}
+.nomor-preview .nomor-hint { font-size: 12px; color: var(--muted); }
+
+/* Peringatan duplikat */
+.duplicate-warning {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 13px;
+}
+
+/* --------------------------------------------------------------- responsive */
+
+@media (max-width: 700px) {
+  .modal-panel { place-items: start stretch; padding: 0; }
+  .modal-panel > .modal-card { width: 100%; max-height: 100vh; border: 0; border-radius: 0; min-height: 100vh; }
+  #form-panel.panel { padding: 0; }
+  #form-panel.panel > form,
+  #form-panel.panel > .modal-card,
+  #form-panel.panel > .panel-body { width: 100%; max-height: 100vh; min-height: 100vh; border: 0; border-radius: 0; }
+  .admin-toolbar { flex-direction: column; }
+  .check-grid,
+  #access-options,
+  #disposition-options,
+  .golongan-options { grid-template-columns: minmax(0, 1fr); }
+}

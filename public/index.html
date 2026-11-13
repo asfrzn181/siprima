@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SiPrima — Masuk</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/overrides.css">
+</head>
+<body class="auth-page">
+  <main class="auth-card" aria-labelledby="judul-login">
+    <div class="brand-mark">S</div>
+    <p class="eyebrow">Sekretariat Dinas</p>
+    <h1 id="judul-login">SiPrima</h1>
+    <p class="muted">Aplikasi agenda surat masuk dan surat keluar.</p>
+    <form id="login-form" class="stack" novalidate>
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="username" required>
+      <label for="password">Kata sandi</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button class="button primary" type="submit">Masuk</button>
+      <p id="login-error" class="form-error" role="alert" hidden></p>
+    </form>
+    <p class="fine-print">Akses hanya untuk akun internal yang terdaftar.</p>
+  </main>
+  <script type="module" src="assets/js/pages/login.js"></script>
+</body>
+</html>
