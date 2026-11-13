@@ -1,18 +1,20 @@
 # SiPrima — Agenda Surat Sekretariat Dinas
 
-Aplikasi internal agenda surat masuk dan surat keluar. Frontend statis (HTML/CSS/ES Modules) disajikan oleh Express.js; seluruh akses data melewati API `/api` dengan **Firebase Admin SDK**. Browser tidak pernah memuat SDK, konfigurasi, atau kredensial Firebase.
+Aplikasi internal agenda surat masuk dan surat keluar. Frontend statis (HTML/CSS/ES Modules) disajikan oleh Express.js; seluruh akses data melewati API `/api` dengan **MySQL 8**. Browser tidak pernah memuat SDK, konfigurasi, atau kredensial database.
 
 ## Arsitektur
 
 ```
-Browser (public/) → Express /api → route → controller → service → repository → Firebase
+Browser (public/) → Express /api → route → controller → service → repository → MySQL 8
+Google Apps Script → /api/cron → cron service → job registry → MySQL / storage
 ```
 
-- Autentikasi: Firebase Authentication (Email/Password). Backend memverifikasi login lewat Identity Toolkit, lalu menerbitkan **session cookie HttpOnly**.
-- Otorisasi: RBAC `admin`, `pimpinan`, `bidang`; ditegakkan di route dan service.
-- Data: struktur koleksi Firestore lama dipertahankan.
+- Autentikasi: sesi opaque (cookie HttpOnly) dengan hash SHA-256 di tabel `sessions`; kata sandi bcrypt.
+- Otorisasi: RBAC `admin`, `pimpinan`, `bidang` + izin granular (`permissions`), ditegakkan di route dan service.
+- Data: skema relasional MySQL (lihat `db/ERD.md` dan `docs/mapping-firestore-mysql.md`).
 - Unggahan: multer menyimpan scan di folder privat di luar `public_html`; unduhan lewat endpoint ber-otorisasi.
-- Keamanan: helmet + CSP, rate limit (login lebih ketat), validasi zod, CSRF double-submit, sanitasi output DOM, audit log.
+- Keamanan: helmet + CSP, CORS opsional, rate limit (login & cron lebih ketat), validasi zod, CSRF double-submit, sanitasi output DOM, audit log.
+- Cron: API `/api/cron` untuk Google Apps Script dengan kunci API ber-hash dan riwayat run.
 
 ## Struktur folder
 
@@ -25,65 +27,127 @@ Browser (public/) → Express /api → route → controller → service → repo
 │  └─ assets/{css,js,vendor}
 ├─ src/
 │  ├─ app.js  server.js
-│  ├─ config/                 # env, firebase (singleton lazy), logger
+│  ├─ config/                 # env, db (pool + transaksi), logger
 │  ├─ constants/
 │  ├─ routes/ controllers/ services/ repositories/
+│  ├─ jobs/                   # registry job cron
 │  ├─ middlewares/ validators/ utils/
-├─ scripts/                   # seed-admin, audit-data
+├─ db/
+│  ├─ migrations/             # 001_init.sql, 002_cron.sql
+│  └─ ERD.md
+├─ docs/                      # audit Firebase & pemetaan ke MySQL
+├─ scripts/                   # migrate, seed, audit-data
 ├─ tests/                     # unit, HTTP, statis, integrasi (opt-in)
-├─ firestore.rules storage.rules
-└─ firestore.indexes.json
+└─ firestore.rules storage.rules   # arsip aturan lama (deny-all)
 ```
 
 ## Prasyarat
 
 - Node.js **20+** (cPanel: pilih versi Node 20/22).
-- Project Firebase dengan Authentication Email/Password dan Cloud Firestore aktif.
-- Service account Firebase (Firebase Console → Project settings → Service accounts → Generate new private key).
+- MySQL **8.0+** (InnoDB, `utf8mb4`).
+- Tidak ada lagi dependency Firebase.
 
 ## Menjalankan lokal
 
 ```bash
 cp .env.example .env      # Windows: copy .env.example .env
-# isi kredensial pada .env
+# isi kredensial MySQL pada .env
 npm install
+npm run migrate           # buat tabel
+npm run seed              # peran, izin, admin, master, cron
 npm run dev               # http://localhost:3000
 ```
 
-Buat admin pertama:
+Seeder membaca admin dari environment (tidak hardcoded):
 
 ```bash
-ADMIN_EMAIL=admin@dinas.go.id ADMIN_PASSWORD='ubah-saya' ADMIN_NAMA='Admin SiPrima' node scripts/seed-admin.js
+ADMIN_EMAIL=admin@dinas.go.id ADMIN_PASSWORD='ubah-saya-min-8' ADMIN_NAMA='Admin SiPrima' npm run seed
 ```
 
 Perintah lain:
 
-| Perintah                        | Kegunaan                           |
-| ------------------------------- | ---------------------------------- |
-| `npm start`                     | jalankan server produksi           |
-| `npm run dev`                   | server dengan watch                |
-| `npm run lint`                  | ESLint seluruh kode                |
-| `npm run format`                | Prettier                           |
-| `npm test`                      | unit + HTTP + pemeriksaan statis   |
-| `RUN_FIREBASE_TESTS=1 npm test` | tambah uji integrasi Firebase asli |
-| `node scripts/audit-data.js`    | laporan data read-only             |
+| Perintah                        | Kegunaan                              |
+| ------------------------------- | ------------------------------------- |
+| `npm start`                     | jalankan server produksi              |
+| `npm run dev`                   | server dengan watch                   |
+| `npm run migrate`               | jalankan migrasi `up`                 |
+| `npm run migrate:down`          | rollback migrasi terakhir             |
+| `npm run seed`                  | seed idempoten                        |
+| `npm run lint`                  | ESLint seluruh kode                   |
+| `npm run format`                | Prettier                              |
+| `npm test`                      | unit + HTTP + pemeriksaan statis      |
+| `RUN_MYSQL_TESTS=1 npm test`    | tambah uji integrasi MySQL asli       |
+| `node scripts/audit-data.js`    | laporan data read-only                |
 
 ## Konfigurasi environment
 
-Semua konfigurasi hanya dibaca di `src/config/env.js`. Variabel wajib:
+Semua konfigurasi runtime dibaca di `src/config/env.js`; koneksi database juga membaca `DB_*` di `src/config/db.js`. Variabel utama:
 
-| Variabel                                                    | Keterangan                                                  |
-| ----------------------------------------------------------- | ----------------------------------------------------------- |
-| `FIREBASE_PROJECT_ID`                                       | project ID Firebase                                         |
-| `FIREBASE_CLIENT_EMAIL`                                     | email service account                                       |
-| `FIREBASE_PRIVATE_KEY` **atau** `FIREBASE_PRIVATE_KEY_PATH` | private key (pakai `\n`) atau path file di luar public_html |
-| `FIREBASE_WEB_API_KEY`                                      | Web API key untuk verifikasi email/password                 |
-| `NODE_ENV`                                                  | `production` di server                                      |
-| `APP_BASE_URL`                                              | URL publik aplikasi                                         |
-| `UPLOAD_DIR`                                                | folder scan privat, **di luar public_html**                 |
-| `LOG_DIR`                                                   | folder log error                                            |
+| Variabel                | Keterangan                                              |
+| ----------------------- | ------------------------------------------------------- |
+| `DB_HOST`, `DB_PORT`    | alamat MySQL (default `127.0.0.1:3306`)                 |
+| `DB_USER`, `DB_PASSWORD`| kredensial MySQL                                        |
+| `DB_NAME`               | nama database (default `siprima`)                       |
+| `DB_SSL`                | `true` bila server MySQL mewajibkan TLS                 |
+| `NODE_ENV`              | `production` di server                                  |
+| `APP_BASE_URL`          | URL publik aplikasi                                     |
+| `SESSION_MAX_AGE_HOURS` | masa berlaku sesi (default 8 jam)                       |
+| `BCRYPT_ROUNDS`         | biaya bcrypt (default 12)                               |
+| `CORS_ORIGINS`          | origin dipisah koma; kosong = same-origin saja          |
+| `CRON_API_KEY_HEADER`   | nama header kunci cron (default `x-cron-key`)           |
+| `UPLOAD_DIR`            | folder scan privat, **di luar public_html**             |
+| `BACKUP_DIR`            | folder snapshot job `export_snapshot`                   |
+| `LOG_DIR`               | folder log error                                        |
 
-Lihat `.env.example` untuk daftar lengkap (sesi, rate limit, trust proxy).
+Lihat `.env.example` untuk daftar lengkap (rate limit, trust proxy, reset password, cron).
+
+## Migrasi & seed
+
+```bash
+npm run migrate            # menerapkan semua migrasi yang belum jalan
+npm run migrate:down       # rollback migrasi terakhir
+npm run seed               # idempoten; aman dijalankan berulang
+```
+
+Seeder membuat:
+
+- peran `admin`, `pimpinan`, `bidang` dan izin granular;
+- admin awal dari `ADMIN_EMAIL` / `ADMIN_PASSWORD` (minimal 8 karakter);
+- master bidang awal (`SEED_BIDANG_JSON` atau `SEK`);
+- master nomor awal (SK, SE, LAINNYA);
+- pengaturan default;
+- job cron dan (opsional) kunci API awal dari `CRON_SEED_KEY`.
+
+## API cron (Google Apps Script)
+
+Semua endpoint di bawah `/api/cron`. Kunci dikirim lewat header `x-cron-key` (dapat diubah via `CRON_API_KEY_HEADER`). Kunci disimpan sebagai SHA-256 di `cron_api_keys`.
+
+| Metode | Endpoint                  | Keterangan                                              |
+| ------ | ------------------------- | ------------------------------------------------------- |
+| GET    | `/api/cron/health`        | publik, cek status API                                  |
+| GET    | `/api/cron/jobs`          | daftar job + status aktif                               |
+| POST   | `/api/cron/run/:job_name` | mulai job secara async, balas `202 { run_id }`          |
+| GET    | `/api/cron/runs/:run_id`  | status & hasil satu run                                 |
+| GET    | `/api/cron/runs`          | riwayat; filter `?job_name=&limit=`                     |
+
+Perilaku:
+
+- Job berjalan di background; respons awal `202` berisi `run_id`.
+- Job yang sama tidak dapat berjalan bersamaan (lock baris `cron_jobs` + status `queued/running`) → `409`.
+- Job nonaktif atau kunci tidak berizin → `409` / `403`.
+- Status run: `queued`, `running`, `success`, `failed`.
+- Job bawaan: `cleanup_expired_reservations`, `cleanup_orphan_uploads`, `export_snapshot`, `audit_data`.
+
+Contoh Apps Script:
+
+```javascript
+const respons = UrlFetchApp.fetch('https://domain-anda/api/cron/run/audit_data', {
+  method: 'post',
+  headers: { 'x-cron-key': 'KUNCI_RAHASIA' },
+  muteHttpExceptions: true
+});
+Logger.log(respons.getContentText());
+```
 
 ## Deploy ke cPanel (Passenger)
 
@@ -100,55 +164,35 @@ Lihat `.env.example` untuk daftar lengkap (sesi, rate limit, trust proxy).
    cd /home/USER/siprima
    npm ci --omit=dev
    ```
-5. **Folder privat**:
+5. **Database**: buat database & user MySQL di cPanel, lalu jalankan:
    ```bash
-   mkdir -p /home/USER/siprima-storage/scan /home/USER/siprima-storage/logs
+   npm run migrate
+   npm run seed
+   ```
+6. **Folder privat**:
+   ```bash
+   mkdir -p /home/USER/siprima-storage/scan /home/USER/siprima-storage/backup /home/USER/siprima-storage/logs
    chmod 750 /home/USER/siprima-storage /home/USER/siprima-storage/scan
    ```
-   Pastikan `UPLOAD_DIR` dan `LOG_DIR` menunjuk ke folder tersebut.
-6. **Restart** aplikasi dari cPanel (_Restart_) atau:
+   Pastikan `UPLOAD_DIR`, `BACKUP_DIR`, dan `LOG_DIR` menunjuk ke folder tersebut.
+7. **Restart** aplikasi dari cPanel (_Restart_) atau:
    ```bash
    touch /home/USER/siprima/tmp/restart.txt
    ```
-7. Buka URL aplikasi, login dengan akun admin hasil `seed-admin`.
+8. Buka URL aplikasi, login dengan akun admin hasil `npm run seed`.
 
 Catatan:
 
-- `public/` adalah satu-satunya folder yang boleh diakses langsung. Jangan menaruh `.env`, service account, atau `storage/` di dalamnya.
+- `public/` adalah satu-satunya folder yang boleh diakses langsung. Jangan menaruh `.env`, dump database, atau `storage/` di dalamnya.
 - Set `TRUST_PROXY=1` agar cookie `Secure` dan rate limit bekerja di balik proxy cPanel.
-
-## Service account
-
-1. Firebase Console → Project settings → Service accounts → **Generate new private key**.
-2. Simpan JSON di luar `public_html`, mis. `/home/USER/siprima-secrets/service-account.json`, lalu set:
-   ```env
-   FIREBASE_PRIVATE_KEY_PATH=/home/USER/siprima-secrets/service-account.json
-   ```
-   atau tempel isi `private_key` ke `FIREBASE_PRIVATE_KEY` dengan newline sebagai `\n`.
-3. Batasi permission file: `chmod 600`.
-4. Rotasi key bila pernah terekspos; hapus key lama di Firebase Console.
-
-## Aturan keamanan Firebase
-
-Terapkan `firestore.rules` dan `storage.rules` (keduanya **deny-all**):
-
-```bash
-firebase deploy --only firestore:rules,storage:rules
-```
-
-Karena semua akses memakai Admin SDK, client langsung harus selalu ditolak. Indeks komposit lama tetap dipakai; terapkan dengan:
-
-```bash
-firebase deploy --only firestore:indexes
-```
 
 ## Ringkasan API
 
 | Metode       | Endpoint                                                             | Akses                       |
 | ------------ | -------------------------------------------------------------------- | --------------------------- |
 | GET          | `/api/auth/csrf`                                                     | publik (token CSRF)         |
-| POST         | `/api/auth/login`                                                    | publik + rate limit         |
-| POST         | `/api/auth/logout`                                                   | login                       |
+| POST         | `/api/auth/login`, `/register`, `/refresh`, `/logout`                | publik/login + rate limit   |
+| POST         | `/api/auth/password/forgot`, `/password/reset`                       | publik + rate limit         |
 | GET          | `/api/auth/session`                                                  | login                       |
 | GET/POST     | `/api/surat-masuk`, `/:id`, `/:id/berkas`                            | login; tulis: admin         |
 | POST         | `/api/surat-masuk/:id/disposisi`                                     | admin, pimpinan             |
@@ -162,6 +206,7 @@ firebase deploy --only firestore:indexes
 | GET/PUT      | `/api/pengaturan`                                                    | login; tulis: admin         |
 | GET          | `/api/audit`                                                         | admin                       |
 | GET          | `/api/nomor/cari`, `/verifikasi`                                     | login / admin+pimpinan      |
+| GET/POST     | `/api/cron/*`                                                        | kunci API cron              |
 
 Semua respons berbentuk:
 
@@ -181,13 +226,14 @@ Cakupan default:
 - kontrak HTTP: 401 tanpa sesi, 403 tanpa CSRF, 400 validasi, 404, header keamanan;
 - aturan akses & IDOR: matriks peran dan `bolehBacaSurat`/`bolehUbahSuratKeluar`;
 - rendering nomor, pagination, serialisasi;
+- registry & validator cron;
 - `public/` bebas SDK/konfigurasi/rahasia Firebase dan bebas CDN;
-- rules Firestore/Storage deny-all.
+- rules Firestore/Storage lama tetap deny-all (arsip).
 
-Uji integrasi penuh (login, CRUD surat masuk, ID palsu, 403 bidang) bersifat opt-in karena menulis ke Firebase asli:
+Uji integrasi penuh (login, CRUD surat masuk, ID palsu, 403 bidang, cron) bersifat opt-in karena menulis ke MySQL asli:
 
 ```bash
-RUN_FIREBASE_TESTS=1 TEST_ADMIN_EMAIL=... TEST_ADMIN_PASSWORD=... \
+RUN_MYSQL_TESTS=1 TEST_ADMIN_EMAIL=... TEST_ADMIN_PASSWORD=... \
 TEST_BIDANG_EMAIL=... TEST_BIDANG_PASSWORD=... npm test
 ```
 
@@ -196,15 +242,17 @@ TEST_BIDANG_EMAIL=... TEST_BIDANG_PASSWORD=... npm test
 | Gejala                                                               | Penyebab & solusi                                                                                                     |
 | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Aplikasi 500 saat start, pesan "Konfigurasi environment tidak valid" | Variabel wajib belum diisi. Periksa panel Environment Variables cPanel lalu restart.                                  |
-| `FIREBASE_PRIVATE_KEY_PATH tidak ditemukan`                          | Path salah atau file di luar izin user aplikasi. Gunakan path absolut.                                                |
-| Login selalu "Email atau kata sandi salah"                           | `FIREBASE_WEB_API_KEY` salah, provider Email/Password belum aktif, atau user belum punya dokumen `users/{uid}` aktif. |
+| `ECONNREFUSED` / `ER_ACCESS_DENIED_ERROR`                            | `DB_HOST`/`DB_USER`/`DB_PASSWORD` salah, MySQL belum jalan, atau user belum diberi akses ke `DB_NAME`.                |
+| `ER_NO_SUCH_TABLE`                                                   | Migrasi belum dijalankan. Jalankan `npm run migrate`.                                                                 |
+| Login selalu "Email atau kata sandi salah"                           | Admin belum di-seed, `aktif = 0`, atau kata sandi salah. Jalankan `npm run seed` dengan `ADMIN_*` yang benar.         |
 | Login sukses tetapi langsung logout                                  | Cookie `Secure` tanpa HTTPS, atau `TRUST_PROXY` salah. Set `TRUST_PROXY=1` di balik proxy cPanel.                     |
 | 403 "Token keamanan tidak valid"                                     | Cookie CSRF hilang/berbeda. Muat ulang halaman; pastikan domain tidak berganti antara www dan non-www.                |
+| Cron 401                                                             | Header `x-cron-key` tidak dikirim atau kunci sudah dicabut. Buat kunci baru lewat seeder/DB.                          |
+| Cron 409 "Job yang sama masih berjalan"                              | Tunggu run sebelumnya selesai; cek `GET /api/cron/runs?job_name=...`.                                                 |
 | Unggahan gagal 413                                                   | Ukuran melebihi `MAX_UPLOAD_MB`, atau limit `post_max_size`/`upload_max_filesize` PHP/cPanel.                         |
 | Scan tidak bisa diunduh                                              | `UPLOAD_DIR` berbeda setelah restart, atau `fileId` tidak ada dan `fileUrl` kosong.                                   |
-| `permission-denied` di log                                           | Ada kode yang masih mengakses Firestore langsung. Semua akses harus lewat API.                                        |
 | Passenger restart loop                                               | Cek `stderr.log` cPanel, jalankan `node src/server.js` manual untuk melihat error env.                                |
-| Rate limit terlalu ketat                                             | Sesuaikan `RATE_LIMIT_MAX` / `LOGIN_RATE_LIMIT_MAX`, lalu restart.                                                    |
+| Rate limit terlalu ketat                                             | Sesuaikan `RATE_LIMIT_MAX` / `LOGIN_RATE_LIMIT_MAX` / `CRON_RATE_LIMIT_MAX`, lalu restart.                            |
 
 Log error ditulis ke `LOG_DIR/LOG_FILE` dan juga stderr Passenger.
 
@@ -212,11 +260,14 @@ Log error ditulis ke `LOG_DIR/LOG_FILE` dan juga stderr Passenger.
 
 **Asumsi**
 
-- Data lama tetap memakai koleksi/field yang sama (`suratMasuk`, `suratKeluar`, `masterBidang`, `masterNomor`, `letter_numbers`, dst.).
+- Migrasi bersifat fresh: tidak ada data atau pengguna Firebase yang dipindahkan (FASE 5 dilewati).
+- ID internal memakai `BIGINT UNSIGNED AUTO_INCREMENT`; `cron_runs.run_id` memakai UUID publik.
 - Peran lama dipetakan: `bidang` = operator, tanpa peran `petugas`/`pembaca`.
 - Scan baru disimpan lokal privat; field `fileUrl` tetap dipakai untuk tautan Drive lama.
 - Nomor surat dibuat lewat transaksi `letter_numbers`; reservasi kedaluwarsa otomatis.
-- Pimpinan bersifat baca + disposisi, tidak membuat surat.
+- Pimpinan bersifat baca + disposisi + ubah surat masuk, tidak membuat surat keluar.
+- Tidak ada realtime (`onSnapshot`); frontend memakai refetch manual.
+- Reset password tidak mengirim email; token hanya dikembalikan bila `AUTH_EXPOSE_RESET_TOKEN=true`.
 
 **Perlu konfirmasi**
 
@@ -224,3 +275,4 @@ Log error ditulis ke `LOG_DIR/LOG_FILE` dan juga stderr Passenger.
 - Batas ukuran scan final (default 5 MB) dan kebutuhan antivirus/scan malware.
 - Retensi audit log dan kebutuhan ekspor audit.
 - Apakah `appsScriptUrl` masih diperlukan setelah upload lokal (dipakai untuk tautan legacy).
+- Kebijakan rotasi kunci cron dan apakah perlu endpoint admin untuk mengelola kunci.

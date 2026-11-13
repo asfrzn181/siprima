@@ -1,18 +1,18 @@
-// Uji integrasi penuh terhadap Firebase asli.
-// Jalankan dengan: RUN_FIREBASE_TESTS=1 npm test
-// Butuh .env valid dan TEST_ADMIN_EMAIL/TEST_ADMIN_PASSWORD.
+// Uji integrasi penuh terhadap MySQL asli.
+// Jalankan dengan: RUN_MYSQL_TESTS=1 npm test
+// Butuh .env valid (DB_*) dan TEST_ADMIN_EMAIL/TEST_ADMIN_PASSWORD.
 // Opsional: TEST_BIDANG_EMAIL/TEST_BIDANG_PASSWORD untuk uji 403 dan IDOR.
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import request from 'supertest';
 
-const aktif = process.env.RUN_FIREBASE_TESTS === '1';
+const aktif = process.env.RUN_MYSQL_TESTS === '1';
 const emailAdmin = process.env.TEST_ADMIN_EMAIL || '';
 const sandiAdmin = process.env.TEST_ADMIN_PASSWORD || '';
 const emailBidang = process.env.TEST_BIDANG_EMAIL || '';
 const sandiBidang = process.env.TEST_BIDANG_PASSWORD || '';
 
-const lewati = aktif ? false : 'Set RUN_FIREBASE_TESTS=1 dan kredensial uji untuk menjalankan.';
+const lewati = aktif ? false : 'Set RUN_MYSQL_TESTS=1 dan kredensial uji untuk menjalankan.';
 
 const buatAgen = async (app, email, password) => {
   const agen = request.agent(app);
@@ -75,19 +75,19 @@ test('CRUD surat masuk lewat API', { skip: lewati }, async () => {
       true
     );
   } finally {
-    const { dapatkanDb } = await import('../src/config/firebase.js');
-    await dapatkanDb().collection('suratMasuk').doc(id).delete();
+    const { query } = await import('../src/config/db.js');
+    await query('DELETE FROM surat_masuk WHERE id = ?', [id]);
   }
 });
 
 test('ID surat yang tidak ada / ditukar tidak membocorkan data', { skip: lewati }, async () => {
   const { app } = await import('../src/app.js');
   const { agen } = await buatAgen(app, emailAdmin, sandiAdmin);
-  const respons = await agen.get('/api/surat-masuk/ID-PALSU-12345');
+  const respons = await agen.get('/api/surat-masuk/999999999');
   assert.equal(respons.status, 404);
   assert.equal(respons.body.data, null);
 
-  const keluar = await agen.get('/api/surat-keluar/ID-PALSU-12345');
+  const keluar = await agen.get('/api/surat-keluar/999999999');
   assert.equal(keluar.status, 404);
   assert.equal(keluar.body.data, null);
 });
@@ -113,3 +113,17 @@ test(
     assert.equal(dashboard.status, 403);
   }
 );
+
+test('cron health dapat diakses tanpa kunci', { skip: lewati }, async () => {
+  const { app } = await import('../src/app.js');
+  const respons = await request(app).get('/api/cron/health');
+  assert.equal(respons.status, 200);
+  assert.equal(respons.body.data.status, 'ok');
+});
+
+test('cron jobs menolak permintaan tanpa kunci', { skip: lewati }, async () => {
+  const { app } = await import('../src/app.js');
+  const respons = await request(app).get('/api/cron/jobs');
+  assert.equal(respons.status, 401);
+  assert.equal(respons.body.errors[0].code, 'KUNCI_CRON_TIDAK_ADA');
+});

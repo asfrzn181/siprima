@@ -10,6 +10,7 @@ import { pengaturanRouter } from './pengaturan.routes.js';
 import { auditRouter } from './audit.routes.js';
 import { dashboardRouter } from './dashboard.routes.js';
 import { laporanRouter } from './laporan.routes.js';
+import { cronRouter } from './cron.routes.js';
 
 export const apiRouter = Router();
 
@@ -24,3 +25,4 @@ apiRouter.use('/pengaturan', pengaturanRouter);
 apiRouter.use('/audit', auditRouter);
 apiRouter.use('/dashboard', dashboardRouter);
 apiRouter.use('/laporan', laporanRouter);
+apiRouter.use('/cron', cronRouter);

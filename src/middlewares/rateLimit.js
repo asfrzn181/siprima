@@ -33,3 +33,9 @@ export const batasiUnggah = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 60
 });
+
+export const batasiCron = rateLimit({
+  ...dasar,
+  windowMs: 60 * 1000,
+  limit: env.CRON_RATE_LIMIT_MAX
+});

@@ -1,46 +1,58 @@
-// Pemeriksaan data read-only. Tidak mengubah dokumen apa pun.
+// Pemeriksaan data read-only terhadap MySQL. Tidak mengubah data apa pun.
 // Pakai: node scripts/audit-data.js
-import { KOLEKSI, PERAN, STATUS_NOMOR } from '../src/constants/index.js';
-import { hitungKoleksi, queryKoleksi } from '../src/repositories/base.repository.js';
+import { query, tutupPool } from '../src/config/db.js';
 
 const tulis = (teks) => process.stdout.write(`${teks}\n`);
 
-const nilai = async (nama) => hitungKoleksi(nama);
+const hitung = async (tabel) => {
+  const [row] = await query(`SELECT COUNT(*) AS jumlah FROM ${tabel}`);
+  return Number(row.jumlah);
+};
 
 const jalankan = async () => {
-  const koleksi = [
-    KOLEKSI.USERS,
-    KOLEKSI.MASTER_BIDANG,
-    KOLEKSI.MASTER_NOMOR,
-    KOLEKSI.SURAT_MASUK,
-    KOLEKSI.SURAT_KELUAR,
-    KOLEKSI.LETTER_NUMBERS,
-    KOLEKSI.AUDIT_LOG
+  const tabel = [
+    'users',
+    'master_bidang',
+    'master_nomor',
+    'surat_masuk',
+    'surat_keluar',
+    'letter_numbers',
+    'audit_log'
   ];
 
-  tulis('Jumlah dokumen:');
-  for (const nama of koleksi) {
-    tulis(`- ${nama}: ${await nilai(nama)}`);
+  tulis('Jumlah baris:');
+  for (const nama of tabel) {
+    tulis(`- ${nama}: ${await hitung(nama)}`);
   }
 
-  const users = await queryKoleksi(KOLEKSI.USERS);
-  const peranSah = Object.values(PERAN);
-  const peranAneh = users.filter((user) => !peranSah.includes(user.role));
-  const bidangTanpaKode = users.filter(
-    (user) => user.role === PERAN.BIDANG && !String(user.bidang || '').trim()
+  const [peranAneh] = await query(
+    `SELECT COUNT(*) AS jumlah FROM users u
+       LEFT JOIN roles r ON r.id = u.role_id
+      WHERE r.id IS NULL`
   );
-  tulis(`Pengguna dengan peran tidak dikenal: ${peranAneh.length}`);
-  tulis(`Pengguna bidang tanpa kode bidang: ${bidangTanpaKode.length}`);
+  const [bidangTanpaKode] = await query(
+    `SELECT COUNT(*) AS jumlah FROM users u
+       JOIN roles r ON r.id = u.role_id
+      WHERE r.name = 'bidang' AND (u.bidang_kode IS NULL OR u.bidang_kode = '')`
+  );
+  tulis(`Pengguna tanpa peran valid: ${Number(peranAneh.jumlah)}`);
+  tulis(`Pengguna bidang tanpa kode bidang: ${Number(bidangTanpaKode.jumlah)}`);
 
-  const suratKeluar = await queryKoleksi(KOLEKSI.SURAT_KELUAR, { limit: 5000 });
-  const tanpaRegister = suratKeluar.filter((surat) => !surat.letterNumberId);
-  tulis(`Surat keluar tanpa letterNumberId: ${tanpaRegister.length}`);
+  const [tanpaRegister] = await query(
+    'SELECT COUNT(*) AS jumlah FROM surat_keluar WHERE letter_number_id IS NULL'
+  );
+  tulis(`Surat keluar tanpa letter_number_id: ${Number(tanpaRegister.jumlah)}`);
 
-  const nomor = await queryKoleksi(KOLEKSI.LETTER_NUMBERS, { limit: 5000 });
-  const reserved = nomor.filter((item) => item.status === STATUS_NOMOR.RESERVED);
-  const tanpaSurat = nomor.filter((item) => item.status === STATUS_NOMOR.ISSUED && !item.letter_id);
-  tulis(`Nomor berstatus RESERVED: ${reserved.length}`);
-  tulis(`Nomor ISSUED tanpa referensi surat: ${tanpaSurat.length}`);
+  const [reserved] = await query(
+    "SELECT COUNT(*) AS jumlah FROM letter_numbers WHERE status = 'RESERVED'"
+  );
+  const [tanpaSurat] = await query(
+    "SELECT COUNT(*) AS jumlah FROM letter_numbers WHERE status = 'ISSUED' AND letter_id IS NULL"
+  );
+  tulis(`Nomor berstatus RESERVED: ${Number(reserved.jumlah)}`);
+  tulis(`Nomor ISSUED tanpa referensi surat: ${Number(tanpaSurat.jumlah)}`);
+
+  await tutupPool();
 };
 
 jalankan().catch((error) => {

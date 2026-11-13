@@ -1,8 +1,4 @@
 process.env.NODE_ENV = 'test';
-process.env.FIREBASE_PROJECT_ID = 'demo-siprima';
-process.env.FIREBASE_CLIENT_EMAIL = 'test@demo-siprima.iam.gserviceaccount.com';
-process.env.FIREBASE_PRIVATE_KEY = '-----BEGIN PRIVATE KEY-----\\nZGVtbw==\\n-----END PRIVATE KEY-----\\n';
-process.env.FIREBASE_WEB_API_KEY = 'demo-web-api-key-1234567890';
 
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -40,7 +36,7 @@ test('POST tanpa token CSRF ditolak 403', async () => {
   assert.equal(respons.body.errors[0].code, 'CSRF_TIDAK_VALID');
 });
 
-test('POST login dengan CSRF tetapi data tidak valid ditolak 400 tanpa memanggil Firebase', async () => {
+test('POST login dengan CSRF tetapi data tidak valid ditolak 400 tanpa menyentuh database', async () => {
   const agen = request.agent(app);
   const csrf = await agen.get('/api/auth/csrf');
   const respons = await agen.post('/api/auth/login').set('x-csrf-token', csrf.body.data.token).send({});
