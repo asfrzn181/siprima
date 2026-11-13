@@ -250,6 +250,7 @@ TEST_BIDANG_EMAIL=... TEST_BIDANG_PASSWORD=... npm test
 | Cron 409 "Job yang sama masih berjalan"                              | Tunggu run sebelumnya selesai; cek `GET /api/cron/runs?job_name=...`.                                                 |
 | Unggahan gagal 413                                                   | Ukuran melebihi `MAX_UPLOAD_MB`, atau limit `post_max_size`/`upload_max_filesize` PHP/cPanel.                         |
 | Scan tidak bisa diunduh                                              | `UPLOAD_DIR` berbeda setelah restart, atau `fileId` tidak ada dan `fileUrl` kosong.                                   |
+| Setelah **Run NPM Install** muncul "check availability … content type before operation text/html … after text/html; charset=utf-8" | Ini **peringatan, bukan kegagalan**. cPanel membandingkan respons sebelum aplikasi hidup (halaman default LiteSpeed `text/html`) dengan sesudahnya (Express `text/html; charset=utf-8`). Modul sudah terpasang; klik **Restart** lalu buka URL aplikasi. |
 | Passenger restart loop                                               | Cek `stderr.log` cPanel, jalankan `node src/server.js` manual untuk melihat error env.                                |
 | Rate limit terlalu ketat                                             | Sesuaikan `RATE_LIMIT_MAX` / `LOGIN_RATE_LIMIT_MAX` / `CRON_RATE_LIMIT_MAX`, lalu restart.                            |
 
