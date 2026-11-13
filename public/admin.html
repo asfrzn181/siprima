@@ -7,6 +7,14 @@
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/overrides.css">
   <link rel="stylesheet" href="assets/css/forms.css">
+  <style>
+    .peran-grid{display:grid;gap:1.25rem}
+    .peran-card{border:1px solid var(--border,#e2e8f0);border-radius:.75rem;padding:1rem}
+    .peran-card h3{margin:0 0 .25rem}
+    .peran-izin{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.5rem .9rem;margin:.75rem 0}
+    .peran-izin label{display:flex;gap:.5rem;align-items:center;font-weight:500}
+    .peran-izin input{width:auto}
+  </style>
 </head>
 <body>
   <div id="app-shell"></div>
@@ -15,14 +23,16 @@
       <div>
         <p class="eyebrow">Konfigurasi</p>
         <h1>Administrasi</h1>
-        <p class="muted">Kelola akun, master, pengaturan, dan jejak aktivitas.</p>
+        <p class="muted">Kelola akun, master, peran, pengaturan, dan jejak aktivitas.</p>
       </div>
     </section>
 
     <nav class="tabs" aria-label="Menu administrasi">
       <button class="tab-button active" data-tab="users" type="button">Pengguna</button>
       <button class="tab-button" data-tab="bidang" type="button">Master Bidang</button>
+      <button class="tab-button" data-tab="asal-tujuan" type="button">Master Asal &amp; Tujuan</button>
       <button class="tab-button" data-tab="nomor" type="button">Master Nomor Surat</button>
+      <button class="tab-button" data-tab="peran" type="button">Peran &amp; Hak Akses</button>
       <button class="tab-button" data-tab="settings" type="button">Pengaturan</button>
       <button class="tab-button" data-tab="audit" type="button">Audit Log</button>
       <button class="tab-button" data-tab="cleaner" type="button">Pembersih Nomor Ganda</button>
@@ -36,7 +46,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Nama</th><th>Email</th><th>Peran</th><th>Bidang</th><th>Status</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>No. Urut</th><th>Nama</th><th>Email</th><th>Peran</th><th>Bidang</th><th>Status</th><th>Aksi</th></tr></thead>
             <tbody id="users-body"></tbody>
           </table>
         </div>
@@ -52,11 +62,27 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Kode</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>No. Urut</th><th>Kode</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead>
             <tbody id="bidang-body"></tbody>
           </table>
         </div>
         <div id="bidang-pager" class="table-pagination"></div>
+      </div>
+    </section>
+
+    <section id="tab-asal-tujuan" class="tab-panel" hidden>
+      <div class="panel">
+        <div class="admin-toolbar">
+          <div><h2>Master asal &amp; tujuan</h2><p class="muted">Saran pengirim dan tujuan surat masuk.</p></div>
+          <button id="new-asal-tujuan" class="button accent" type="button">+ Tambah asal/tujuan</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>No. Urut</th><th>Kode</th><th>Nama tujuan</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="asal-tujuan-body"></tbody>
+          </table>
+        </div>
+        <div id="asal-tujuan-pager" class="table-pagination"></div>
       </div>
     </section>
 
@@ -65,21 +91,31 @@
         <div class="admin-toolbar">
           <div>
             <h2>Master nomor surat</h2>
-            <p class="muted">Format mendukung <code>{KODE}</code>, <code>{URUT:n}</code>, <code>{UNIT}</code>, <code>{TAHUN}</code>, <code>{BULAN}</code>, <code>{BULAN_ROMAWI}</code>, <code>{BIDANG}</code>.</p>
+            <p class="muted">Simpan kode klasifikasi dan nama jenis; format nomor dibuat otomatis per golongan.</p>
           </div>
           <div class="filter-actions">
             <button id="new-nomor" class="button accent" type="button">+ Tambah jenis</button>
             <label class="button secondary" for="csv-import">Impor CSV<input id="csv-import" type="file" accept=".csv,text/csv" hidden></label>
           </div>
         </div>
-        <p class="csv-help">CSV klasifikasi dapat memakai header <code>KODE,NAMA KLASIFIKASI</code>. Format, reset tahunan, dan status memakai nilai default.</p>
+        <p class="csv-help">CSV klasifikasi memakai header <code>KODE,NAMA KLASIFIKASI</code>. Golongan, reset tahunan, dan status memakai nilai default.</p>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Golongan</th><th>Kode</th><th>Nama klasifikasi</th><th>Format</th><th>Status</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>No. Urut</th><th>Golongan</th><th>Kode</th><th>Nama klasifikasi</th><th>Status</th><th>Aksi</th></tr></thead>
             <tbody id="nomor-body"></tbody>
           </table>
         </div>
         <div id="nomor-pager" class="table-pagination"></div>
+      </div>
+    </section>
+
+    <section id="tab-peran" class="tab-panel" hidden>
+      <div class="panel">
+        <div class="admin-toolbar">
+          <div><h2>Peran &amp; hak akses</h2><p class="muted">Centang izin per menu dan tindakan untuk setiap peran.</p></div>
+          <button id="refresh-peran" class="button secondary" type="button">Muat ulang</button>
+        </div>
+        <div id="peran-body" class="peran-grid"></div>
       </div>
     </section>
 
@@ -109,7 +145,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Waktu</th><th>Pengguna</th><th>Aksi</th><th>Koleksi</th><th>Doc ID</th></tr></thead>
+            <thead><tr><th>No. Urut</th><th>Waktu</th><th>Pengguna</th><th>Aksi</th><th>Koleksi</th><th>Doc ID</th></tr></thead>
             <tbody id="audit-body"></tbody>
           </table>
         </div>
@@ -159,7 +195,12 @@
           </span>
         </label>
         <label>Nama<input name="nama" required maxlength="120"></label>
-        <label>Peran<select name="role"><option value="bidang">Bidang</option><option value="pimpinan">Pimpinan</option><option value="admin">Admin</option></select></label>
+        <label>Peran<select name="role">
+          <option value="bidang">Bidang</option>
+          <option value="operator">Operator/Staf</option>
+          <option value="pimpinan">Pimpinan/Viewer</option>
+          <option value="admin">Admin</option>
+        </select></label>
         <label>Kode bidang <span class="muted">(dari master bidang)</span><select name="bidang"><option value="">Pilih bidang</option></select></label>
         <label>Status aktif<input name="aktif" type="checkbox" checked></label>
         <div class="form-actions wide"><button class="button primary" type="submit">Simpan pengguna</button></div>
@@ -185,6 +226,23 @@
     </div>
   </section>
 
+  <section id="asal-tujuan-modal" class="modal-panel" hidden>
+    <div class="modal-card">
+      <div class="panel-heading">
+        <h2>Master asal &amp; tujuan</h2>
+        <button class="button secondary modal-close" data-close="asal-tujuan-modal" type="button">Tutup</button>
+      </div>
+      <form id="asal-tujuan-form" class="form-grid">
+        <input name="id" type="hidden">
+        <label>Kode<input name="kode" maxlength="40" required></label>
+        <label>Nama tujuan<input name="nama" maxlength="160" required></label>
+        <label>Status aktif<input name="aktif" type="checkbox" checked></label>
+        <div class="form-actions wide"><button class="button primary" type="submit">Simpan asal &amp; tujuan</button></div>
+        <p id="asal-tujuan-error" class="form-error wide" hidden></p>
+      </form>
+    </div>
+  </section>
+
   <section id="nomor-modal" class="modal-panel" hidden>
     <div class="modal-card">
       <div class="panel-heading">
@@ -193,17 +251,13 @@
       </div>
       <form id="nomor-form" class="form-grid">
         <input name="id" type="hidden">
-        <label>Nama jenis<input name="nama" required maxlength="120"></label>
+        <label>Nama klasifikasi<input name="nama" required maxlength="120"></label>
         <label>Golongan
           <select name="golongan">
             <option value="SK">SK - Surat Keputusan</option>
             <option value="SE">SE - Surat Edaran</option>
             <option value="LAINNYA" selected>Surat lainnya</option>
           </select>
-        </label>
-        <label>Format
-          <span class="muted">Variabel: {KODE} {URUT:3} {UNIT} {TAHUN} {BULAN} {BULAN_ROMAWI}</span>
-          <input name="format" required maxlength="180" value="{KODE}/{URUT:3}/{UNIT}/{TAHUN}">
         </label>
         <label>Kode klasifikasi<input name="kode" required maxlength="40" value="800"></label>
         <label>Reset tahunan<input name="resetTahunan" type="checkbox" checked></label>

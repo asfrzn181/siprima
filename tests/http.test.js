@@ -16,7 +16,16 @@ test('GET / mengembalikan halaman login dan header keamanan', async () => {
 });
 
 test('endpoint API tanpa sesi mengembalikan 401 dengan bentuk JSON seragam', async () => {
-  for (const jalur of ['/api/auth/session', '/api/surat-masuk', '/api/surat-keluar', '/api/users']) {
+  for (const jalur of [
+    '/api/auth/session',
+    '/api/surat-masuk',
+    '/api/surat-keluar',
+    '/api/sk',
+    '/api/se',
+    '/api/users',
+    '/api/roles',
+    '/api/master/asal-tujuan'
+  ]) {
     const respons = await request(app).get(jalur);
     assert.equal(respons.status, 401, jalur);
     assert.equal(respons.body.status, 'error');

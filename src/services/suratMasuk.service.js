@@ -13,9 +13,12 @@ import { AppError, galatAkses, galatTidakDitemukan } from '../utils/AppError.js'
 import {
   adalahAdmin,
   adalahBidang,
+  adalahOperator,
   adalahPengelola,
   bolehBacaSurat,
-  bolehTindakLanjut
+  bolehBuatSuratMasuk,
+  bolehTindakLanjut,
+  bolehUbahSuratMasuk
 } from '../utils/akses.js';
 import { potongHalaman } from '../utils/pagination.js';
 import { serialisasi } from '../utils/serialisasi.js';
@@ -49,7 +52,7 @@ const urutkan = (items, field) =>
 
 const cariPrefix = async (profil, filter) => {
   const kunci = filter.search;
-  const medan = ['noSurat', 'hal', 'asal'];
+  const medan = ['noSurat', 'hal', 'asal', 'tujuan'];
   const hasil = [];
   for (const medanCari of medan) {
     for (const mode of modeUntuk(profil, filter.sifat)) {
@@ -106,7 +109,7 @@ export const ambilMasuk = async (id, profil) => {
 };
 
 export const tambahMasuk = async (payload, profil) => {
-  if (!adalahAdmin(profil)) throw galatAkses('Hanya admin yang dapat menambah surat masuk.');
+  if (!bolehBuatSuratMasuk(profil)) throw galatAkses('Anda tidak berhak menambah surat masuk.');
   if (payload.sifat === SIFAT.RAHASIA && payload.aksesBidang.length === 0) {
     throw new AppError(400, 'VALIDASI_GAGAL', 'Surat rahasia wajib memiliki minimal satu bidang akses.', [
       { field: 'aksesBidang', message: 'Pilih minimal satu bidang.' }
@@ -128,7 +131,7 @@ export const tambahMasuk = async (payload, profil) => {
 };
 
 export const ubahMasuk = async (id, payload, profil) => {
-  if (!adalahPengelola(profil)) throw galatAkses();
+  if (!bolehUbahSuratMasuk(profil)) throw galatAkses();
   const lama = await cariSuratMasuk(id);
   if (!lama) throw galatTidakDitemukan('Surat masuk tidak ditemukan.');
   const perubahan = {
@@ -136,6 +139,7 @@ export const ubahMasuk = async (id, payload, profil) => {
     tglSurat: payload.tglSurat,
     noSurat: payload.noSurat,
     asal: payload.asal,
+    tujuan: payload.tujuan || '',
     hal: payload.hal,
     isiRingkas: payload.isiRingkas,
     sifat: payload.sifat,
@@ -219,7 +223,9 @@ export const tindakLanjutMasuk = async (id, payload, profil) => {
 };
 
 export const lampirkanScanMasuk = async (id, file, profil) => {
-  if (!adalahAdmin(profil)) throw galatAkses('Hanya admin yang dapat mengunggah scan surat masuk.');
+  if (!adalahAdmin(profil) && !adalahOperator(profil)) {
+    throw galatAkses('Anda tidak berhak mengunggah scan surat masuk.');
+  }
   const surat = await cariSuratMasuk(id);
   if (!surat) throw galatTidakDitemukan('Surat masuk tidak ditemukan.');
   await setBerkasSuratMasuk(id, { fileId: file.filename, fileUrl: '' });

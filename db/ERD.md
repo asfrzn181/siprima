@@ -15,6 +15,7 @@ erDiagram
   users ||--o{ password_resets : ""
   users ||--o{ surat_masuk : "dibuat_oleh_id"
   users ||--o{ surat_keluar : "dibuat_oleh_id"
+  users ||--o{ surat_khusus : "dibuat_oleh_id"
   users ||--o{ audit_log : ""
 
   master_nomor ||--o{ surat_keluar : "jenis_id"
@@ -30,6 +31,22 @@ erDiagram
 
   cron_jobs ||--o{ cron_runs : "job_name (logis)"
   cron_api_keys ||--o{ cron_runs : "pelaku (logis)"
+
+  master_asal_tujuan {
+    bigint id PK
+    string kode UK
+    string nama
+    bool aktif
+  }
+  surat_khusus {
+    bigint id PK
+    enum jenis "SK | SE"
+    string tentang
+    string nomor
+    datetime tanggal
+    string keterangan
+    bigint dibuat_oleh_id FK
+  }
 ```
 
 ## Catatan desain
@@ -39,6 +56,9 @@ erDiagram
 - **Array → tabel relasi**: `aksesBidang` menjadi `surat_masuk_akses_bidang` / `surat_keluar_akses_bidang` dengan PK komposit + index `bidang_kode` untuk query `array-contains`.
 - **Map dinamis → tabel**: `tindakLanjut` (map per bidang) menjadi `surat_masuk_tindak_lanjut` dengan `UNIQUE(surat_masuk_id, bidang_kode)`.
 - **Map statis → kolom**: `dibuatOleh`, `disposisi`, `created_by`, `voided_by` menjadi kolom `*_id` + snapshot `*_nama`/`*_role`.
+- **Master pendukung**: `master_asal_tujuan` menyimpan saran `kode` + `nama` untuk autocomplete `asal`/`tujuan` surat masuk. Nilai pada `surat_masuk` tetap teks bebas (tanpa FK) agar input tidak bergantung pada master.
+- **Surat khusus (SK/SE)**: satu tabel `surat_khusus` dengan `jenis ENUM('SK','SE')`; kolom yang ditampilkan berbeda per jenis di frontend, tetapi struktur penyimpanan sama.
+- **Format nomor**: kolom `master_nomor.format` dihapus (migrasi `003_fitur_surat.sql`); format nomor diturunkan dari `golongan` di aplikasi (`defaultFormatGolongan`).
 - **JSON**: `letter_audit_log.before_json/after_json`, `audit_log.sebelum/sesudah`, `cron_jobs.config`, `cron_api_keys.allowed_jobs`, `cron_runs.result` — strukturnya fleksibel dan tidak di-query.
 - **FK actions**: `CASCADE` untuk anak yang tidak bermakna tanpa induk (relasi akses, tindak lanjut, audit surat), `SET NULL` untuk referensi opsional (user, bidang, jenis nomor, letter number), `RESTRICT` untuk role yang masih dipakai.
 - **Waktu**: `DATETIME(3)` UTC; konversi zona Asia/Jakarta dilakukan di aplikasi (`src/utils/tanggal.js`).

@@ -9,6 +9,7 @@ export const skemaSuratMasuk = z.object({
   tglSurat: tanggalWajib,
   noSurat: teks(120),
   asal: teks(160),
+  tujuan: z.string().trim().max(160).default(''),
   hal: teks(200),
   isiRingkas: teks(2000),
   sifat: z.enum([SIFAT.BIASA, SIFAT.RAHASIA]).default(SIFAT.BIASA),

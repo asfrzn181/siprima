@@ -10,7 +10,11 @@ import { skemaKataKunci } from '../validators/common.validator.js';
 
 export const masterNomorRouter = Router();
 
-masterNomorRouter.use(wajibLogin, izinkan(PERAN.ADMIN, PERAN.BIDANG), wajibIzin(IZIN.MASTER_BACA));
+masterNomorRouter.use(
+  wajibLogin,
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.BIDANG),
+  wajibIzin(IZIN.MASTER_BACA)
+);
 
 masterNomorRouter.get('/', controller.daftarSemuaNomor);
 masterNomorRouter.get('/halaman', controller.daftarNomor);

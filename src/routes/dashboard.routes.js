@@ -8,7 +8,7 @@ export const dashboardRouter = Router();
 
 dashboardRouter.use(
   wajibLogin,
-  izinkan(PERAN.ADMIN, PERAN.PIMPINAN),
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.PIMPINAN),
   wajibIzin(IZIN.DASHBOARD_BACA)
 );
 

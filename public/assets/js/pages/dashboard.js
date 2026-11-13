@@ -1,9 +1,9 @@
-import { wajibPeran } from '../api/client.js';
+import { wajibIzin } from '../api/client.js';
 import { ringkasanDashboard } from '../api/admin.api.js';
 import { badge, renderShell, showToast, skeletonRows } from '../components/ui.js';
 import { formatTanggal, formatStatusKind } from '../utils/format.js';
 
-const session = await wajibPeran('admin', 'pimpinan');
+const session = await wajibIzin('dashboard.baca');
 renderShell({ active: 'dashboard', session, title: 'Dashboard' });
 document.querySelector('#welcome').textContent =
   `Selamat datang, ${session.profile.nama || session.user.email}.`;
@@ -15,7 +15,7 @@ const refresh = document.querySelector('#refresh');
 const barisKosong = (tbody, pesan, detail) => {
   const baris = document.createElement('tr');
   const sel = document.createElement('td');
-  sel.colSpan = 5;
+  sel.colSpan = 6;
   const kotak = document.createElement('div');
   kotak.className = 'empty-state';
   kotak.append(Object.assign(document.createElement('strong'), { textContent: pesan }));
@@ -30,7 +30,7 @@ const tampilkanSkeleton = (tbody) => {
   for (let i = 0; i < 4; i += 1) {
     const baris = document.createElement('tr');
     const sel = document.createElement('td');
-    sel.colSpan = 5;
+    sel.colSpan = 6;
     sel.append(skeletonRows(1));
     baris.append(sel);
     tbody.append(baris);
@@ -43,8 +43,12 @@ const renderBaris = (tbody, items, pemetaan, pesanKosong, detailKosong) => {
     return;
   }
   tbody.replaceChildren(
-    ...items.map((item) => {
+    ...items.map((item, index) => {
       const baris = document.createElement('tr');
+      const nomorSel = document.createElement('td');
+      nomorSel.dataset.label = 'No. Urut';
+      nomorSel.textContent = String(index + 1);
+      baris.append(nomorSel);
       pemetaan(item).forEach((sel) => {
         const td = document.createElement('td');
         td.dataset.label = sel.label;

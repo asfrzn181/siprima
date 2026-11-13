@@ -1,17 +1,17 @@
-import { wajibPeran } from '../api/client.js';
+import { wajibIzin } from '../api/client.js';
 import { laporan } from '../api/admin.api.js';
 import { badge, renderShell, showToast } from '../components/ui.js';
 import { pesanTabel } from '../utils/dom.js';
 import { eksporExcel } from '../utils/excel.js';
 import { formatStatusKind, formatTanggal, tanggalIso } from '../utils/format.js';
 
-const sesi = await wajibPeran('admin', 'pimpinan');
+const sesi = await wajibIzin('laporan.baca');
 renderShell({ active: 'laporan', session: sesi });
 
 const PAGE_SIZE = 20;
 const COLS = {
-  keluar: ['No. Surat', 'Tanggal Surat', 'Tujuan', 'Hal', 'Bidang Pembuat', 'Sifat', 'Status'],
-  masuk: ['No. Agenda', 'Tgl Terima', 'Tgl Surat', 'No. Surat', 'Asal', 'Hal', 'Sifat', 'Status']
+  keluar: ['No. Urut', 'No. Surat', 'Tanggal Surat', 'Tujuan', 'Hal', 'Bidang Pembuat', 'Sifat', 'Status'],
+  masuk: ['No. Urut', 'No. Agenda', 'Tgl Terima', 'Tgl Surat', 'No. Surat', 'Asal', 'Hal', 'Sifat', 'Status']
 };
 const STATUS = {
   keluar: [
@@ -77,9 +77,10 @@ const renderHalaman = () => {
     pesanTabel(body, COLS[jenis].length, 'Tidak ada data surat untuk filter ini.');
   } else if (jenis === 'keluar') {
     body.replaceChildren(
-      ...potongan.map((item) => {
+      ...potongan.map((item, index) => {
         const baris = document.createElement('tr');
         baris.append(
+          selTeks(String(mulai + index + 1)),
           selTeks(item.noSurat),
           selTeks(formatTanggal(item.tglSurat)),
           selTeks(item.tujuan),
@@ -98,9 +99,10 @@ const renderHalaman = () => {
     );
   } else {
     body.replaceChildren(
-      ...potongan.map((item) => {
+      ...potongan.map((item, index) => {
         const baris = document.createElement('tr');
         baris.append(
+          selTeks(String(mulai + index + 1)),
           selTeks(item.noAgenda),
           selTeks(formatTanggal(item.tglTerima)),
           selTeks(formatTanggal(item.tglSurat)),
@@ -209,7 +211,8 @@ exportButton.addEventListener('click', async () => {
   try {
     const rows =
       jenis === 'keluar'
-        ? items.map((item) => ({
+        ? items.map((item, index) => ({
+            'No. Urut': index + 1,
             'No. Surat': item.noSurat || '',
             'Tanggal Surat': formatTanggal(item.tglSurat),
             Tujuan: item.tujuan || '',
@@ -218,7 +221,8 @@ exportButton.addEventListener('click', async () => {
             Sifat: item.sifat || '',
             Status: item.status || ''
           }))
-        : items.map((item) => ({
+        : items.map((item, index) => ({
+            'No. Urut': index + 1,
             'No. Agenda': item.noAgenda || '',
             'Tgl Terima': formatTanggal(item.tglTerima),
             'Tgl Surat': formatTanggal(item.tglSurat),

@@ -1,4 +1,4 @@
-import { wajibMasuk } from '../api/client.js';
+import { punyaIzin, wajibMasuk } from '../api/client.js';
 import { daftarBidang } from '../api/master.api.js';
 import { daftarSuratKeluar, eksporSuratKeluar, kedaluwarsaNomor } from '../api/suratKeluar.api.js';
 import { badge, renderShell, showToast } from '../components/ui.js';
@@ -8,6 +8,10 @@ import { formatStatusKind, formatTanggal } from '../utils/format.js';
 import { siapkanForm } from './suratKeluarForm.js';
 
 const sesi = await wajibMasuk();
+if (!punyaIzin(sesi.profile, 'surat_keluar.baca')) {
+  window.location.replace('./dashboard.html');
+  throw new Error('Akses surat keluar dibatasi.');
+}
 renderShell({ active: 'keluar', session: sesi });
 
 const body = document.querySelector('#list-body');
@@ -37,7 +41,7 @@ const formPanel = siapkanForm({
   }
 });
 
-if (!['admin', 'bidang'].includes(sesi.profile.role)) {
+if (!punyaIzin(sesi.profile, 'surat_keluar.tulis')) {
   document.querySelector('#new-button').hidden = true;
 }
 if (sesi.profile.role === 'bidang' && !bidang.some((item) => item.kode === sesi.profile.bidang)) {
@@ -52,11 +56,12 @@ const sel = (teks) => {
 
 const render = () => {
   if (!items.length) {
-    pesanTabel(body, 8, 'Tidak ada surat sesuai filter.');
+    pesanTabel(body, 9, 'Tidak ada surat sesuai filter.');
     return;
   }
+  const mulai = (halaman - 1) * 20;
   body.replaceChildren(
-    ...items.map((item) => {
+    ...items.map((item, index) => {
       const baris = document.createElement('tr');
       const sifat = document.createElement('td');
       sifat.append(
@@ -78,6 +83,7 @@ const render = () => {
       });
       aksi.append(detail);
       baris.append(
+        sel(String(mulai + index + 1)),
         sel(item.noSurat),
         sel(formatTanggal(item.tglSurat)),
         sel(item.tujuan),
@@ -104,7 +110,7 @@ const muat = async () => {
     pageLabel.textContent = `Halaman ${halaman} dari ${totalHalaman}`;
     note.textContent = `${hasil.pagination.total} surat ditemukan.`;
   } catch (error) {
-    pesanTabel(body, 8, error.message || 'Gagal memuat.');
+    pesanTabel(body, 9, error.message || 'Gagal memuat.');
     note.textContent = 'Gagal memuat data.';
   }
 };
@@ -136,10 +142,12 @@ next.addEventListener('click', async () => {
   await muat();
 });
 
+document.querySelector('#export').hidden = !punyaIzin(sesi.profile, 'surat_keluar.cetak');
 document.querySelector('#export').addEventListener('click', async () => {
   try {
     const data = await eksporSuratKeluar(filter);
-    const rows = data.map((item) => ({
+    const rows = data.map((item, index) => ({
+      'No. Urut': index + 1,
       'No. Surat': item.noSurat,
       'Tanggal Surat': formatTanggal(item.tglSurat),
       Tujuan: item.tujuan,
@@ -158,6 +166,6 @@ document.querySelector('#export').addEventListener('click', async () => {
 await formPanel.muatMaster();
 await muat();
 
-if (sesi.profile.role === 'admin') {
+if (punyaIzin(sesi.profile, 'nomor.verifikasi')) {
   kedaluwarsaNomor().catch(() => {});
 }

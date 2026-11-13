@@ -10,7 +10,7 @@ Google Apps Script → /api/cron → cron service → job registry → MySQL / s
 ```
 
 - Autentikasi: sesi opaque (cookie HttpOnly) dengan hash SHA-256 di tabel `sessions`; kata sandi bcrypt.
-- Otorisasi: RBAC `admin`, `pimpinan`, `bidang` + izin granular (`permissions`), ditegakkan di route dan service.
+- Otorisasi: RBAC `admin`, `operator`, `pimpinan`, `bidang` + izin granular (`permissions`) per menu dan per tindakan (lihat, tambah, ubah, hapus, cetak/ekspor), ditegakkan di route dan service. Menu & tombol frontend mengikuti izin pengguna.
 - Data: skema relasional MySQL (lihat `db/ERD.md` dan `docs/mapping-firestore-mysql.md`).
 - Unggahan: multer menyimpan scan di folder privat di luar `public_html`; unduhan lewat endpoint ber-otorisasi.
 - Keamanan: helmet + CSP, CORS opsional, rate limit (login & cron lebih ketat), validasi zod, CSRF double-submit, sanitasi output DOM, audit log.
@@ -33,7 +33,7 @@ Google Apps Script → /api/cron → cron service → job registry → MySQL / s
 │  ├─ jobs/                   # registry job cron
 │  ├─ middlewares/ validators/ utils/
 ├─ db/
-│  ├─ migrations/             # 001_init.sql, 002_cron.sql
+│  ├─ migrations/             # 001_init.sql, 002_cron.sql, 003_fitur_surat.sql
 │  └─ ERD.md
 ├─ docs/                      # audit Firebase & pemetaan ke MySQL
 ├─ scripts/                   # migrate, seed, audit-data
@@ -111,10 +111,10 @@ npm run seed               # idempoten; aman dijalankan berulang
 
 Seeder membuat:
 
-- peran `admin`, `pimpinan`, `bidang` dan izin granular;
+- peran `admin`, `operator`, `pimpinan`, `bidang` dan izin granular;
 - admin awal dari `ADMIN_EMAIL` / `ADMIN_PASSWORD` (minimal 8 karakter);
 - master bidang awal (`SEED_BIDANG_JSON` atau `SEK`);
-- master nomor awal (SK, SE, LAINNYA);
+- master nomor awal (SK, SE, LAINNYA) — tanpa kolom format;
 - pengaturan default;
 - job cron dan (opsional) kunci API awal dari `CRON_SEED_KEY`.
 
@@ -189,25 +189,28 @@ Catatan:
 
 ## Ringkasan API
 
-| Metode       | Endpoint                                                             | Akses                       |
-| ------------ | -------------------------------------------------------------------- | --------------------------- |
-| GET          | `/api/auth/csrf`                                                     | publik (token CSRF)         |
-| POST         | `/api/auth/login`, `/register`, `/refresh`, `/logout`                | publik/login + rate limit   |
-| POST         | `/api/auth/password/forgot`, `/password/reset`                       | publik + rate limit         |
-| GET          | `/api/auth/session`                                                  | login                       |
-| GET/POST     | `/api/surat-masuk`, `/:id`, `/:id/berkas`                            | login; tulis: admin         |
-| POST         | `/api/surat-masuk/:id/disposisi`                                     | admin, pimpinan             |
-| POST         | `/api/surat-masuk/:id/tindak-lanjut`                                 | bidang terkait              |
-| GET/POST/PUT | `/api/surat-keluar`                                                  | login; tulis: admin, bidang |
-| POST         | `/api/surat-keluar/:id/{batal,koreksi,kirim,pakai-ulang-nomor,scan}` | sesuai peran                |
-| GET          | `/api/surat-{masuk,keluar}/export`                                   | login, maks. 5000 baris     |
-| GET          | `/api/dashboard`, `/api/laporan/*`                                   | admin, pimpinan             |
-| GET/POST/PUT | `/api/users`                                                         | admin                       |
-| GET/POST/PUT | `/api/master/bidang`, `/api/master/nomor`                            | baca: login; tulis: admin   |
-| GET/PUT      | `/api/pengaturan`                                                    | login; tulis: admin         |
-| GET          | `/api/audit`                                                         | admin                       |
-| GET          | `/api/nomor/cari`, `/verifikasi`                                     | login / admin+pimpinan      |
-| GET/POST     | `/api/cron/*`                                                        | kunci API cron              |
+| Metode       | Endpoint                                                             | Akses                          |
+| ------------ | -------------------------------------------------------------------- | ------------------------------ |
+| GET          | `/api/auth/csrf`                                                     | publik (token CSRF)            |
+| POST         | `/api/auth/login`, `/register`, `/refresh`, `/logout`                | publik/login + rate limit      |
+| POST         | `/api/auth/password/forgot`, `/password/reset`                       | publik + rate limit            |
+| GET          | `/api/auth/session`                                                  | login                          |
+| GET/POST/PUT | `/api/surat-masuk`, `/:id`, `/:id/berkas`                            | izin `surat_masuk.*` per aksi  |
+| POST         | `/api/surat-masuk/:id/disposisi`                                     | izin `surat_masuk.disposisi`   |
+| POST         | `/api/surat-masuk/:id/tindak-lanjut`                                 | izin `surat_masuk.tindak_lanjut` |
+| GET/POST/PUT | `/api/surat-keluar`                                                  | izin `surat_keluar.*` per aksi |
+| POST         | `/api/surat-keluar/:id/{batal,koreksi,kirim,pakai-ulang-nomor,scan}` | izin `surat_keluar.*` per aksi |
+| GET/POST/PUT | `/api/sk` (Surat Keputusan), `/api/se` (Surat Edaran)                | izin `sk.*` / `se.*` per aksi  |
+| GET          | `/api/surat-{masuk,keluar}/export`                                   | izin `.cetak`                  |
+| GET          | `/api/dashboard`, `/api/laporan/*`                                   | izin `dashboard.baca`/`laporan.baca` |
+| GET/POST/PUT | `/api/users`                                                         | admin                          |
+| GET          | `/api/roles`, `PUT /api/roles/:nama`                                 | admin                          |
+| GET/POST/PUT | `/api/master/bidang`, `/api/master/nomor`                            | baca: login; tulis: admin      |
+| GET/POST/PUT | `/api/master/asal-tujuan` (`/cari`, `/halaman`)                      | baca: login; tulis: admin      |
+| GET/PUT      | `/api/pengaturan`                                                    | login; tulis: admin            |
+| GET          | `/api/audit`                                                         | admin                          |
+| GET          | `/api/nomor/cari`, `/verifikasi`                                     | login / admin+pimpinan         |
+| GET/POST     | `/api/cron/*`                                                        | kunci API cron                 |
 
 Semua respons berbentuk:
 
@@ -268,9 +271,11 @@ Log error ditulis ke `LOG_DIR/LOG_FILE` dan juga stderr Passenger.
 
 - Migrasi bersifat fresh: tidak ada data atau pengguna Firebase yang dipindahkan (FASE 5 dilewati).
 - ID internal memakai `BIGINT UNSIGNED AUTO_INCREMENT`; `cron_runs.run_id` memakai UUID publik.
-- Peran lama dipetakan: `bidang` = operator, tanpa peran `petugas`/`pembaca`.
+- Peran: `admin` (akses penuh), `operator`/staf (tambah & ubah menu yang diizinkan), `pimpinan`/viewer (lihat & cetak saja), `bidang` (scoping per bidang). Izin per menu dan per tindakan disimpan di tabel `permissions`/`role_permissions` dan dapat diatur di halaman **Peran & Hak Akses**.
 - Scan baru disimpan lokal privat; field `fileUrl` tetap dipakai untuk tautan Drive lama.
-- Nomor surat dibuat lewat transaksi `letter_numbers`; reservasi kedaluwarsa otomatis.
+- Surat Keputusan (SK) dan Surat Edaran (SE) dikelola sebagai menu & tabel tersendiri (satu tabel `surat_khusus` dengan kolom `jenis`).
+- Master asal & tujuan hanya menyimpan `kode` + `nama`, dipakai sebagai saran autocomplete pada form surat masuk.
+- Nomor surat dibuat lewat transaksi `letter_numbers`; reservasi kedaluwarsa otomatis. Format nomor diturunkan dari golongan (`defaultFormatGolongan`), bukan disimpan di master.
 - Pimpinan bersifat baca + disposisi + ubah surat masuk, tidak membuat surat keluar.
 - Tidak ada realtime (`onSnapshot`); frontend memakai refetch manual.
 - Reset password tidak mengirim email; token hanya dikembalikan bila `AUTH_EXPOSE_RESET_TOKEN=true`.

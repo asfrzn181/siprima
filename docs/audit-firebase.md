@@ -271,6 +271,8 @@ Artinya otorisasi efektif sepenuhnya berada di backend (`src/utils/akses.js`, `s
 
 ## 10. Matriks akses efektif (dari `src/utils/akses.js` + route)
 
+> Matriks ini menggambarkan aplikasi Firebase **sebelum migrasi**. Setelah migrasi, RBAC diperluas: ada peran tambahan `operator`/staf serta izin granular per menu dan per tindakan (lihat `src/constants/index.js` dan `README.md`).
+
 | Aksi | admin | pimpinan | bidang |
 |---|---|---|---|
 | Baca surat biasa | ✅ | ✅ | ✅ |

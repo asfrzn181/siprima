@@ -10,7 +10,7 @@ export const laporanRouter = Router();
 
 laporanRouter.use(
   wajibLogin,
-  izinkan(PERAN.ADMIN, PERAN.PIMPINAN),
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.PIMPINAN),
   wajibIzin(IZIN.LAPORAN_BACA)
 );
 

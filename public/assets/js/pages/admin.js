@@ -1,10 +1,12 @@
 import { wajibPeran } from '../api/client.js';
 import { renderShell } from '../components/ui.js';
+import { initAsalTujuan } from './admin/asalTujuan.js';
 import { initAudit } from './admin/audit.js';
 import { initBidang } from './admin/bidang.js';
 import { initCleaner } from './admin/cleaner.js';
 import { initNomor } from './admin/nomor.js';
 import { initPengaturan } from './admin/pengaturan.js';
+import { initPeran } from './admin/peran.js';
 import { pasangModal } from './admin/shared.js';
 import { initUsers } from './admin/users.js';
 
@@ -15,7 +17,9 @@ pasangModal();
 const inisialisasi = {
   users: initUsers,
   bidang: initBidang,
+  'asal-tujuan': initAsalTujuan,
   nomor: initNomor,
+  peran: initPeran,
   settings: initPengaturan,
   audit: initAudit,
   cleaner: initCleaner

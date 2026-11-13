@@ -1,11 +1,6 @@
 import { halamanNomor, imporNomor, simpanNomor } from '../../api/master.api.js';
 import { badge, showToast } from '../../components/ui.js';
-import {
-  LABEL_GOLONGAN,
-  formatGolonganDefault,
-  normalisasiFormat,
-  normalisasiGolongan
-} from '../../utils/format.js';
+import { LABEL_GOLONGAN, normalisasiGolongan } from '../../utils/format.js';
 import { bukaModal, pesanBaris, renderPager, selTeks, tutupModal } from './shared.js';
 
 const body = document.querySelector('#nomor-body');
@@ -16,24 +11,16 @@ const error = document.querySelector('#nomor-error');
 
 let halaman = 1;
 
-const sinkronFormat = () => {
-  const nilai = form.elements.format.value.trim();
-  const bawaan = ['SK', 'SE', 'LAINNYA'].map((jenis) => formatGolonganDefault(jenis));
-  if (!nilai || bawaan.includes(nilai)) form.elements.format.value = formatGolonganDefault(golongan.value);
-};
-
 const buka = (item = null) => {
   error.hidden = true;
   form.reset();
   form.elements.id.value = item?.id || '';
   form.elements.nama.value = item?.nama || '';
   golongan.value = normalisasiGolongan(item?.golongan);
-  form.elements.format.value = normalisasiFormat(item?.format, golongan.value);
   form.elements.kode.value = item?.kode || '800';
   form.elements.resetTahunan.checked = item?.resetTahunan !== false;
   form.elements.urutanPerBidang.checked = item?.urutanPerBidang === true;
   form.elements.aktif.checked = item?.aktif !== false;
-  sinkronFormat();
   bukaModal('nomor-modal');
 };
 
@@ -43,7 +30,8 @@ export const muatNomor = async () => {
     const hasil = await halamanNomor(halaman);
     body.replaceChildren();
     if (!hasil.items.length) pesanBaris(body, 6, 'Belum ada jenis nomor.');
-    hasil.items.forEach((item) => {
+    const mulai = (halaman - 1) * (hasil.pagination.limit || 20);
+    hasil.items.forEach((item, index) => {
       const baris = document.createElement('tr');
       const status = document.createElement('td');
       status.append(badge(item.aktif ? 'Aktif' : 'Nonaktif', item.aktif ? 'success' : 'muted'));
@@ -55,10 +43,10 @@ export const muatNomor = async () => {
       edit.addEventListener('click', () => buka(item));
       aksi.append(edit);
       baris.append(
+        selTeks(String(mulai + index + 1)),
         selTeks(LABEL_GOLONGAN[normalisasiGolongan(item.golongan)] || item.golongan),
         selTeks(item.kode),
         selTeks(item.nama),
-        selTeks(item.format),
         status,
         aksi
       );
@@ -115,9 +103,8 @@ const bacaCsv = async (file) => {
     const row = Object.fromEntries(headers.map((header, index) => [header, cells[index] || '']));
     const nama = String(row.nama || row.namaklasifikasi || '').trim();
     const kode = String(row.kode || '').trim();
-    const format = String(row.format || '{KODE}/{URUT:3}/{UNIT}/{TAHUN}').trim();
     const jenis = normalisasiGolongan(row.golongan);
-    if (!kode || !nama || kode.length > 40 || nama.length > 120 || format.length > 180) {
+    if (!kode || !nama || kode.length > 40 || nama.length > 120) {
       dilewati += 1;
       return;
     }
@@ -126,7 +113,6 @@ const bacaCsv = async (file) => {
       id,
       data: {
         nama,
-        format: normalisasiFormat(format, jenis),
         kode,
         golongan: jenis,
         resetTahunan: parseBoolean(row.resettahunan),
@@ -141,24 +127,21 @@ const bacaCsv = async (file) => {
 
 export const initNomor = async () => {
   document.querySelector('#new-nomor').addEventListener('click', () => buka());
-  golongan.addEventListener('change', sinkronFormat);
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     error.hidden = true;
     const id = form.elements.id.value;
-    const jenis = normalisasiGolongan(golongan.value);
     const data = {
       nama: form.elements.nama.value.trim(),
-      format: normalisasiFormat(form.elements.format.value.trim(), jenis),
       kode: form.elements.kode.value.trim(),
-      golongan: jenis,
+      golongan: normalisasiGolongan(golongan.value),
       resetTahunan: form.elements.resetTahunan.checked,
       urutanPerBidang: form.elements.urutanPerBidang.checked,
       aktif: form.elements.aktif.checked
     };
-    if (!data.format || !data.kode) {
-      error.textContent = 'Format dan kode klasifikasi wajib diisi.';
+    if (!data.kode || !data.nama) {
+      error.textContent = 'Kode klasifikasi dan nama wajib diisi.';
       error.hidden = false;
       return;
     }

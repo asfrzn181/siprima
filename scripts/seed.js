@@ -8,7 +8,12 @@ import { withTransaction, query, tutupPool } from '../src/config/db.js';
 import { IZIN_LABEL, IZIN_PER_PERAN, PERAN } from '../src/constants/index.js';
 
 const tulis = (teks) => process.stdout.write(`${teks}\n`);
-const LABEL_PERAN = { admin: 'Administrator', pimpinan: 'Pimpinan', bidang: 'Bidang' };
+const LABEL_PERAN = {
+  admin: 'Administrator',
+  operator: 'Operator/Staf',
+  pimpinan: 'Pimpinan/Viewer',
+  bidang: 'Bidang'
+};
 
 const seedPeran = async (koneksi) => {
   for (const nama of Object.values(PERAN)) {
@@ -97,7 +102,6 @@ const seedNomor = async (koneksi) => {
     {
       nama: 'Surat Keputusan',
       golongan: 'SK',
-      format: '{KODE}/SK/{URUT:3}/{UNIT}/{TAHUN}',
       kode: '800',
       reset_tahunan: 1,
       urutan_per_bidang: 0,
@@ -106,7 +110,6 @@ const seedNomor = async (koneksi) => {
     {
       nama: 'Surat Edaran',
       golongan: 'SE',
-      format: 'SE/{URUT:3}/{UNIT}/{TAHUN}',
       kode: 'SE',
       reset_tahunan: 1,
       urutan_per_bidang: 0,
@@ -115,7 +118,6 @@ const seedNomor = async (koneksi) => {
     {
       nama: 'Surat lainnya',
       golongan: 'LAINNYA',
-      format: '{KODE}/{URUT:3}/{UNIT}/{TAHUN}',
       kode: '005',
       reset_tahunan: 1,
       urutan_per_bidang: 0,
@@ -126,12 +128,11 @@ const seedNomor = async (koneksi) => {
   for (const item of daftar) {
     await koneksi.query(
       `INSERT INTO master_nomor
-         (nama, golongan, format, kode, reset_tahunan, urutan_per_bidang, aktif)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         (nama, golongan, kode, reset_tahunan, urutan_per_bidang, aktif)
+       VALUES (?, ?, ?, ?, ?, ?)`,
       [
         item.nama,
         item.golongan,
-        item.format,
         item.kode,
         item.reset_tahunan,
         item.urutan_per_bidang,

@@ -29,7 +29,7 @@ suratKeluarRouter.get(
 );
 suratKeluarRouter.get(
   '/export',
-  wajibIzin(IZIN.SURAT_KELUAR_BACA),
+  wajibIzin(IZIN.SURAT_KELUAR_CETAK),
   validasi(skemaFilterSuratKeluar, 'query'),
   controller.ekspor
 );
@@ -39,7 +39,7 @@ suratKeluarRouter.get('/:id/berkas', wajibIzin(IZIN.SURAT_KELUAR_BACA), controll
 suratKeluarRouter.post(
   '/',
   verifikasiCsrf,
-  izinkan(PERAN.ADMIN, PERAN.BIDANG),
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.BIDANG),
   wajibIzin(IZIN.SURAT_KELUAR_TULIS),
   validasi(skemaPayloadSuratKeluar),
   controller.tambah
@@ -47,7 +47,7 @@ suratKeluarRouter.post(
 suratKeluarRouter.put(
   '/:id',
   verifikasiCsrf,
-  izinkan(PERAN.ADMIN, PERAN.BIDANG),
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.BIDANG),
   wajibIzin(IZIN.SURAT_KELUAR_TULIS),
   validasi(skemaUbahSuratKeluar),
   controller.ubah
@@ -87,7 +87,7 @@ suratKeluarRouter.post(
 suratKeluarRouter.post(
   '/:id/scan',
   verifikasiCsrf,
-  izinkan(PERAN.ADMIN, PERAN.BIDANG),
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.BIDANG),
   wajibIzin(IZIN.SURAT_KELUAR_TULIS),
   batasiUnggah,
   unggahScan,

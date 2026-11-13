@@ -74,6 +74,7 @@ export const api = {
   get: (jalur) => request(jalur),
   post: (jalur, body = {}) => request(jalur, { method: 'POST', body }),
   put: (jalur, body = {}) => request(jalur, { method: 'PUT', body }),
+  hapus: (jalur) => request(jalur, { method: 'DELETE' }),
   unggah: (jalur, formData) => request(jalur, { method: 'POST', formData }),
   hapusToken: () => {
     state.csrf = '';
@@ -94,17 +95,19 @@ export const logout = async () => {
 export const sesi = () => api.get('/auth/session');
 
 const NAV = [
-  { href: 'dashboard.html', label: 'Dashboard', key: 'dashboard' },
-  { href: 'surat-masuk.html', label: 'Surat masuk', key: 'masuk' },
-  { href: 'surat-keluar.html', label: 'Surat keluar', key: 'keluar' },
-  { href: 'laporan.html', label: 'Laporan', key: 'laporan' },
-  { href: 'admin.html', label: 'Admin', key: 'admin', adminOnly: true }
+  { href: 'dashboard.html', label: 'Dashboard', key: 'dashboard', izin: 'dashboard.baca' },
+  { href: 'surat-masuk.html', label: 'Surat masuk', key: 'masuk', izin: 'surat_masuk.baca' },
+  { href: 'surat-keluar.html', label: 'Surat keluar', key: 'keluar', izin: 'surat_keluar.baca' },
+  { href: 'sk.html', label: 'SK', key: 'sk', izin: 'sk.lihat' },
+  { href: 'se.html', label: 'SE', key: 'se', izin: 'se.lihat' },
+  { href: 'laporan.html', label: 'Laporan', key: 'laporan', izin: 'laporan.baca' },
+  { href: 'admin.html', label: 'Admin', key: 'admin', izin: 'users.kelola' }
 ];
 
-const NAV_BIDANG = [{ href: 'surat-keluar.html', label: 'Surat keluar', key: 'keluar' }];
+export const punyaIzin = (profil, izin) => (profil?.izin || []).includes(izin);
 
 export const navUntuk = (profil) =>
-  profil.role === 'bidang' ? NAV_BIDANG : NAV.filter((item) => !item.adminOnly || profil.role === 'admin');
+  NAV.filter((item) => !item.izin || punyaIzin(profil, item.izin));
 
 export const wajibMasuk = async () => {
   try {
@@ -118,6 +121,15 @@ export const wajibMasuk = async () => {
 export const wajibPeran = async (...peran) => {
   const data = await wajibMasuk();
   if (!peran.includes(data.profile.role)) {
+    window.location.replace(data.profile.role === 'bidang' ? './surat-keluar.html' : './dashboard.html');
+    throw new ApiError('Akses dibatasi.', { status: 403 });
+  }
+  return data;
+};
+
+export const wajibIzin = async (...izin) => {
+  const data = await wajibMasuk();
+  if (!izin.every((butir) => punyaIzin(data.profile, butir))) {
     window.location.replace(data.profile.role === 'bidang' ? './surat-keluar.html' : './dashboard.html');
     throw new ApiError('Akses dibatasi.', { status: 403 });
   }

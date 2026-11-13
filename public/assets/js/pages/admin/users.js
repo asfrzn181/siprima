@@ -8,6 +8,12 @@ const pager = document.querySelector('#users-pager');
 const form = document.querySelector('#user-form');
 const error = document.querySelector('#user-error');
 const bidangSelect = form.elements.bidang;
+const LABEL_PERAN = {
+  admin: 'Admin',
+  operator: 'Operator/Staf',
+  pimpinan: 'Pimpinan/Viewer',
+  bidang: 'Bidang'
+};
 
 let halaman = 1;
 
@@ -47,12 +53,13 @@ const buka = (item, daftarBidangAktif) => {
 };
 
 export const muatPengguna = async (daftarBidangAktif) => {
-  pesanBaris(body, 6, 'Memuat…');
+  pesanBaris(body, 7, 'Memuat…');
   try {
     const hasil = await daftarPengguna(halaman);
     body.replaceChildren();
-    if (!hasil.items.length) pesanBaris(body, 6, 'Belum ada pengguna.');
-    hasil.items.forEach((item) => {
+    if (!hasil.items.length) pesanBaris(body, 7, 'Belum ada pengguna.');
+    const mulai = (halaman - 1) * (hasil.pagination.limit || 20);
+    hasil.items.forEach((item, index) => {
       const baris = document.createElement('tr');
       const status = document.createElement('td');
       status.append(badge(item.aktif ? 'Aktif' : 'Nonaktif', item.aktif ? 'success' : 'muted'));
@@ -64,9 +71,10 @@ export const muatPengguna = async (daftarBidangAktif) => {
       edit.addEventListener('click', () => buka(item, daftarBidangAktif));
       aksi.append(edit);
       baris.append(
+        selTeks(String(mulai + index + 1)),
         selTeks(item.nama),
         selTeks(item.email),
-        selTeks(item.role),
+        selTeks(LABEL_PERAN[item.role] || item.role),
         selTeks(item.bidang),
         status,
         aksi
@@ -78,7 +86,7 @@ export const muatPengguna = async (daftarBidangAktif) => {
       muatPengguna(daftarBidangAktif);
     });
   } catch (galat) {
-    pesanBaris(body, 6, galat.message || 'Gagal memuat pengguna.');
+    pesanBaris(body, 7, galat.message || 'Gagal memuat pengguna.');
   }
 };
 

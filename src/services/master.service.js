@@ -1,12 +1,17 @@
 import { AKSI_AUDIT, GOLONGAN } from '../constants/index.js';
 import { catatAudit } from '../repositories/audit.repository.js';
 import {
+  cariAsalTujuanByKode,
+  cariAsalTujuanByKodeAtauNama,
+  cariAsalTujuanById,
   cariBidangById,
   cariBidangByKode,
   cariNomor,
   cariNomorByKodeAtauNama,
+  daftarAsalTujuan,
   daftarBidang,
   daftarNomor,
+  simpanAsalTujuan,
   simpanBidang,
   simpanNomor,
   simpanNomorBatch
@@ -87,4 +92,35 @@ export const imporMasterNomor = async (rows, aktor) => {
     sesudah: { jumlah }
   });
   return { jumlah };
+};
+
+export const daftarMasterAsalTujuan = async ({ hanyaAktif = true } = {}) =>
+  (await daftarAsalTujuan({ hanyaAktif })).map((item) => serialisasi(item));
+
+export const daftarMasterAsalTujuanHalaman = async (pagination) => {
+  const semua = (await daftarAsalTujuan()).map((item) => serialisasi(item));
+  return potongHalaman(semua, pagination);
+};
+
+export const cariMasterAsalTujuanKode = async (kataKunci, maksimal) =>
+  (await cariAsalTujuanByKodeAtauNama(kataKunci, maksimal)).map((item) => serialisasi(item));
+
+export const simpanMasterAsalTujuan = async (id, data, aktor) => {
+  const lama = id ? await cariAsalTujuanById(Number(id)) : null;
+  if (id && !lama) throw galatTidakDitemukan('Data asal & tujuan tidak ditemukan.');
+  const bentrok = await cariAsalTujuanByKode(data.kode);
+  if (bentrok && String(bentrok.id) !== String(id || '')) {
+    throw new AppError(409, 'KODE_ASAL_TUJUAN_DIPAKAI', 'Kode asal & tujuan sudah dipakai.');
+  }
+  const hasil = await simpanAsalTujuan(id ? Number(id) : null, data);
+  await catatAudit({
+    uid: aktor.uid,
+    nama: aktor.nama,
+    aksi: AKSI_AUDIT.UBAH_MASTER_ASAL_TUJUAN,
+    koleksi: 'masterAsalTujuan',
+    docId: hasil.id,
+    sebelum: lama,
+    sesudah: hasil
+  });
+  return serialisasi(hasil);
 };

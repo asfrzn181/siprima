@@ -5,6 +5,10 @@ export const daftarPengguna = (page = 1) => api.get(`/users${bangunQuery({ page 
 export const buatPengguna = (data) => api.post('/users', data);
 export const ubahPengguna = (id, data) => api.put(`/users/${encodeURIComponent(id)}`, data);
 
+export const daftarPeran = () => api.get('/roles');
+export const ubahIzinPeran = (nama, izin) =>
+  api.put(`/roles/${encodeURIComponent(nama)}`, { izin });
+
 export const ambilPengaturan = () => api.get('/pengaturan');
 export const simpanPengaturan = (data) => api.put('/pengaturan', data);
 

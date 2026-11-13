@@ -56,7 +56,7 @@
         <table>
           <thead>
             <tr>
-              <th>Nomor</th><th>Tanggal</th><th>Tujuan</th><th>Hal</th><th>Pembuat</th><th>Sifat</th><th>Status</th><th></th>
+              <th>No. Urut</th><th>Nomor</th><th>Tanggal</th><th>Tujuan</th><th>Hal</th><th>Pembuat</th><th>Sifat</th><th>Status</th><th></th>
             </tr>
           </thead>
           <tbody id="list-body"></tbody>
@@ -89,13 +89,13 @@
         <label>Tanggal surat<input name="tglSurat" type="date" required></label>
         <label>Bidang pembuat<select name="bidangPembuat" required></select></label>
         <label>Tujuan<input name="tujuan" maxlength="200" required></label>
+        <label>Sifat<select name="sifat"><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
         <label class="wide">Hal<input name="hal" maxlength="200" required></label>
         <label class="wide">Nomor surat
           <input name="nomorGenerated" readonly placeholder="Klik Generate Nomor">
           <span class="form-actions"><button id="generate-number" class="button secondary" type="button">Generate Nomor</button></span>
         </label>
         <label class="wide">Isi ringkas<textarea name="isiRingkas" rows="4" maxlength="2000" required></textarea></label>
-        <label>Sifat<select name="sifat"><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
         <label class="wide">Metode tanda tangan
           <span class="check-grid">
             <label class="check-option"><input type="radio" name="tandaTangan" value="TTE" checked><span>TTE</span></label>

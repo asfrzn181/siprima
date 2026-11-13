@@ -13,3 +13,14 @@ export const ambilNomor = (id) => api.get(`/master/nomor/${encodeURIComponent(id
 export const simpanNomor = (id, data) =>
   id ? api.put(`/master/nomor/${encodeURIComponent(id)}`, data) : api.post('/master/nomor', data);
 export const imporNomor = (rows) => api.post('/master/nomor/impor', { rows });
+
+export const daftarAsalTujuan = (semua = false) =>
+  api.get(`/master/asal-tujuan${semua ? '?semua=1' : ''}`);
+export const halamanAsalTujuan = (page = 1) =>
+  api.get(`/master/asal-tujuan/halaman${bangunQuery({ page })}`);
+export const cariAsalTujuan = (q, limit = 5) =>
+  api.get(`/master/asal-tujuan/cari${bangunQuery({ q, limit })}`);
+export const simpanAsalTujuan = (id, data) =>
+  id
+    ? api.put(`/master/asal-tujuan/${encodeURIComponent(id)}`, data)
+    : api.post('/master/asal-tujuan', data);

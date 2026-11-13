@@ -51,11 +51,12 @@ Dokumen ini melengkapi `docs/audit-firebase.md` dan `db/ERD.md`. Nama field Fire
 | document ID | `id` BIGINT |
 | `nama` | `nama` |
 | `golongan` | `golongan` ENUM |
-| `format` | `format` |
 | `kode` | `kode` |
 | `resetTahunan` | `reset_tahunan` |
 | `urutanPerBidang` | `urutan_per_bidang` |
 | `aktif` | `aktif` |
+
+> `format` dihapus (migrasi `003_fitur_surat.sql`). Format nomor diturunkan dari `golongan` di aplikasi (`defaultFormatGolongan`), sehingga pengguna hanya mengisi `kode` + `nama`. `reset_tahunan` dan `urutan_per_bidang` tetap ada sebagai default internal, tidak ditampilkan di UI.
 
 ### 2.4 `pengaturan/umum` menjadi `pengaturan` (satu baris, `id = 1`)
 
@@ -76,6 +77,7 @@ Dokumen ini melengkapi `docs/audit-firebase.md` dan `db/ERD.md`. Nama field Fire
 | `tglSurat` | `tgl_surat` | |
 | `noSurat` | `no_surat` | index prefix |
 | `asal` | `asal` | index prefix |
+| `tujuan` | `tujuan` | index prefix; saran dari `master_asal_tujuan`, disimpan sebagai teks |
 | `hal` | `hal` | index prefix |
 | `isiRingkas` | `isi_ringkas` | TEXT |
 | `sifat` | `sifat` ENUM | |
@@ -229,6 +231,33 @@ Firestore memakai dokumen terpisah untuk menjaga keunikan `full_number`. Di MySQ
 | `sesudah` | `sesudah` JSON |
 | `waktu` | `waktu` |
 
+### 2.15 `masterAsalTujuan/{id}` menjadi `master_asal_tujuan`
+
+| Firestore | MySQL |
+|---|---|
+| document ID | `id` BIGINT |
+| `kode` | `kode` (UNIQUE) |
+| `nama` | `nama` |
+| `aktif` | `aktif` |
+
+> Baru: master saran pengirim/tujuan. Hanya menyimpan `kode` + `nama`; form surat masuk memakainya lewat autocomplete, nilai tersimpan tetap teks bebas.
+
+### 2.16 SK/SE menjadi `surat_khusus`
+
+Baru: Surat Keputusan (SK) dan Surat Edaran (SE) dikelola sebagai menu terpisah, disimpan pada satu tabel `surat_khusus`.
+
+| Kolom MySQL | Keterangan |
+|---|---|
+| `id` | BIGINT |
+| `jenis` | ENUM `SK` / `SE` |
+| `tentang` | isi/perihal SK/SE |
+| `nomor` | nomor SK/SE |
+| `tanggal` | `DATETIME(3)` |
+| `keterangan` | catatan opsional |
+| `dibuat_oleh_id` | FK ke `users.id` (`SET NULL`) |
+| `dibuat_oleh_nama` | snapshot |
+| `dibuat_pada`, `diubah_pada` | waktu |
+
 ## 3. Query Firestore yang diterjemahkan
 
 | Kebutuhan | Firestore | MySQL |
@@ -241,6 +270,7 @@ Firestore memakai dokumen terpisah untuk menjaga keunikan `full_number`. Di MySQ
 | Verifikasi urutan | `where(tahun [,scope_key])` | `WHERE tahun = ? [AND scope_key = ?]` |
 | Cari nomor lengkap | `where(full_number == x) limit 1` | `WHERE full_number = ? LIMIT 1` |
 | Autocomplete master | prefix `kode`/`nama` | `WHERE kode LIKE ? OR nama LIKE ?` |
+| Daftar SK/SE | `where(jenis) orderBy(tanggal desc)` | `WHERE jenis = ? ORDER BY tanggal DESC LIMIT ?` + index `(jenis, tanggal)` |
 | Audit log | `orderBy(waktu desc) limit 200` | `ORDER BY waktu DESC LIMIT ?` |
 
 ## 4. Perubahan perilaku yang disengaja
@@ -250,3 +280,6 @@ Firestore memakai dokumen terpisah untuk menjaga keunikan `full_number`. Di MySQ
 3. **Tidak ada realtime**: tidak ada `onSnapshot`; frontend tetap memakai refetch manual. SSE tidak diperlukan.
 4. **Sesi**: bukan JWT Firebase, melainkan cookie sesi opaque dengan hash SHA-256 di tabel `sessions`.
 5. **Reset password**: endpoint baru; token dikembalikan hanya bila `AUTH_EXPOSE_RESET_TOKEN=true` (untuk pengembangan).
+6. **Format nomor tidak disimpan**: `master_nomor.format` dihapus; format diturunkan dari `golongan` (`defaultFormatGolongan`) sehingga tidak ada format bebas per baris.
+7. **SK/SE jadi entitas sendiri**: tidak ada koleksi Firestore padanannya; SK dan SE disimpan di `surat_khusus` dengan pemisahan `jenis` (bukan dua tabel).
+8. **Master asal/tujuan tanpa FK**: `surat_masuk.asal`/`tujuan` tetap teks bebas; `master_asal_tujuan` hanya sumber saran autocomplete.

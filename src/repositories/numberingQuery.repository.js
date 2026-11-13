@@ -3,8 +3,8 @@ import { cariBidangByKode, cariNomor } from './master.repository.js';
 import { ambilPengaturan } from './settings.repository.js';
 import { petaNomor } from './numbering.repository.js';
 import {
+  defaultFormatGolongan,
   monthRoman,
-  normalizeFormatGolongan,
   normalizeGolongan,
   renderNomor,
   scopeKeyFor
@@ -49,7 +49,7 @@ export const pratinjauNomor = async ({ jenisId, bidangKode, tanggal }) => {
   );
   const sebelumnya = counter ? Number(counter.last_seq || 0) : 0;
   const berikutnya = sebelumnya + 1;
-  const format = normalizeFormatGolongan(master.format, master.golongan);
+  const format = defaultFormatGolongan(master.golongan);
   return {
     noSurat: renderNomor(format, {
       KODE: master.kode,
@@ -110,7 +110,7 @@ export const verifikasiUrutan = async (tahun, scopeKey = null) => {
 
     const master = masters.get(row.jenisId);
     const golongan = normalizeGolongan(row.golongan || master?.golongan);
-    const format = master?.format || normalizeFormatGolongan('', golongan);
+    const format = defaultFormatGolongan(golongan);
     const expected = renderNomor(format, {
       KODE: row.klasifikasi,
       GOLONGAN: golongan,

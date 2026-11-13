@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { GOLONGAN, SCOPE_NOMOR } from '../constants/index.js';
-import { normalizeFormatGolongan, normalizeGolongan } from '../utils/nomor.js';
+import { normalizeGolongan } from '../utils/nomor.js';
 
 export const skemaMasterBidang = z.object({
   kode: z.string().trim().min(1, 'Kode wajib diisi.').max(40),
@@ -10,19 +10,23 @@ export const skemaMasterBidang = z.object({
 
 export const skemaMasterNomor = z
   .object({
-    nama: z.string().trim().min(1, 'Nama wajib diisi.').max(120),
-    golongan: z.enum(GOLONGAN).default('LAINNYA'),
-    format: z.string().trim().min(1, 'Format wajib diisi.').max(180),
     kode: z.string().trim().min(1, 'Kode klasifikasi wajib diisi.').max(40),
+    nama: z.string().trim().min(1, 'Nama klasifikasi wajib diisi.').max(120),
+    golongan: z.enum(GOLONGAN).default('LAINNYA'),
     resetTahunan: z.boolean().default(true),
     urutanPerBidang: z.boolean().default(false),
     aktif: z.boolean().default(true)
   })
   .transform((data) => ({
     ...data,
-    golongan: normalizeGolongan(data.golongan),
-    format: normalizeFormatGolongan(data.format, data.golongan)
+    golongan: normalizeGolongan(data.golongan)
   }));
+
+export const skemaMasterAsalTujuan = z.object({
+  kode: z.string().trim().min(1, 'Kode wajib diisi.').max(40),
+  nama: z.string().trim().min(1, 'Nama tujuan wajib diisi.').max(160),
+  aktif: z.boolean().default(true)
+});
 
 export const skemaBatchMasterNomor = z.object({
   rows: z

@@ -3,7 +3,7 @@ import { SCOPE_NOMOR, STATUS_NOMOR } from '../constants/index.js';
 import { AppError } from '../utils/AppError.js';
 import { bagianJakarta, keTanggal } from '../utils/tanggal.js';
 import {
-  normalizeFormatGolongan,
+  defaultFormatGolongan,
   normalizeGolongan,
   monthRoman,
   renderNomor,
@@ -69,7 +69,7 @@ const ambilMaster = async (jenisId) => {
   return {
     ...master,
     golongan,
-    format: normalizeFormatGolongan(master.format, golongan)
+    format: defaultFormatGolongan(golongan)
   };
 };
 

@@ -1,12 +1,16 @@
 import { bacaPagination } from '../utils/pagination.js';
 import {
+  cariMasterAsalTujuanKode,
   cariMasterNomor,
   cariMasterNomorKode,
+  daftarMasterAsalTujuan,
+  daftarMasterAsalTujuanHalaman,
   daftarMasterBidang,
   daftarMasterBidangHalaman,
   daftarMasterNomor,
   daftarSemuaMasterNomor,
   imporMasterNomor,
+  simpanMasterAsalTujuan,
   simpanMasterBidang,
   simpanMasterNomor
 } from '../services/master.service.js';
@@ -49,4 +53,21 @@ export const imporNomor = async (req, res) =>
     status: 201,
     message: 'Master nomor berhasil diimpor.',
     data: await imporMasterNomor(req.body.rows, req.profile)
+  });
+
+export const daftarAsalTujuan = async (req, res) =>
+  kirimSukses(res, {
+    data: await daftarMasterAsalTujuan({ hanyaAktif: req.query.semua !== '1' })
+  });
+
+export const daftarAsalTujuanHalaman = async (req, res) =>
+  kirimSukses(res, { data: await daftarMasterAsalTujuanHalaman(bacaPagination(req.query)) });
+
+export const cariAsalTujuan = async (req, res) =>
+  kirimSukses(res, { data: await cariMasterAsalTujuanKode(req.query.q, req.query.limit) });
+
+export const simpanAsalTujuan = async (req, res) =>
+  kirimSukses(res, {
+    message: 'Master asal & tujuan tersimpan.',
+    data: await simpanMasterAsalTujuan(req.params.id, req.body, req.profile)
   });

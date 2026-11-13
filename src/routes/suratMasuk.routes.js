@@ -26,7 +26,7 @@ suratMasukRouter.get(
 );
 suratMasukRouter.get(
   '/export',
-  wajibIzin(IZIN.SURAT_MASUK_BACA),
+  wajibIzin(IZIN.SURAT_MASUK_CETAK),
   validasi(skemaFilterSuratMasuk, 'query'),
   controller.ekspor
 );
@@ -36,7 +36,7 @@ suratMasukRouter.get('/:id/berkas', wajibIzin(IZIN.SURAT_MASUK_BACA), controller
 suratMasukRouter.post(
   '/',
   verifikasiCsrf,
-  izinkan(PERAN.ADMIN),
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR),
   wajibIzin(IZIN.SURAT_MASUK_TULIS),
   validasi(skemaSuratMasuk),
   controller.tambah
@@ -44,7 +44,7 @@ suratMasukRouter.post(
 suratMasukRouter.put(
   '/:id',
   verifikasiCsrf,
-  izinkan(PERAN.ADMIN, PERAN.PIMPINAN),
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.PIMPINAN),
   wajibIzin(IZIN.SURAT_MASUK_TULIS),
   validasi(skemaSuratMasuk),
   controller.ubah
@@ -68,7 +68,7 @@ suratMasukRouter.post(
 suratMasukRouter.post(
   '/:id/scan',
   verifikasiCsrf,
-  izinkan(PERAN.ADMIN),
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR),
   wajibIzin(IZIN.SURAT_MASUK_TULIS),
   batasiUnggah,
   unggahScan,

@@ -10,6 +10,7 @@ const PETA_WHERE = {
   noSurat: 'surat_masuk.no_surat',
   hal: 'surat_masuk.hal',
   asal: 'surat_masuk.asal',
+  tujuan: 'surat_masuk.tujuan',
   aksesBidang: {
     tabel: 'surat_masuk_akses_bidang',
     fk: 'surat_masuk_id',
@@ -23,7 +24,8 @@ const PETA_URUT = {
   tglTerima: 'surat_masuk.tgl_terima',
   noSurat: 'surat_masuk.no_surat',
   hal: 'surat_masuk.hal',
-  asal: 'surat_masuk.asal'
+  asal: 'surat_masuk.asal',
+  tujuan: 'surat_masuk.tujuan'
 };
 
 const KOLOM = {
@@ -31,6 +33,7 @@ const KOLOM = {
   tglSurat: 'tgl_surat',
   noSurat: 'no_surat',
   asal: 'asal',
+  tujuan: 'tujuan',
   hal: 'hal',
   isiRingkas: 'isi_ringkas',
   sifat: 'sifat',
@@ -48,6 +51,7 @@ const petaMasuk = (row) => ({
   tglSurat: row.tgl_surat,
   noSurat: row.no_surat,
   asal: row.asal,
+  tujuan: row.tujuan || '',
   hal: row.hal,
   isiRingkas: row.isi_ringkas,
   sifat: row.sifat,
@@ -181,15 +185,16 @@ export const buatSuratMasuk = async (payload, { uid, nama }) => {
 
     const [hasil] = await koneksi.query(
       `INSERT INTO surat_masuk
-         (no_agenda, tgl_terima, tgl_surat, no_surat, asal, hal, isi_ringkas, sifat,
+         (no_agenda, tgl_terima, tgl_surat, no_surat, asal, tujuan, hal, isi_ringkas, sifat,
           file_id, file_url, status, dibuat_oleh_id, dibuat_oleh_nama, dibuat_pada)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Baru', ?, ?, NOW(3))`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Baru', ?, ?, NOW(3))`,
       [
         `${tahun}/${String(berikutnya).padStart(3, '0')}`,
         tanggalTerima,
         payload.tglSurat,
         payload.noSurat,
         payload.asal,
+        payload.tujuan || '',
         payload.hal,
         payload.isiRingkas,
         payload.sifat,

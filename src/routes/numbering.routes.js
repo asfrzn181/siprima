@@ -29,7 +29,7 @@ numberingRouter.get(
 numberingRouter.post(
   '/pratinjau',
   verifikasiCsrf,
-  izinkan(PERAN.ADMIN, PERAN.BIDANG),
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.BIDANG),
   wajibIzin(IZIN.SURAT_KELUAR_TULIS),
   validasi(skemaReservasi),
   controller.pratinjauNomor
@@ -37,7 +37,7 @@ numberingRouter.post(
 numberingRouter.post(
   '/reservasi',
   verifikasiCsrf,
-  izinkan(PERAN.ADMIN, PERAN.BIDANG),
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.BIDANG),
   wajibIzin(IZIN.SURAT_KELUAR_TULIS),
   validasi(skemaReservasi),
   controller.reservasiNomor

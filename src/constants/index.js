@@ -17,6 +17,7 @@ export const KOLEKSI = Object.freeze({
 
 export const PERAN = Object.freeze({
   ADMIN: 'admin',
+  OPERATOR: 'operator',
   PIMPINAN: 'pimpinan',
   BIDANG: 'bidang'
 });
@@ -24,14 +25,26 @@ export const PERAN = Object.freeze({
 export const IZIN = Object.freeze({
   SURAT_MASUK_BACA: 'surat_masuk.baca',
   SURAT_MASUK_TULIS: 'surat_masuk.tulis',
+  SURAT_MASUK_HAPUS: 'surat_masuk.hapus',
+  SURAT_MASUK_CETAK: 'surat_masuk.cetak',
   SURAT_MASUK_DISPOSISI: 'surat_masuk.disposisi',
   SURAT_MASUK_TINDAK_LANJUT: 'surat_masuk.tindak_lanjut',
   SURAT_KELUAR_BACA: 'surat_keluar.baca',
   SURAT_KELUAR_TULIS: 'surat_keluar.tulis',
+  SURAT_KELUAR_HAPUS: 'surat_keluar.hapus',
+  SURAT_KELUAR_CETAK: 'surat_keluar.cetak',
   SURAT_KELUAR_BATAL: 'surat_keluar.batal',
   SURAT_KELUAR_KIRIM: 'surat_keluar.kirim',
   SURAT_KELUAR_KOREKSI: 'surat_keluar.koreksi',
   SURAT_KELUAR_PAKAI_ULANG: 'surat_keluar.pakai_ulang',
+  SK_BACA: 'sk.lihat',
+  SK_TULIS: 'sk.tulis',
+  SK_HAPUS: 'sk.hapus',
+  SK_CETAK: 'sk.cetak',
+  SE_BACA: 'se.lihat',
+  SE_TULIS: 'se.tulis',
+  SE_HAPUS: 'se.hapus',
+  SE_CETAK: 'se.cetak',
   DASHBOARD_BACA: 'dashboard.baca',
   LAPORAN_BACA: 'laporan.baca',
   USERS_KELOLA: 'users.kelola',
@@ -44,16 +57,28 @@ export const IZIN = Object.freeze({
 });
 
 export const IZIN_LABEL = Object.freeze({
-  [IZIN.SURAT_MASUK_BACA]: 'Baca surat masuk',
+  [IZIN.SURAT_MASUK_BACA]: 'Lihat surat masuk',
   [IZIN.SURAT_MASUK_TULIS]: 'Tambah/ubah surat masuk',
+  [IZIN.SURAT_MASUK_HAPUS]: 'Hapus surat masuk',
+  [IZIN.SURAT_MASUK_CETAK]: 'Cetak/ekspor surat masuk',
   [IZIN.SURAT_MASUK_DISPOSISI]: 'Catat disposisi',
   [IZIN.SURAT_MASUK_TINDAK_LANJUT]: 'Isi tindak lanjut',
-  [IZIN.SURAT_KELUAR_BACA]: 'Baca surat keluar',
-  [IZIN.SURAT_KELUAR_TULIS]: 'Buat/ubah surat keluar',
+  [IZIN.SURAT_KELUAR_BACA]: 'Lihat surat keluar',
+  [IZIN.SURAT_KELUAR_TULIS]: 'Tambah/ubah surat keluar',
+  [IZIN.SURAT_KELUAR_HAPUS]: 'Hapus surat keluar',
+  [IZIN.SURAT_KELUAR_CETAK]: 'Cetak/ekspor surat keluar',
   [IZIN.SURAT_KELUAR_BATAL]: 'Batalkan surat keluar',
   [IZIN.SURAT_KELUAR_KIRIM]: 'Ubah status pengiriman',
   [IZIN.SURAT_KELUAR_KOREKSI]: 'Koreksi nomor surat keluar',
   [IZIN.SURAT_KELUAR_PAKAI_ULANG]: 'Pakai ulang nomor VOID',
+  [IZIN.SK_BACA]: 'Lihat SK',
+  [IZIN.SK_TULIS]: 'Tambah/ubah SK',
+  [IZIN.SK_HAPUS]: 'Hapus SK',
+  [IZIN.SK_CETAK]: 'Cetak/ekspor SK',
+  [IZIN.SE_BACA]: 'Lihat SE',
+  [IZIN.SE_TULIS]: 'Tambah/ubah SE',
+  [IZIN.SE_HAPUS]: 'Hapus SE',
+  [IZIN.SE_CETAK]: 'Cetak/ekspor SE',
   [IZIN.DASHBOARD_BACA]: 'Lihat dashboard',
   [IZIN.LAPORAN_BACA]: 'Lihat laporan',
   [IZIN.USERS_KELOLA]: 'Kelola pengguna',
@@ -67,17 +92,37 @@ export const IZIN_LABEL = Object.freeze({
 
 export const IZIN_PER_PERAN = Object.freeze({
   admin: Object.freeze(Object.values(IZIN)),
-  pimpinan: Object.freeze([
+  operator: Object.freeze([
     IZIN.SURAT_MASUK_BACA,
     IZIN.SURAT_MASUK_TULIS,
-    IZIN.SURAT_MASUK_DISPOSISI,
+    IZIN.SURAT_MASUK_CETAK,
     IZIN.SURAT_KELUAR_BACA,
-    IZIN.SURAT_KELUAR_BATAL,
-    IZIN.SURAT_KELUAR_KOREKSI,
+    IZIN.SURAT_KELUAR_TULIS,
+    IZIN.SURAT_KELUAR_CETAK,
+    IZIN.SK_BACA,
+    IZIN.SK_TULIS,
+    IZIN.SK_CETAK,
+    IZIN.SE_BACA,
+    IZIN.SE_TULIS,
+    IZIN.SE_CETAK,
+    IZIN.DASHBOARD_BACA,
+    IZIN.LAPORAN_BACA,
+    IZIN.MASTER_BACA
+  ]),
+  pimpinan: Object.freeze([
+    IZIN.SURAT_MASUK_BACA,
+    IZIN.SURAT_MASUK_CETAK,
+    IZIN.SURAT_KELUAR_BACA,
+    IZIN.SURAT_KELUAR_CETAK,
+    IZIN.SK_BACA,
+    IZIN.SK_CETAK,
+    IZIN.SE_BACA,
+    IZIN.SE_CETAK,
     IZIN.DASHBOARD_BACA,
     IZIN.LAPORAN_BACA,
     IZIN.MASTER_BACA,
     IZIN.PENGATURAN_BACA,
+    IZIN.AUDIT_BACA,
     IZIN.NOMOR_VERIFIKASI
   ]),
   bidang: Object.freeze([
@@ -85,6 +130,7 @@ export const IZIN_PER_PERAN = Object.freeze({
     IZIN.SURAT_MASUK_TINDAK_LANJUT,
     IZIN.SURAT_KELUAR_BACA,
     IZIN.SURAT_KELUAR_TULIS,
+    IZIN.SURAT_KELUAR_CETAK,
     IZIN.MASTER_BACA,
     IZIN.PENGATURAN_BACA
   ])
@@ -139,10 +185,18 @@ export const AKSI_AUDIT = Object.freeze({
   BATAL_SURAT_KELUAR: 'batalkan surat keluar',
   KIRIM_SURAT_KELUAR: 'ubah status pengiriman',
   KOREKSI_SURAT_KELUAR: 'koreksi nomor surat keluar',
+  TAMBAH_SK: 'tambah SK',
+  UBAH_SK: 'ubah SK',
+  HAPUS_SK: 'hapus SK',
+  TAMBAH_SE: 'tambah SE',
+  UBAH_SE: 'ubah SE',
+  HAPUS_SE: 'hapus SE',
   TAMBAH_USER: 'tambah pengguna',
   UBAH_USER: 'ubah pengguna',
   UBAH_MASTER_BIDANG: 'ubah master bidang',
   UBAH_MASTER_NOMOR: 'ubah master nomor',
+  UBAH_MASTER_ASAL_TUJUAN: 'ubah master asal & tujuan',
+  UBAH_PERAN: 'ubah hak akses peran',
   UBAH_PENGATURAN: 'ubah pengaturan'
 });
 

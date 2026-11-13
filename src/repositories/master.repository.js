@@ -1,4 +1,4 @@
-import { query, one, withTransaction } from '../config/db.js';
+import { one, query, withTransaction } from '../config/db.js';
 
 const petaBidang = (row) => ({
   id: row.id,
@@ -11,10 +11,16 @@ const petaNomor = (row) => ({
   id: row.id,
   nama: row.nama,
   golongan: row.golongan,
-  format: row.format,
   kode: row.kode,
   resetTahunan: row.reset_tahunan === 1,
   urutanPerBidang: row.urutan_per_bidang === 1,
+  aktif: row.aktif === 1
+});
+
+const petaAsalTujuan = (row) => ({
+  id: row.id,
+  kode: row.kode,
+  nama: row.nama,
   aktif: row.aktif === 1
 });
 
@@ -68,7 +74,7 @@ export const cariNomor = async (id) => {
 
 export const cariNomorByKodeAtauNama = async (kataKunci, maksimal = 5) => {
   const kunci = String(kataKunci || '').trim();
-  if (kunci.length < 3) return [];
+  if (kunci.length < 2) return [];
   const pola = `%${kunci}%`;
   const rows = await query(
     `SELECT * FROM master_nomor
@@ -83,7 +89,6 @@ export const simpanNomor = async (id, data) => {
   const nilai = [
     data.nama,
     data.golongan,
-    data.format,
     data.kode,
     data.resetTahunan ? 1 : 0,
     data.urutanPerBidang ? 1 : 0,
@@ -92,7 +97,7 @@ export const simpanNomor = async (id, data) => {
   if (id) {
     await query(
       `UPDATE master_nomor
-          SET nama = ?, golongan = ?, format = ?, kode = ?, reset_tahunan = ?,
+          SET nama = ?, golongan = ?, kode = ?, reset_tahunan = ?,
               urutan_per_bidang = ?, aktif = ?
         WHERE id = ?`,
       [...nilai, id]
@@ -101,8 +106,8 @@ export const simpanNomor = async (id, data) => {
   }
   const hasil = await query(
     `INSERT INTO master_nomor
-       (nama, golongan, format, kode, reset_tahunan, urutan_per_bidang, aktif)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       (nama, golongan, kode, reset_tahunan, urutan_per_bidang, aktif)
+     VALUES (?, ?, ?, ?, ?, ?)`,
     nilai
   );
   return cariNomor(hasil.insertId);
@@ -115,7 +120,6 @@ export const simpanNomorBatch = async (baris) => {
       const nilai = [
         data.nama,
         data.golongan,
-        data.format,
         data.kode,
         data.resetTahunan ? 1 : 0,
         data.urutanPerBidang ? 1 : 0,
@@ -125,29 +129,26 @@ export const simpanNomorBatch = async (baris) => {
       if (Number.isInteger(idNumerik) && idNumerik > 0) {
         await koneksi.query(
           `UPDATE master_nomor
-              SET nama = ?, golongan = ?, format = ?, kode = ?, reset_tahunan = ?,
+              SET nama = ?, golongan = ?, kode = ?, reset_tahunan = ?,
                   urutan_per_bidang = ?, aktif = ?
             WHERE id = ?`,
           [...nilai, idNumerik]
         );
         continue;
       }
-      const [ada] = await koneksi.query(
-        'SELECT id FROM master_nomor WHERE kode = ? AND golongan = ? LIMIT 1',
-        [data.kode, data.golongan]
-      );
+      const [ada] = await koneksi.query('SELECT id FROM master_nomor WHERE kode = ? LIMIT 1', [data.kode]);
       if (ada.length) {
         await koneksi.query(
           `UPDATE master_nomor
-              SET nama = ?, format = ?, reset_tahunan = ?, urutan_per_bidang = ?, aktif = ?
+              SET nama = ?, golongan = ?, reset_tahunan = ?, urutan_per_bidang = ?, aktif = ?
             WHERE id = ?`,
-          [data.nama, data.format, data.resetTahunan ? 1 : 0, data.urutanPerBidang ? 1 : 0, data.aktif ? 1 : 0, ada[0].id]
+          [data.nama, data.golongan, data.resetTahunan ? 1 : 0, data.urutanPerBidang ? 1 : 0, data.aktif ? 1 : 0, ada[0].id]
         );
       } else {
         await koneksi.query(
           `INSERT INTO master_nomor
-             (nama, golongan, format, kode, reset_tahunan, urutan_per_bidang, aktif)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+             (nama, golongan, kode, reset_tahunan, urutan_per_bidang, aktif)
+           VALUES (?, ?, ?, ?, ?, ?)`,
           nilai
         );
       }
@@ -157,3 +158,51 @@ export const simpanNomorBatch = async (baris) => {
 };
 
 export const hapusNomor = (id) => query('DELETE FROM master_nomor WHERE id = ?', [id]);
+
+export const daftarAsalTujuan = async ({ hanyaAktif = false } = {}) => {
+  const rows = await query(
+    `SELECT id, kode, nama, aktif FROM master_asal_tujuan
+     ${hanyaAktif ? 'WHERE aktif = 1' : ''} ORDER BY nama ASC`
+  );
+  return rows.map(petaAsalTujuan);
+};
+
+export const cariAsalTujuanById = async (id) => {
+  const row = await one('SELECT id, kode, nama, aktif FROM master_asal_tujuan WHERE id = ?', [id]);
+  return row ? petaAsalTujuan(row) : null;
+};
+
+export const cariAsalTujuanByKode = async (kode) => {
+  const row = await one('SELECT id, kode, nama, aktif FROM master_asal_tujuan WHERE kode = ? LIMIT 1', [
+    String(kode || '').trim()
+  ]);
+  return row ? petaAsalTujuan(row) : null;
+};
+
+export const cariAsalTujuanByKodeAtauNama = async (kataKunci, maksimal = 5) => {
+  const kunci = String(kataKunci || '').trim();
+  if (kunci.length < 2) return [];
+  const pola = `%${kunci}%`;
+  const rows = await query(
+    `SELECT id, kode, nama, aktif FROM master_asal_tujuan
+      WHERE aktif = 1 AND (kode LIKE ? OR nama LIKE ?)
+      ORDER BY nama ASC LIMIT ?`,
+    [pola, pola, Number(maksimal) || 5]
+  );
+  return rows.map(petaAsalTujuan);
+};
+
+export const simpanAsalTujuan = async (id, data) => {
+  const nilai = [data.kode, data.nama, data.aktif ? 1 : 0];
+  if (id) {
+    await query('UPDATE master_asal_tujuan SET kode = ?, nama = ?, aktif = ? WHERE id = ?', [...nilai, id]);
+    return cariAsalTujuanById(id);
+  }
+  const hasil = await query(
+    `INSERT INTO master_asal_tujuan (kode, nama, aktif) VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE nama = VALUES(nama), aktif = VALUES(aktif)`,
+    nilai
+  );
+  if (hasil.insertId) return cariAsalTujuanById(hasil.insertId);
+  return cariAsalTujuanByKode(data.kode);
+};

@@ -1,3 +1,4 @@
+import { punyaIzin } from '../api/client.js';
 import { cariNomor, daftarNomor } from '../api/master.api.js';
 import {
   cariNomorLengkap,
@@ -62,9 +63,13 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
   const tombolUlang = document.querySelector('#reuse');
   const unduh = document.querySelector('#download');
   const tautan = document.querySelector('#file-link');
-  const admin = sesi.profile.role === 'admin';
-  const pengelola = ['admin', 'pimpinan'].includes(sesi.profile.role);
-  const bolehBuat = ['admin', 'bidang'].includes(sesi.profile.role);
+  const bidangSaja = sesi.profile.role === 'bidang';
+  const bolehBuat = punyaIzin(sesi.profile, 'surat_keluar.tulis');
+  const bolehBatal = punyaIzin(sesi.profile, 'surat_keluar.batal');
+  const bolehKoreksi = punyaIzin(sesi.profile, 'surat_keluar.koreksi');
+  const bolehUlang = punyaIzin(sesi.profile, 'surat_keluar.pakai_ulang');
+  const bolehKirim = punyaIzin(sesi.profile, 'surat_keluar.kirim');
+  const bolehAturAkses = bolehBuat && !bidangSaja;
   const selectJenis = form.elements.jenisId;
   const inputCari = form.elements.nomorCari;
   let masters = [];
@@ -76,42 +81,42 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
 
   const isiBidang = (terpilih) => {
     form.elements.bidangPembuat.replaceChildren();
-    const daftar = bidang.filter((item) => admin || item.kode === sesi.profile.bidang);
+    const daftar = bidang.filter((item) => !bidangSaja || item.kode === sesi.profile.bidang);
     daftar.forEach((item) => {
       const opsi = new Option(`${item.nama} (${item.kode})`, item.kode);
       opsi.selected = item.kode === terpilih;
       form.elements.bidangPembuat.append(opsi);
     });
-    form.elements.bidangPembuat.disabled = sesi.profile.role === 'bidang';
+    form.elements.bidangPembuat.disabled = bidangSaja;
   };
 
   const aturKunci = (bacaSaja, item) => {
     const milikSendiri = !item || item.bidangPembuat === sesi.profile.bidang;
     form.querySelectorAll('input, select, textarea').forEach((field) => {
       const khususBidang =
-        sesi.profile.role === 'bidang' &&
+        bidangSaja &&
         ['jenisId', 'nomorCari', 'tglSurat', 'bidangPembuat', 'sifat', 'nomorGenerated'].includes(field.name);
-      field.disabled = bacaSaja || khususBidang || (field.name === 'scan' && !admin);
+      field.disabled = bacaSaja || khususBidang || (field.name === 'scan' && !bolehBuat);
     });
     document.querySelectorAll('input[name="aksesBidang"], input[name="tandaTangan"]').forEach((input) => {
-      input.disabled = bacaSaja || !admin;
+      input.disabled = bacaSaja || !bolehAturAkses;
     });
     simpan.hidden = bacaSaja || !bolehBuat || !milikSendiri;
     generate.hidden = Boolean(item) || !bolehBuat;
-    document.querySelector('#file-label').hidden = !admin;
-    tombolBatal.hidden = !item || !pengelola;
-    tombolKoreksi.hidden = !item || !pengelola;
-    tombolUlang.hidden = !item || !admin;
+    document.querySelector('#file-label').hidden = !bolehBuat;
+    tombolBatal.hidden = !item || !bolehBatal;
+    tombolKoreksi.hidden = !item || !bolehKoreksi;
+    tombolUlang.hidden = !item || !bolehUlang;
     unduh.hidden = !item?.fileId;
     unduh.dataset.id = item?.id || '';
     tautan.hidden = !item?.fileUrl;
     tautan.href = item?.fileUrl || '#';
-    form.elements.dikirimKeLuar.disabled = !admin;
+    form.elements.dikirimKeLuar.disabled = !bolehKirim;
   };
 
   const cekNomorVoid = async (item) => {
     tombolUlang.hidden = true;
-    if (!item || !admin || !item.noSurat) return;
+    if (!item || !bolehUlang || !item.noSurat) return;
     try {
       const register = await cariNomorLengkap(item.noSurat);
       tombolUlang.hidden = !register || register.status !== 'VOID';
@@ -158,7 +163,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     document.querySelector('#access').hidden = form.elements.sifat.value !== 'rahasia';
 
     const bacaSaja =
-      Boolean(item) && sesi.profile.role === 'bidang' && item.bidangPembuat !== sesi.profile.bidang;
+      Boolean(item) && (!bolehBuat || (bidangSaja && item.bidangPembuat !== sesi.profile.bidang));
     aturKunci(bacaSaja, item);
     await cekNomorVoid(item);
     panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -276,7 +281,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
           aksesBidang: data.aksesBidang,
           fileUrl: data.fileUrl
         });
-        if (admin) await kirimSuratKeluar(id, form.elements.dikirimKeLuar.checked);
+        if (bolehKirim) await kirimSuratKeluar(id, form.elements.dikirimKeLuar.checked);
       } else {
         tersimpan = await tambahSuratKeluar(data);
       }

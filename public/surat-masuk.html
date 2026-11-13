@@ -52,10 +52,12 @@
         <table class="card-table">
           <thead>
             <tr>
+              <th scope="col">No. Urut</th>
               <th scope="col">Agenda</th>
               <th scope="col">Tanggal</th>
               <th scope="col">Nomor surat</th>
               <th scope="col">Asal</th>
+              <th scope="col">Tujuan</th>
               <th scope="col">Perihal</th>
               <th scope="col">Sifat</th>
               <th scope="col">Status</th>
@@ -86,10 +88,11 @@
           <label>Tanggal terima<input name="tglTerima" type="date" required></label>
           <label>Tanggal surat<input name="tglSurat" type="date" required></label>
           <label>Nomor surat<input name="noSurat" maxlength="120" placeholder="Kode atau nama klasifikasi" required><span class="field-hint">Ketik kode klasifikasi untuk memilih dari master.</span></label>
-          <label>Asal<input name="asal" maxlength="160" required></label>
+          <label>Asal (pengirim)<input name="asal" maxlength="160" placeholder="Ketik kode atau nama instansi" autocomplete="off" required><span class="field-hint">Saran diambil dari master asal &amp; tujuan.</span></label>
+          <label>Tujuan<input name="tujuan" maxlength="160" placeholder="Ketik kode atau nama instansi" autocomplete="off"><span class="field-hint">Saran diambil dari master asal &amp; tujuan.</span></label>
+          <label>Sifat<select name="sifat"><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
           <label class="wide">Perihal<input name="hal" maxlength="200" required></label>
           <label class="wide">Isi ringkas<textarea name="isiRingkas" rows="4" maxlength="2000" required></textarea></label>
-          <label>Sifat<select name="sifat"><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
           <fieldset id="access-fieldset" class="wide" hidden>
             <legend>Bidang yang boleh melihat surat rahasia</legend>
             <div id="access-options" class="check-grid"></div>

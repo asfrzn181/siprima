@@ -20,12 +20,13 @@ const buka = (item = null) => {
 };
 
 export const muatBidang = async () => {
-  pesanBaris(body, 4, 'Memuat…');
+  pesanBaris(body, 5, 'Memuat…');
   try {
     const hasil = await halamanBidang(halaman);
     body.replaceChildren();
-    if (!hasil.items.length) pesanBaris(body, 4, 'Belum ada master bidang.');
-    hasil.items.forEach((item) => {
+    if (!hasil.items.length) pesanBaris(body, 5, 'Belum ada master bidang.');
+    const mulai = (halaman - 1) * (hasil.pagination.limit || 20);
+    hasil.items.forEach((item, index) => {
       const baris = document.createElement('tr');
       const status = document.createElement('td');
       status.append(badge(item.aktif ? 'Aktif' : 'Nonaktif', item.aktif ? 'success' : 'muted'));
@@ -36,7 +37,7 @@ export const muatBidang = async () => {
       edit.textContent = 'Edit';
       edit.addEventListener('click', () => buka(item));
       aksi.append(edit);
-      baris.append(selTeks(item.kode), selTeks(item.nama), status, aksi);
+      baris.append(selTeks(String(mulai + index + 1)), selTeks(item.kode), selTeks(item.nama), status, aksi);
       body.append(baris);
     });
     renderPager(pager, hasil.pagination, (halamanBaru) => {
@@ -44,7 +45,7 @@ export const muatBidang = async () => {
       muatBidang();
     });
   } catch (galat) {
-    pesanBaris(body, 4, galat.message || 'Gagal memuat bidang.');
+    pesanBaris(body, 5, galat.message || 'Gagal memuat bidang.');
   }
 };
 

@@ -1,5 +1,5 @@
-import { wajibMasuk } from '../api/client.js';
-import { daftarBidang, cariNomor } from '../api/master.api.js';
+import { punyaIzin, wajibMasuk } from '../api/client.js';
+import { cariAsalTujuan, cariNomor, daftarBidang } from '../api/master.api.js';
 import {
   daftarSuratMasuk,
   disposisiSuratMasuk,
@@ -16,14 +16,16 @@ import { eksporExcel } from '../utils/excel.js';
 import { formatStatusKind, formatTanggal, inputTanggal, tanggalIso } from '../utils/format.js';
 
 const sesi = await wajibMasuk();
-if (sesi.profile.role === 'bidang') {
-  window.location.replace('./surat-keluar.html');
-  throw new Error('Akses dibatasi untuk bidang.');
+if (!punyaIzin(sesi.profile, 'surat_masuk.baca')) {
+  window.location.replace('./dashboard.html');
+  throw new Error('Akses surat masuk dibatasi.');
 }
 renderShell({ active: 'masuk', session: sesi, title: 'Surat masuk' });
 
-const canCreate = sesi.profile.role === 'admin';
-const canEdit = ['admin', 'pimpinan'].includes(sesi.profile.role);
+const canCreate = punyaIzin(sesi.profile, 'surat_masuk.tulis');
+const canEdit = punyaIzin(sesi.profile, 'surat_masuk.tulis');
+const canDisposisi = punyaIzin(sesi.profile, 'surat_masuk.disposisi');
+const canExport = punyaIzin(sesi.profile, 'surat_masuk.cetak');
 
 const body = document.querySelector('#surat-body');
 const note = document.querySelector('#list-note');
@@ -86,11 +88,12 @@ const sel = (label, teks) => {
 
 const renderBaris = () => {
   if (!items.length) {
-    pesanTabel(body, 8, 'Tidak ada surat yang sesuai.', 'Ubah kata kunci atau reset filter.');
+    pesanTabel(body, 10, 'Tidak ada surat yang sesuai.', 'Ubah kata kunci atau reset filter.');
     return;
   }
+  const mulai = (halaman - 1) * 20;
   body.replaceChildren(
-    ...items.map((item) => {
+    ...items.map((item, index) => {
       const baris = document.createElement('tr');
       baris.dataset.id = item.id;
       baris.tabIndex = 0;
@@ -132,10 +135,12 @@ const renderBaris = () => {
       aksiSel.append(detail);
 
       baris.append(
+        sel('No. Urut', String(mulai + index + 1)),
         sel('Agenda', item.noAgenda),
         sel('Tanggal', formatTanggal(item.tglTerima)),
         nomorSel,
         sel('Asal', item.asal),
+        sel('Tujuan', item.tujuan),
         sel('Perihal', item.hal),
         sifatSel,
         statusSel,
@@ -158,7 +163,7 @@ const muat = async () => {
     pageLabel.textContent = `Halaman ${halaman} dari ${totalHalaman}`;
     note.textContent = `${hasil.pagination.total} surat ditemukan.`;
   } catch (error) {
-    pesanTabel(body, 8, 'Daftar surat gagal dimuat.', error.message);
+    pesanTabel(body, 10, 'Daftar surat gagal dimuat.', error.message);
     note.textContent = 'Gagal memuat data.';
   }
 };
@@ -168,7 +173,7 @@ const setReadOnly = (bacaSaja) => {
     field.disabled = bacaSaja || (field.name === 'scan' && !canCreate);
   });
   saveButton.hidden = bacaSaja;
-  dispositionButton.hidden = bacaSaja || !canEdit;
+  dispositionButton.hidden = bacaSaja || !canDisposisi;
   document.querySelector('#file-label').hidden = bacaSaja || !canCreate;
 };
 
@@ -192,6 +197,7 @@ const bukaForm = (item = null, bacaSaja = false) => {
   form.elements.tglSurat.value = inputTanggal(item?.tglSurat || new Date());
   form.elements.noSurat.value = item?.noSurat || '';
   form.elements.asal.value = item?.asal || '';
+  form.elements.tujuan.value = item?.tujuan || '';
   form.elements.hal.value = item?.hal || '';
   form.elements.isiRingkas.value = item?.isiRingkas || '';
   form.elements.sifat.value = item?.sifat || 'biasa';
@@ -223,6 +229,7 @@ const payloadForm = () => ({
   tglSurat: tanggalIso(form.elements.tglSurat.value),
   noSurat: form.elements.noSurat.value.trim(),
   asal: form.elements.asal.value.trim(),
+  tujuan: form.elements.tujuan.value.trim(),
   hal: form.elements.hal.value.trim(),
   isiRingkas: form.elements.isiRingkas.value.trim(),
   sifat: form.elements.sifat.value,
@@ -248,6 +255,28 @@ createAutocomplete({
     form.elements.noSurat.value = item.kode || '';
   }
 });
+
+const pasangAutocompleteInstansi = (input) =>
+  createAutocomplete({
+    input,
+    minChars: 2,
+    loadSuggestions: (kataKunci) => cariAsalTujuan(kataKunci, 5),
+    renderItem: (item) => {
+      const wadah = document.createElement('span');
+      wadah.append(
+        Object.assign(document.createElement('strong'), { textContent: item.nama || '—' }),
+        Object.assign(document.createElement('small'), { textContent: item.kode || '' })
+      );
+      return wadah;
+    },
+    formatSelected: (item) => item.nama || '',
+    onSelect: (item) => {
+      input.value = item.nama || '';
+    }
+  });
+
+pasangAutocompleteInstansi(form.elements.asal);
+pasangAutocompleteInstansi(form.elements.tujuan);
 
 document.querySelector('#new-button').hidden = !canCreate;
 document.querySelector('#new-button').addEventListener('click', () => bukaForm());
@@ -313,15 +342,18 @@ next.addEventListener('click', async () => {
   await muat();
 });
 
+document.querySelector('#export-button').hidden = !canExport;
 document.querySelector('#export-button').addEventListener('click', async () => {
   try {
     const data = await eksporSuratMasuk(filter);
-    const rows = data.map((item) => ({
+    const rows = data.map((item, index) => ({
+      'No. Urut': index + 1,
       'No. Agenda': item.noAgenda,
       'Tanggal Terima': formatTanggal(item.tglTerima),
       'Tanggal Surat': formatTanggal(item.tglSurat),
       'No. Surat': item.noSurat,
       Asal: item.asal,
+      Tujuan: item.tujuan,
       Hal: item.hal,
       'Isi Ringkas': item.isiRingkas,
       Sifat: item.sifat,

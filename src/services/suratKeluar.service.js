@@ -13,8 +13,10 @@ import { AppError, galatAkses, galatTidakDitemukan } from '../utils/AppError.js'
 import {
   adalahAdmin,
   adalahBidang,
+  adalahOperator,
   adalahPengelola,
   bolehBacaSurat,
+  bolehBuatSuratKeluar,
   bolehUbahSuratKeluar
 } from '../utils/akses.js';
 import { potongHalaman } from '../utils/pagination.js';
@@ -123,7 +125,7 @@ const tentukanBidang = (payload, profil) => {
 };
 
 export const tambahKeluar = async (payload, profil) => {
-  if (![PERAN.ADMIN, PERAN.BIDANG].includes(profil.role)) throw galatAkses();
+  if (!bolehBuatSuratKeluar(profil)) throw galatAkses();
   const bidang = tentukanBidang(payload, profil);
   const final = {
     ...payload,
@@ -286,7 +288,7 @@ export const pakaiUlangNomor = async ({ id, payload, profil }) => {
 export const lampirkanScanKeluar = async (id, file, profil) => {
   const surat = await cariSuratKeluar(id);
   if (!surat) throw galatTidakDitemukan('Surat keluar tidak ditemukan.');
-  const boleh = adalahAdmin(profil) || (adalahBidang(profil) && surat.bidangPembuat === profil.bidang);
+  const boleh = adalahAdmin(profil) || adalahOperator(profil) || (adalahBidang(profil) && surat.bidangPembuat === profil.bidang);
   if (!boleh) throw galatAkses('Anda tidak berhak mengunggah scan surat ini.');
   await setBerkasSuratKeluar(id, { fileId: file.filename, fileUrl: '' });
   await catatAudit({
