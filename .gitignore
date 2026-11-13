@@ -15,9 +15,6 @@ npm-debug.log*
 .env
 .env.*
 !.env.example
-*.serviceAccount.json
-service-account*.json
-firebase-service-account*.json
 secrets/
 
 # Unggahan & log (di luar public_html)
@@ -25,9 +22,6 @@ uploads/
 logs/
 storage/
 *.log
-
-# Firebase cache
-.firebase/
 
 # Hasil uji
 coverage/

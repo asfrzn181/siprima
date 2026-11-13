@@ -2,6 +2,10 @@
 
 > Dokumen ini dibuat **tanpa mengubah kode**. Sumber kebenaran adalah kode di commit `5430efc`.
 > Kesimpulan disimpulkan dari **kode**, bukan dari isi database.
+>
+> Catatan: setelah migrasi selesai, berkas konfigurasi Firebase (`firebase.json`,
+> `.firebaserc`, `firestore.rules`, `storage.rules`, `firestore.indexes.json`) sudah
+> dihapus dari repo. Dokumen ini disimpan sebagai catatan historis.
 
 ## 1. Ringkasan eksekutif
 

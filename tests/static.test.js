@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -51,9 +51,13 @@ test('pustaka SheetJS tersedia lokal', () => {
   assert.ok(statSync(lokasi).size > 100_000);
 });
 
-test('aturan Firestore dan Storage menolak akses langsung', () => {
-  for (const nama of ['firestore.rules', 'storage.rules']) {
-    const isi = readFileSync(path.join(akar, nama), 'utf8');
-    assert.match(isi, /allow read, write: if false;/);
-  }
+test('berkas konfigurasi Firebase lama sudah tidak ada', () => {
+  const lama = [
+    '.firebaserc',
+    'firebase.json',
+    'firestore.indexes.json',
+    'firestore.rules',
+    'storage.rules'
+  ];
+  lama.forEach((nama) => assert.equal(existsSync(path.join(akar, nama)), false, nama));
 });

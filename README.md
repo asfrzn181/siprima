@@ -37,8 +37,7 @@ Google Apps Script → /api/cron → cron service → job registry → MySQL / s
 │  └─ ERD.md
 ├─ docs/                      # audit Firebase & pemetaan ke MySQL
 ├─ scripts/                   # migrate, seed, audit-data
-├─ tests/                     # unit, HTTP, statis, integrasi (opt-in)
-└─ firestore.rules storage.rules   # arsip aturan lama (deny-all)
+└─ tests/                     # unit, HTTP, statis, integrasi (opt-in)
 ```
 
 ## Prasyarat
@@ -228,7 +227,7 @@ Cakupan default:
 - rendering nomor, pagination, serialisasi;
 - registry & validator cron;
 - `public/` bebas SDK/konfigurasi/rahasia Firebase dan bebas CDN;
-- rules Firestore/Storage lama tetap deny-all (arsip).
+- berkas konfigurasi Firebase lama sudah tidak ada di repo.
 
 Uji integrasi penuh (login, CRUD surat masuk, ID palsu, 403 bidang, cron) bersifat opt-in karena menulis ke MySQL asli:
 
