@@ -1,7 +1,7 @@
-import { KOLEKSI } from '../constants/index.js';
-import { queryKoleksi, refDokumen } from './base.repository.js';
+import { one, query } from '../config/db.js';
 import { cariBidangByKode, cariNomor } from './master.repository.js';
 import { ambilPengaturan } from './settings.repository.js';
+import { petaNomor } from './numbering.repository.js';
 import {
   monthRoman,
   normalizeFormatGolongan,
@@ -13,20 +13,19 @@ import { bagianJakarta, keTanggal } from '../utils/tanggal.js';
 import { AppError } from '../utils/AppError.js';
 
 export const cariNomorByFullNumber = async (fullNumber) => {
-  const hasil = await queryKoleksi(KOLEKSI.LETTER_NUMBERS, {
-    where: [['full_number', '==', String(fullNumber || '').trim()]],
-    limit: 1
-  });
-  return hasil[0] || null;
+  const row = await one('SELECT * FROM letter_numbers WHERE full_number = ? LIMIT 1', [
+    String(fullNumber || '').trim()
+  ]);
+  return row ? petaNomor(row) : null;
 };
 
 export const cariRegisterNomor = async (id) => {
-  const snap = await refDokumen(KOLEKSI.LETTER_NUMBERS, id).get();
-  return snap.exists ? { id: snap.id, ...snap.data() } : null;
+  const row = await one('SELECT * FROM letter_numbers WHERE id = ?', [id]);
+  return row ? petaNomor(row) : null;
 };
 
 export const pratinjauNomor = async ({ jenisId, bidangKode, tanggal }) => {
-  const master = await cariNomor(jenisId);
+  const master = await cariNomor(Number(jenisId));
   if (!master || master.aktif !== true) {
     throw new AppError(400, 'MASTER_NOMOR_TIDAK_AKTIF', 'Pilih jenis nomor surat yang aktif.');
   }
@@ -44,11 +43,11 @@ export const pratinjauNomor = async ({ jenisId, bidangKode, tanggal }) => {
   const scope = pengaturan.numberingScope === 'PER_KLASIFIKASI' ? 'PER_KLASIFIKASI' : 'GLOBAL_PER_TAHUN';
   const scopeKey = scopeKeyFor({ golongan: master.golongan, kode: master.kode, scope });
   const bagian = bagianJakarta(tanggalSurat);
-  const counter = await refDokumen(
-    KOLEKSI.LETTER_COUNTERS,
-    encodeURIComponent(`${bagian.year}_${scopeKey}`)
-  ).get();
-  const sebelumnya = counter.exists ? Number(counter.data().last_seq || 0) : 0;
+  const counter = await one(
+    'SELECT last_seq FROM letter_counters WHERE tahun = ? AND scope_key = ?',
+    [bagian.year, scopeKey]
+  );
+  const sebelumnya = counter ? Number(counter.last_seq || 0) : 0;
   const berikutnya = sebelumnya + 1;
   const format = normalizeFormatGolongan(master.format, master.golongan);
   return {
@@ -84,9 +83,15 @@ const bandingkanUrutan = (a, b) =>
   Number(a.seq) - Number(b.seq) || String(a.seq_suffix || '').localeCompare(String(b.seq_suffix || ''));
 
 export const verifikasiUrutan = async (tahun, scopeKey = null) => {
-  const where = [['tahun', '==', Number(tahun)]];
-  if (scopeKey) where.push(['scope_key', '==', scopeKey]);
-  const rows = (await queryKoleksi(KOLEKSI.LETTER_NUMBERS, { where })).sort(bandingkanUrutan);
+  const rows = (
+    await query(
+      `SELECT * FROM letter_numbers WHERE tahun = ? ${scopeKey ? 'AND scope_key = ?' : ''}`,
+      scopeKey ? [Number(tahun), scopeKey] : [Number(tahun)]
+    )
+  )
+    .map(petaNomor)
+    .sort(bandingkanUrutan);
+
   const groups = new Map();
   const digunakan = new Set();
   const issues = [];

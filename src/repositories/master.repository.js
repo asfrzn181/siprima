@@ -1,77 +1,159 @@
-import { KOLEKSI } from '../constants/index.js';
-import { ambilDokumen, commitBatch, queryKoleksi, refDokumen, simpanDokumen } from './base.repository.js';
+import { query, one, withTransaction } from '../config/db.js';
 
-export const daftarBidang = ({ hanyaAktif = false } = {}) =>
-  queryKoleksi(KOLEKSI.MASTER_BIDANG, {
-    where: hanyaAktif ? [['aktif', '==', true]] : [],
-    orderBy: { field: 'nama', arah: 'asc' }
-  });
+const petaBidang = (row) => ({
+  id: row.id,
+  kode: row.kode,
+  nama: row.nama,
+  aktif: row.aktif === 1
+});
 
-export const cariBidangByKode = async (kode) => {
-  const hasil = await queryKoleksi(KOLEKSI.MASTER_BIDANG, {
-    where: [['kode', '==', String(kode || '').trim()]],
-    limit: 1
-  });
-  return hasil[0] || null;
+const petaNomor = (row) => ({
+  id: row.id,
+  nama: row.nama,
+  golongan: row.golongan,
+  format: row.format,
+  kode: row.kode,
+  resetTahunan: row.reset_tahunan === 1,
+  urutanPerBidang: row.urutan_per_bidang === 1,
+  aktif: row.aktif === 1
+});
+
+export const daftarBidang = async ({ hanyaAktif = false } = {}) => {
+  const rows = await query(
+    `SELECT id, kode, nama, aktif FROM master_bidang
+     ${hanyaAktif ? 'WHERE aktif = 1' : ''} ORDER BY nama ASC`
+  );
+  return rows.map(petaBidang);
 };
 
-export const simpanBidang = (id, data) => simpanDokumen(KOLEKSI.MASTER_BIDANG, id, data, { merge: true });
+export const cariBidangByKode = async (kode) => {
+  const row = await one('SELECT id, kode, nama, aktif FROM master_bidang WHERE kode = ? LIMIT 1', [
+    String(kode || '').trim()
+  ]);
+  return row ? petaBidang(row) : null;
+};
 
-export const daftarNomor = () =>
-  queryKoleksi(KOLEKSI.MASTER_NOMOR, { orderBy: { field: 'nama', arah: 'asc' } });
+export const cariBidangById = async (id) => {
+  const row = await one('SELECT id, kode, nama, aktif FROM master_bidang WHERE id = ?', [id]);
+  return row ? petaBidang(row) : null;
+};
 
-export const cariNomor = (id) => ambilDokumen(KOLEKSI.MASTER_NOMOR, id);
+export const simpanBidang = async (id, data) => {
+  if (id) {
+    await query('UPDATE master_bidang SET kode = ?, nama = ?, aktif = ? WHERE id = ?', [
+      data.kode,
+      data.nama,
+      data.aktif ? 1 : 0,
+      id
+    ]);
+  } else {
+    await query(
+      `INSERT INTO master_bidang (kode, nama, aktif) VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE nama = VALUES(nama), aktif = VALUES(aktif)`,
+      [data.kode, data.nama, data.aktif ? 1 : 0]
+    );
+  }
+  return cariBidangByKode(data.kode);
+};
+
+export const daftarNomor = async () => {
+  const rows = await query('SELECT * FROM master_nomor ORDER BY nama ASC');
+  return rows.map(petaNomor);
+};
+
+export const cariNomor = async (id) => {
+  const row = await one('SELECT * FROM master_nomor WHERE id = ?', [id]);
+  return row ? petaNomor(row) : null;
+};
 
 export const cariNomorByKodeAtauNama = async (kataKunci, maksimal = 5) => {
   const kunci = String(kataKunci || '').trim();
   if (kunci.length < 3) return [];
-  const variasiNama = [
-    ...new Set([
-      kunci,
-      kunci.toUpperCase(),
-      `${kunci.charAt(0).toUpperCase()}${kunci.slice(1).toLowerCase()}`
-    ])
-  ];
-  const [berdasarkanKode, ...berdasarkanNama] = await Promise.all([
-    queryKoleksi(KOLEKSI.MASTER_NOMOR, {
-      where: [
-        ['kode', '>=', kunci],
-        ['kode', '<=', `${kunci}\uf8ff`]
-      ],
-      orderBy: { field: 'kode', arah: 'asc' },
-      limit: maksimal
-    }),
-    ...variasiNama.map((nama) =>
-      queryKoleksi(KOLEKSI.MASTER_NOMOR, {
-        where: [
-          ['nama', '>=', nama],
-          ['nama', '<=', `${nama}\uf8ff`]
-        ],
-        orderBy: { field: 'nama', arah: 'asc' },
-        limit: maksimal
-      })
-    )
-  ]);
-  const unik = new Map([berdasarkanKode, ...berdasarkanNama].flat().map((item) => [item.id, item]));
-  return [...unik.values()]
-    .filter((item) => item.aktif !== false && item.kode && item.nama)
-    .sort((a, b) => `${a.kode} ${a.nama}`.localeCompare(`${b.kode} ${b.nama}`, 'id', { numeric: true }))
-    .slice(0, maksimal);
+  const pola = `%${kunci}%`;
+  const rows = await query(
+    `SELECT * FROM master_nomor
+      WHERE aktif = 1 AND (kode LIKE ? OR nama LIKE ?)
+      ORDER BY kode ASC, nama ASC LIMIT ?`,
+    [pola, pola, Number(maksimal) || 5]
+  );
+  return rows.map(petaNomor);
 };
 
-export const simpanNomor = (id, data) => simpanDokumen(KOLEKSI.MASTER_NOMOR, id, data, { merge: false });
+export const simpanNomor = async (id, data) => {
+  const nilai = [
+    data.nama,
+    data.golongan,
+    data.format,
+    data.kode,
+    data.resetTahunan ? 1 : 0,
+    data.urutanPerBidang ? 1 : 0,
+    data.aktif ? 1 : 0
+  ];
+  if (id) {
+    await query(
+      `UPDATE master_nomor
+          SET nama = ?, golongan = ?, format = ?, kode = ?, reset_tahunan = ?,
+              urutan_per_bidang = ?, aktif = ?
+        WHERE id = ?`,
+      [...nilai, id]
+    );
+    return cariNomor(id);
+  }
+  const hasil = await query(
+    `INSERT INTO master_nomor
+       (nama, golongan, format, kode, reset_tahunan, urutan_per_bidang, aktif)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    nilai
+  );
+  return cariNomor(hasil.insertId);
+};
 
 export const simpanNomorBatch = async (baris) => {
-  const ukuran = 400;
-  for (let mulai = 0; mulai < baris.length; mulai += ukuran) {
-    const potongan = baris.slice(mulai, mulai + ukuran);
-    await commitBatch((batch) => {
-      potongan.forEach(({ id, data }) => {
-        batch.set(refDokumen(KOLEKSI.MASTER_NOMOR, id), data);
-      });
-    });
-  }
+  await withTransaction(async (koneksi) => {
+    for (const item of baris) {
+      const data = item.data;
+      const nilai = [
+        data.nama,
+        data.golongan,
+        data.format,
+        data.kode,
+        data.resetTahunan ? 1 : 0,
+        data.urutanPerBidang ? 1 : 0,
+        data.aktif ? 1 : 0
+      ];
+      const idNumerik = Number(item.id);
+      if (Number.isInteger(idNumerik) && idNumerik > 0) {
+        await koneksi.query(
+          `UPDATE master_nomor
+              SET nama = ?, golongan = ?, format = ?, kode = ?, reset_tahunan = ?,
+                  urutan_per_bidang = ?, aktif = ?
+            WHERE id = ?`,
+          [...nilai, idNumerik]
+        );
+        continue;
+      }
+      const [ada] = await koneksi.query(
+        'SELECT id FROM master_nomor WHERE kode = ? AND golongan = ? LIMIT 1',
+        [data.kode, data.golongan]
+      );
+      if (ada.length) {
+        await koneksi.query(
+          `UPDATE master_nomor
+              SET nama = ?, format = ?, reset_tahunan = ?, urutan_per_bidang = ?, aktif = ?
+            WHERE id = ?`,
+          [data.nama, data.format, data.resetTahunan ? 1 : 0, data.urutanPerBidang ? 1 : 0, data.aktif ? 1 : 0, ada[0].id]
+        );
+      } else {
+        await koneksi.query(
+          `INSERT INTO master_nomor
+             (nama, golongan, format, kode, reset_tahunan, urutan_per_bidang, aktif)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          nilai
+        );
+      }
+    }
+  });
   return baris.length;
 };
 
-export const hapusNomor = (id) => refDokumen(KOLEKSI.MASTER_NOMOR, id).delete();
+export const hapusNomor = (id) => query('DELETE FROM master_nomor WHERE id = ?', [id]);

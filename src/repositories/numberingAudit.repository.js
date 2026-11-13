@@ -1,46 +1,51 @@
-import { Timestamp } from 'firebase-admin/firestore';
-import { KOLEKSI } from '../constants/index.js';
 import { hashSha256 } from '../utils/hash.js';
-import { refDokumen, refKoleksi } from './base.repository.js';
+import { jsonAtauNull } from './helpers.js';
 
 const dataAktor = (aktor = {}) => ({
-  uid: aktor.uid || '',
+  uid: aktor.uid || null,
   nama: aktor.nama || aktor.email || '',
   role: aktor.profile?.role || aktor.role || ''
 });
 
-export const bacaAuditHead = async (transaction) => {
-  const head = await transaction.get(refDokumen(KOLEKSI.LETTER_AUDIT_HEADS, 'global'));
-  return head.exists ? String(head.data().last_hash || '') : '';
+export const bacaAuditHead = async (koneksi) => {
+  await koneksi.query("INSERT IGNORE INTO letter_audit_heads (id, last_hash) VALUES (1, '')");
+  const [rows] = await koneksi.query('SELECT last_hash FROM letter_audit_heads WHERE id = 1 FOR UPDATE');
+  return rows.length ? String(rows[0].last_hash || '') : '';
 };
 
 export const tulisAuditDalamTransaksi = async (
-  transaction,
+  koneksi,
   { letterId, action, actor, before, after, previousHash }
 ) => {
+  const aktor = dataAktor(actor);
   const payload = JSON.stringify({
     letter_id: letterId,
     action,
-    actor: dataAktor(actor),
+    actor: aktor,
     before_json: before || null,
     after_json: after || null
   });
   const hash = hashSha256(`${previousHash || ''}${payload}`);
-  const auditRef = refKoleksi(KOLEKSI.LETTER_AUDIT_LOG).doc();
-  const now = Timestamp.now();
-  transaction.set(auditRef, {
-    id: auditRef.id,
-    letter_id: letterId,
-    action,
-    actor: dataAktor(actor),
-    timestamp: now,
-    before_json: before || null,
-    after_json: after || null,
-    prev_hash: previousHash || '',
+
+  await koneksi.query(
+    `INSERT INTO letter_audit_log
+       (letter_id, action, actor_id, actor_nama, actor_role, timestamp,
+        before_json, after_json, prev_hash, hash)
+     VALUES (?, ?, ?, ?, ?, NOW(3), ?, ?, ?, ?)`,
+    [
+      letterId,
+      action,
+      aktor.uid,
+      aktor.nama,
+      aktor.role,
+      jsonAtauNull(before),
+      jsonAtauNull(after),
+      previousHash || '',
+      hash
+    ]
+  );
+  await koneksi.query('UPDATE letter_audit_heads SET last_hash = ?, updated_at = NOW(3) WHERE id = 1', [
     hash
-  });
-  transaction.set(refDokumen(KOLEKSI.LETTER_AUDIT_HEADS, 'global'), {
-    last_hash: hash,
-    updated_at: now
-  });
+  ]);
+  return hash;
 };
