@@ -1,11 +1,17 @@
-import { dapatkanAuth } from '../config/firebase.js';
-import { PERAN } from '../constants/index.js';
-import { daftarUser, simpanUser, ubahUser, cariUser } from '../repositories/user.repository.js';
+import bcrypt from 'bcryptjs';
+import { env } from '../config/env.js';
+import { AKSI_AUDIT, PERAN } from '../constants/index.js';
+import { catatAudit } from '../repositories/audit.repository.js';
+import {
+  cariUser,
+  cariUserByEmail,
+  daftarUser,
+  simpanUser,
+  ubahUser
+} from '../repositories/user.repository.js';
 import { AppError, galatKonflik, galatTidakDitemukan } from '../utils/AppError.js';
 import { potongHalaman } from '../utils/pagination.js';
 import { serialisasi } from '../utils/serialisasi.js';
-import { AKSI_AUDIT } from '../constants/index.js';
-import { catatAudit } from '../repositories/audit.repository.js';
 
 const validasiBidang = (data) => {
   if (data.role === PERAN.BIDANG && !String(data.bidang || '').trim()) {
@@ -22,68 +28,50 @@ export const daftarPengguna = async (pagination) => {
 
 export const buatPengguna = async (data, aktor) => {
   validasiBidang(data);
-  let userRecord;
-  try {
-    userRecord = await dapatkanAuth().createUser({
-      email: data.email,
-      password: data.password,
-      displayName: data.nama,
-      disabled: !data.aktif
-    });
-  } catch (error) {
-    if (error.code === 'auth/email-already-exists') throw galatKonflik('Email sudah dipakai.');
-    throw error;
-  }
+  const email = String(data.email || '').trim().toLowerCase();
+  if (await cariUserByEmail(email)) throw galatKonflik('Email sudah dipakai.');
 
-  const profil = {
-    email: data.email,
+  const passwordHash = await bcrypt.hash(data.password, env.BCRYPT_ROUNDS);
+  const hasil = await simpanUser({
+    email,
+    passwordHash,
     nama: data.nama,
     role: data.role,
     bidang: data.role === PERAN.BIDANG ? data.bidang : '',
     aktif: data.aktif
-  };
-  try {
-    await simpanUser(userRecord.uid, profil);
-  } catch (error) {
-    await dapatkanAuth()
-      .deleteUser(userRecord.uid)
-      .catch(() => {});
-    throw error;
-  }
+  });
+
   await catatAudit({
     uid: aktor.uid,
     nama: aktor.nama,
     aksi: AKSI_AUDIT.TAMBAH_USER,
     koleksi: 'users',
-    docId: userRecord.uid,
-    sesudah: { ...profil, uid: userRecord.uid }
+    docId: hasil.id,
+    sesudah: hasil
   });
-  return { uid: userRecord.uid, ...profil };
+  return serialisasi(hasil);
 };
 
-export const ubahPengguna = async (uid, data, aktor) => {
+export const ubahPengguna = async (id, data, aktor) => {
   validasiBidang(data);
-  const lama = await cariUser(uid);
+  const lama = await cariUser(id);
   if (!lama) throw galatTidakDitemukan('Pengguna tidak ditemukan.');
-  const perubahan = {
+
+  const hasil = await ubahUser(id, {
     nama: data.nama,
     role: data.role,
     bidang: data.role === PERAN.BIDANG ? data.bidang : '',
     aktif: data.aktif
-  };
-  await ubahUser(uid, perubahan);
-  await dapatkanAuth().updateUser(uid, {
-    displayName: data.nama,
-    disabled: !data.aktif
   });
+
   await catatAudit({
     uid: aktor.uid,
     nama: aktor.nama,
     aksi: AKSI_AUDIT.UBAH_USER,
     koleksi: 'users',
-    docId: uid,
+    docId: id,
     sebelum: lama,
-    sesudah: { ...lama, ...perubahan }
+    sesudah: hasil
   });
-  return { uid, ...lama, ...perubahan };
+  return serialisasi(hasil);
 };

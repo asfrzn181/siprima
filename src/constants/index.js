@@ -21,6 +21,75 @@ export const PERAN = Object.freeze({
   BIDANG: 'bidang'
 });
 
+export const IZIN = Object.freeze({
+  SURAT_MASUK_BACA: 'surat_masuk.baca',
+  SURAT_MASUK_TULIS: 'surat_masuk.tulis',
+  SURAT_MASUK_DISPOSISI: 'surat_masuk.disposisi',
+  SURAT_MASUK_TINDAK_LANJUT: 'surat_masuk.tindak_lanjut',
+  SURAT_KELUAR_BACA: 'surat_keluar.baca',
+  SURAT_KELUAR_TULIS: 'surat_keluar.tulis',
+  SURAT_KELUAR_BATAL: 'surat_keluar.batal',
+  SURAT_KELUAR_KIRIM: 'surat_keluar.kirim',
+  SURAT_KELUAR_KOREKSI: 'surat_keluar.koreksi',
+  SURAT_KELUAR_PAKAI_ULANG: 'surat_keluar.pakai_ulang',
+  DASHBOARD_BACA: 'dashboard.baca',
+  LAPORAN_BACA: 'laporan.baca',
+  USERS_KELOLA: 'users.kelola',
+  MASTER_BACA: 'master.baca',
+  MASTER_KELOLA: 'master.kelola',
+  PENGATURAN_BACA: 'pengaturan.baca',
+  PENGATURAN_KELOLA: 'pengaturan.kelola',
+  AUDIT_BACA: 'audit.baca',
+  NOMOR_VERIFIKASI: 'nomor.verifikasi'
+});
+
+export const IZIN_LABEL = Object.freeze({
+  [IZIN.SURAT_MASUK_BACA]: 'Baca surat masuk',
+  [IZIN.SURAT_MASUK_TULIS]: 'Tambah/ubah surat masuk',
+  [IZIN.SURAT_MASUK_DISPOSISI]: 'Catat disposisi',
+  [IZIN.SURAT_MASUK_TINDAK_LANJUT]: 'Isi tindak lanjut',
+  [IZIN.SURAT_KELUAR_BACA]: 'Baca surat keluar',
+  [IZIN.SURAT_KELUAR_TULIS]: 'Buat/ubah surat keluar',
+  [IZIN.SURAT_KELUAR_BATAL]: 'Batalkan surat keluar',
+  [IZIN.SURAT_KELUAR_KIRIM]: 'Ubah status pengiriman',
+  [IZIN.SURAT_KELUAR_KOREKSI]: 'Koreksi nomor surat keluar',
+  [IZIN.SURAT_KELUAR_PAKAI_ULANG]: 'Pakai ulang nomor VOID',
+  [IZIN.DASHBOARD_BACA]: 'Lihat dashboard',
+  [IZIN.LAPORAN_BACA]: 'Lihat laporan',
+  [IZIN.USERS_KELOLA]: 'Kelola pengguna',
+  [IZIN.MASTER_BACA]: 'Baca master',
+  [IZIN.MASTER_KELOLA]: 'Kelola master',
+  [IZIN.PENGATURAN_BACA]: 'Baca pengaturan',
+  [IZIN.PENGATURAN_KELOLA]: 'Kelola pengaturan',
+  [IZIN.AUDIT_BACA]: 'Lihat audit log',
+  [IZIN.NOMOR_VERIFIKASI]: 'Verifikasi urutan nomor'
+});
+
+export const IZIN_PER_PERAN = Object.freeze({
+  admin: Object.freeze(Object.values(IZIN)),
+  pimpinan: Object.freeze([
+    IZIN.SURAT_MASUK_BACA,
+    IZIN.SURAT_MASUK_TULIS,
+    IZIN.SURAT_MASUK_DISPOSISI,
+    IZIN.SURAT_KELUAR_BACA,
+    IZIN.SURAT_KELUAR_BATAL,
+    IZIN.SURAT_KELUAR_KOREKSI,
+    IZIN.DASHBOARD_BACA,
+    IZIN.LAPORAN_BACA,
+    IZIN.MASTER_BACA,
+    IZIN.PENGATURAN_BACA,
+    IZIN.NOMOR_VERIFIKASI
+  ]),
+  bidang: Object.freeze([
+    IZIN.SURAT_MASUK_BACA,
+    IZIN.SURAT_MASUK_TINDAK_LANJUT,
+    IZIN.SURAT_KELUAR_BACA,
+    IZIN.SURAT_KELUAR_TULIS,
+    IZIN.MASTER_BACA,
+    IZIN.PENGATURAN_BACA
+  ])
+});
+
 export const SEMUA_PERAN = Object.freeze(Object.values(PERAN));
 export const PERAN_PENGELOLA = Object.freeze([PERAN.ADMIN, PERAN.PIMPINAN]);
 export const PERAN_OPERATOR = Object.freeze([PERAN.ADMIN, PERAN.BIDANG]);

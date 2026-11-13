@@ -1,5 +1,6 @@
-import { KOLEKSI, PERAN, STATUS_MASUK } from '../constants/index.js';
-import { hitungKoleksi, queryKoleksi } from '../repositories/base.repository.js';
+import { PERAN, STATUS_MASUK } from '../constants/index.js';
+import { daftarSuratMasuk, hitungSuratMasuk } from '../repositories/suratMasuk.repository.js';
+import { daftarSuratKeluar, hitungSuratKeluar } from '../repositories/suratKeluar.repository.js';
 import { serialisasi } from '../utils/serialisasi.js';
 import { bagianJakarta, keTanggal } from '../utils/tanggal.js';
 
@@ -30,21 +31,13 @@ export const ringkasanDashboard = async (profil) => {
 
   const [masukHariIni, masukBulan, belumDiproses, keluarHariIni, keluarBulan, masukTerbaru, keluarTerbaru] =
     await Promise.all([
-      hitungKoleksi(KOLEKSI.SURAT_MASUK, [...masuk, ['tglTerima', '>=', hariIni]]),
-      hitungKoleksi(KOLEKSI.SURAT_MASUK, [...masuk, ['tglTerima', '>=', bulanIni]]),
-      hitungKoleksi(KOLEKSI.SURAT_MASUK, [...masuk, ['status', '==', STATUS_MASUK.BARU]]),
-      hitungKoleksi(KOLEKSI.SURAT_KELUAR, [...keluar, ['tglSurat', '>=', hariIni]]),
-      hitungKoleksi(KOLEKSI.SURAT_KELUAR, [...keluar, ['tglSurat', '>=', bulanIni]]),
-      queryKoleksi(KOLEKSI.SURAT_MASUK, {
-        where: masuk,
-        orderBy: { field: 'dibuatPada', arah: 'desc' },
-        limit: 10
-      }),
-      queryKoleksi(KOLEKSI.SURAT_KELUAR, {
-        where: keluar,
-        orderBy: { field: 'tglSurat', arah: 'desc' },
-        limit: 10
-      })
+      hitungSuratMasuk([...masuk, ['tglTerima', '>=', hariIni]]),
+      hitungSuratMasuk([...masuk, ['tglTerima', '>=', bulanIni]]),
+      hitungSuratMasuk([...masuk, ['status', '==', STATUS_MASUK.BARU]]),
+      hitungSuratKeluar([...keluar, ['tglSurat', '>=', hariIni]]),
+      hitungSuratKeluar([...keluar, ['tglSurat', '>=', bulanIni]]),
+      daftarSuratMasuk({ where: masuk, field: 'dibuatPada', arah: 'desc', limit: 10 }),
+      daftarSuratKeluar({ where: keluar, field: 'tglSurat', arah: 'desc', limit: 10 })
     ]);
 
   return {

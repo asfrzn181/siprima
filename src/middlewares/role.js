@@ -8,3 +8,14 @@ export const izinkan =
     }
     next();
   };
+
+// Otorisasi berbasis izin (hasil terjemahan firestore.rules/storage.rules).
+export const wajibIzin =
+  (...izin) =>
+  (req, _res, next) => {
+    const dimiliki = req.profile?.izin || [];
+    if (!req.profile || !izin.every((butir) => dimiliki.includes(butir))) {
+      return next(galatAkses());
+    }
+    next();
+  };
