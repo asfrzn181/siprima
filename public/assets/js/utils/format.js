@@ -116,9 +116,9 @@ export const normalisasiGolongan = (nilai) => {
 };
 
 export const formatGolonganDefault = (golongan) => {
-  if (normalisasiGolongan(golongan) === 'SK') return '{KODE}/SK/{URUT:3}/{UNIT}/{TAHUN}';
-  if (normalisasiGolongan(golongan) === 'SE') return 'SE/{URUT:3}/{UNIT}/{TAHUN}';
-  return '{KODE}/{URUT:3}/{UNIT}/{TAHUN}';
+  if (normalisasiGolongan(golongan) === 'SK') return '{KODE}/{URUT:3}/BKPSDMD/{BULAN_ROMAWI}/{TAHUN}';
+  if (normalisasiGolongan(golongan) === 'SE') return '{URUT:3} Tahun {TAHUN}';
+  return '{KODE}/{URUT:3}/BKPSDMD/{BULAN_ROMAWI}/{TAHUN}';
 };
 
 export const normalisasiFormat = (format, golongan) => {

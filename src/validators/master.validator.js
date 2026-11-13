@@ -23,9 +23,22 @@ export const skemaMasterNomor = z
   }));
 
 export const skemaMasterAsalTujuan = z.object({
-  kode: z.string().trim().min(1, 'Kode wajib diisi.').max(40),
+  kode: z.string().trim().max(40).default(''),
   nama: z.string().trim().min(1, 'Nama tujuan wajib diisi.').max(160),
   aktif: z.boolean().default(true)
+});
+
+export const skemaBatchMasterAsalTujuan = z.object({
+  rows: z
+    .array(
+      z.object({
+        kode: z.string().trim().max(40).default(''),
+        nama: z.string().trim().min(1, 'Nama tujuan wajib diisi.').max(160),
+        aktif: z.boolean().default(true)
+      })
+    )
+    .min(1, 'Tidak ada baris valid untuk diimpor.')
+    .max(2000)
 });
 
 export const skemaBatchMasterNomor = z.object({

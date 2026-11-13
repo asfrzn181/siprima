@@ -9,6 +9,7 @@ import {
   daftarMasterBidangHalaman,
   daftarMasterNomor,
   daftarSemuaMasterNomor,
+  imporMasterAsalTujuan,
   imporMasterNomor,
   simpanMasterAsalTujuan,
   simpanMasterBidang,
@@ -70,4 +71,11 @@ export const simpanAsalTujuan = async (req, res) =>
   kirimSukses(res, {
     message: 'Master asal & tujuan tersimpan.',
     data: await simpanMasterAsalTujuan(req.params.id, req.body, req.profile)
+  });
+
+export const imporAsalTujuan = async (req, res) =>
+  kirimSukses(res, {
+    status: 201,
+    message: 'Master asal & tujuan berhasil diimpor.',
+    data: await imporMasterAsalTujuan(req.body.rows, req.profile)
   });

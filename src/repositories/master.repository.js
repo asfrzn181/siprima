@@ -179,6 +179,16 @@ export const cariAsalTujuanByKode = async (kode) => {
   return row ? petaAsalTujuan(row) : null;
 };
 
+export const kodeAsalTujuanTerakhir = async () => {
+  const row = await one(
+    `SELECT kode FROM master_asal_tujuan
+      WHERE kode LIKE 'TUJUAN-%'
+      ORDER BY CAST(SUBSTRING(kode, 8) AS UNSIGNED) DESC
+      LIMIT 1`
+  );
+  return row ? row.kode : null;
+};
+
 export const cariAsalTujuanByKodeAtauNama = async (kataKunci, maksimal = 5) => {
   const kunci = String(kataKunci || '').trim();
   if (kunci.length < 2) return [];

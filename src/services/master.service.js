@@ -1,9 +1,6 @@
 import { AKSI_AUDIT, GOLONGAN } from '../constants/index.js';
-import { parse } from 'csv-parse/sync';
-import fs from 'fs';
-import path from 'path';
 import { catatAudit } from '../repositories/audit.repository.js';
-import { 
+import {
   cariAsalTujuanByKode,
   cariAsalTujuanByKodeAtauNama,
   cariAsalTujuanById,
@@ -14,18 +11,25 @@ import {
   daftarAsalTujuan,
   daftarBidang,
   daftarNomor,
+  kodeAsalTujuanTerakhir,
   simpanAsalTujuan,
   simpanBidang,
   simpanNomor,
-  simpanNomorBatch,
-  imporAsalTujuan // Add this import
+  simpanNomorBatch
 } from '../repositories/master.repository.js';
 import { AppError, galatTidakDitemukan } from '../utils/AppError.js';
 import { potongHalaman } from '../utils/pagination.js';
 import { serialisasi } from '../utils/serialisasi.js';
 
-export const daftarMasterBidang = async ({ hanyaAktif = true } = {})
-  => (await daftarBidang({ hanyaAktif })).map((item) => serialisasi(item));
+const kodeAsalTujuanBerikutnya = async () => {
+  const terakhir = await kodeAsalTujuanTerakhir();
+  const cocok = String(terakhir || '').match(/TUJUAN-(\d+)/);
+  const urutan = cocok ? Number(cocok[1]) + 1 : 1;
+  return `TUJUAN-${String(urutan).padStart(3, '0')}`;
+};
+
+export const daftarMasterBidang = async ({ hanyaAktif = true } = {}) =>
+  (await daftarBidang({ hanyaAktif })).map((item) => serialisasi(item));
 
 export const daftarMasterBidangHalaman = async (pagination) => {
   const semua = (await daftarBidang()).map((item) => serialisasi(item));
@@ -65,8 +69,8 @@ export const cariMasterNomor = async (id) => {
   return serialisasi(data);
 };
 
-export const cariMasterNomorKode = async (kataKunci, maksimal)
-  => (await cariNomorByKodeAtauNama(kataKunci, maksimal)).map((item) => serialisasi(item));
+export const cariMasterNomorKode = async (kataKunci, maksimal) =>
+  (await cariNomorByKodeAtauNama(kataKunci, maksimal)).map((item) => serialisasi(item));
 
 export const simpanMasterNomor = async (id, data, aktor) => {
   const lama = id ? await cariNomor(Number(id)) : null;
@@ -106,33 +110,20 @@ export const daftarMasterAsalTujuanHalaman = async (pagination) => {
   return potongHalaman(semua, pagination);
 };
 
-export const cariMasterAsalTujuanKode = async (kataKunci, maksimal)
-  => (await cariAsalTujuanByKodeAtauNama(kataKunci, maksimal)).map((item) => serialisasi(item));
+export const cariMasterAsalTujuanKode = async (kataKunci, maksimal) =>
+  (await cariAsalTujuanByKodeAtauNama(kataKunci, maksimal)).map((item) => serialisasi(item));
 
 export const simpanMasterAsalTujuan = async (id, data, aktor) => {
   const lama = id ? await cariAsalTujuanById(Number(id)) : null;
   if (id && !lama) throw galatTidakDitemukan('Data asal & tujuan tidak ditemukan.');
-  const bentrok = await cariAsalTujuanByKode(data.kode);
+
+  const kode = String(data.kode || '').trim() || (id ? lama.kode : await kodeAsalTujuanBerikutnya());
+  const bentrok = await cariAsalTujuanByKode(kode);
   if (bentrok && String(bentrok.id) !== String(id || '')) {
     throw new AppError(409, 'KODE_ASAL_TUJUAN_DIPAKAI', 'Kode asal & tujuan sudah dipakai.');
   }
 
-  // Generate kode automatically if creating a new entry and kode is not provided
-  if (!id && !data.kode) {
-    const lastKodeResult = await query('SELECT kode FROM master_asal_tujuan ORDER BY CAST(SUBSTRING(kode, 8) AS UNSIGNED) DESC LIMIT 1');
-    let newKode = 'TUJUAN-001'; // Default if no existing codes
-    if (lastKodeResult && lastKodeResult.length > 0) {
-      const lastKode = lastKodeResult[0].kode;
-      const match = lastKode.match(/TUJUAN-(\d+)/);
-      if (match && match[1]) {
-        const seq = parseInt(match[1], 10) + 1;
-        newKode = `TUJUAN-${String(seq).padStart(3, '0')}`;
-      }
-    }
-    data.kode = newKode;
-  }
-
-  const hasil = await simpanAsalTujuan(id ? Number(id) : null, data);
+  const hasil = await simpanAsalTujuan(id ? Number(id) : null, { ...data, kode });
   await catatAudit({
     uid: aktor.uid,
     nama: aktor.nama,
@@ -145,32 +136,38 @@ export const simpanMasterAsalTujuan = async (id, data, aktor) => {
   return serialisasi(hasil);
 };
 
-// New function for importing asal tujuan via CSV
-export const imporAsalTujuan = async (rows, aktor) => {
-  const data = rows.map(row => ({
-    kode: row['KODE'] || row['Kode'],
-    nama: row['NAMA TUJUAN'] || row['Nama Tujuan'],
-    aktif: row['Status'] === 'Aktif' || row['status'] === 'aktif' || true // Default to active if not specified
-  }));
+export const imporMasterAsalTujuan = async (rows, aktor) => {
+  let jumlah = 0;
+  let gagal = 0;
 
-  const hasil = await Promise.all(data.map(async row => {
-    try {
-      // Use simpanAsalTujuan which now handles automatic kode generation if needed
-      return await simpanAsalTujuan(null, row, aktor); // Use null for id to create new
-    } catch (error) {
-      console.error('Error importing row:', row, error.message);
-      return { error: error.message, row };
+  for (const row of rows) {
+    const kode = String(row.kode || '').trim();
+    const nama = String(row.nama || '').trim();
+    if (!nama) {
+      gagal += 1;
+      continue;
     }
-  }));
+    try {
+      const ada = kode ? await cariAsalTujuanByKode(kode) : null;
+      await simpanMasterAsalTujuan(
+        ada ? ada.id : null,
+        { kode, nama, aktif: row.aktif !== false },
+        aktor
+      );
+      jumlah += 1;
+    } catch {
+      gagal += 1;
+    }
+  }
 
   await catatAudit({
     uid: aktor.uid,
     nama: aktor.nama,
-    aksi: AKSI_AUDIT.UBAH_MASTER_ASAL_TUJUAN, // Assuming this action is appropriate for import
+    aksi: AKSI_AUDIT.UBAH_MASTER_ASAL_TUJUAN,
     koleksi: 'masterAsalTujuan',
     docId: 'impor-csv',
-    sesudah: { importedCount: hasil.filter(r => !r.error).length, errors: hasil.filter(r => r.error).length }
+    sesudah: { jumlah, gagal }
   });
 
-  return { importedCount: hasil.filter(r => !r.error).length, errors: hasil.filter(r => r.error).length };
+  return { jumlah, gagal };
 };

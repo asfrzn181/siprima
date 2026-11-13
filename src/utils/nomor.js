@@ -18,9 +18,9 @@ export const normalizeGolongan = (nilai) => {
 export const golonganUsesKode = (golongan) => normalizeGolongan(golongan) !== 'SE';
 
 export const defaultFormatGolongan = (golongan) => {
-  if (normalizeGolongan(golongan) === 'SK') return '{KODE}/{URUT:3}/BKPSDMD/{TAHUN}';
+  if (normalizeGolongan(golongan) === 'SK') return '{KODE}/{URUT:3}/BKPSDMD/{BULAN_ROMAWI}/{TAHUN}';
   if (normalizeGolongan(golongan) === 'SE') return '{URUT:3} Tahun {TAHUN}';
-  return '{KODE}/{URUT:3}/BKPSDMD/{UNIT}/{TAHUN}';
+  return '{KODE}/{URUT:3}/BKPSDMD/{BULAN_ROMAWI}/{TAHUN}';
 };
 
 export const stripKodeToken = (format) =>

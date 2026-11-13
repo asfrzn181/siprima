@@ -5,7 +5,7 @@ import { wajibLogin } from '../middlewares/auth.js';
 import { verifikasiCsrf } from '../middlewares/csrf.js';
 import { izinkan, wajibIzin } from '../middlewares/role.js';
 import { validasi } from '../middlewares/validate.js';
-import { skemaMasterAsalTujuan } from '../validators/master.validator.js';
+import { skemaBatchMasterAsalTujuan, skemaMasterAsalTujuan } from '../validators/master.validator.js';
 import { skemaKataKunci } from '../validators/common.validator.js';
 
 export const masterAsalTujuanRouter = Router();
@@ -33,6 +33,14 @@ masterAsalTujuanRouter.post(
   wajibIzin(IZIN.MASTER_KELOLA),
   validasi(skemaMasterAsalTujuan),
   controller.simpanAsalTujuan
+);
+masterAsalTujuanRouter.post(
+  '/impor',
+  verifikasiCsrf,
+  izinkan(PERAN.ADMIN),
+  wajibIzin(IZIN.MASTER_KELOLA),
+  validasi(skemaBatchMasterAsalTujuan),
+  controller.imporAsalTujuan
 );
 masterAsalTujuanRouter.put(
   '/:id',

@@ -16,8 +16,19 @@ test('normalisasi golongan dan format default', () => {
   assert.equal(normalizeGolongan('surat keputusan'), 'SK');
   assert.equal(normalizeGolongan('SURAT EDARAN'), 'SE');
   assert.equal(normalizeGolongan('apa saja'), 'LAINNYA');
-  assert.equal(defaultFormatGolongan('SK'), '{KODE}/SK/{URUT:3}/{UNIT}/{TAHUN}');
-  assert.equal(defaultFormatGolongan('SE'), 'SE/{URUT:3}/{UNIT}/{TAHUN}');
+  assert.equal(defaultFormatGolongan('SK'), '{KODE}/{URUT:3}/BKPSDMD/{BULAN_ROMAWI}/{TAHUN}');
+  assert.equal(defaultFormatGolongan('SE'), '{URUT:3} Tahun {TAHUN}');
+});
+
+test('format default SK memuat BKPSDMD dan bulan romawi', () => {
+  const hasil = renderNomor(defaultFormatGolongan('SK'), {
+    KODE: '800.1.11.10',
+    GOLONGAN: 'SK',
+    URUT: 1,
+    BULAN_ROMAWI: monthRoman(3),
+    TAHUN: 2026
+  });
+  assert.equal(hasil, '800.1.11.10/001/BKPSDMD/III/2026');
 });
 
 test('format SE tidak memakai token kode', () => {

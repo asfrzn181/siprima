@@ -1,4 +1,4 @@
-import { halamanAsalTujuan, simpanAsalTujuan } from '../../api/master.api.js';
+import { halamanAsalTujuan, imporAsalTujuan, simpanAsalTujuan } from '../../api/master.api.js';
 import { badge, showToast } from '../../components/ui.js';
 import { bukaModal, pesanBaris, renderPager, selTeks, tutupModal } from './shared.js';
 
@@ -17,6 +17,65 @@ const buka = (item = null) => {
   form.elements.nama.value = item?.nama || '';
   form.elements.aktif.checked = item?.aktif !== false;
   bukaModal('asal-tujuan-modal');
+};
+
+const parseBaris = (baris) => {
+  const hasil = [];
+  let sel = '';
+  let kutip = false;
+  for (let i = 0; i < baris.length; i += 1) {
+    const karakter = baris[i];
+    if (karakter === '"') {
+      if (kutip && baris[i + 1] === '"') {
+        sel += '"';
+        i += 1;
+      } else {
+        kutip = !kutip;
+      }
+    } else if (karakter === ',' && !kutip) {
+      hasil.push(sel.trim());
+      sel = '';
+    } else {
+      sel += karakter;
+    }
+  }
+  hasil.push(sel.trim());
+  return hasil;
+};
+
+const parseBoolean = (nilai, bawaan = true) => {
+  if (nilai === undefined || nilai === '') return bawaan;
+  return ['true', '1', 'ya', 'yes', 'aktif'].includes(String(nilai).toLowerCase());
+};
+
+const bacaCsv = async (file) => {
+  const lines = (await file.text()).split(/\r?\n/).filter(Boolean).map(parseBaris);
+  if (!lines.length) return { rows: [], dilewati: 0 };
+  const headers = lines.shift().map((header) =>
+    header
+      .replace(/^\uFEFF/, '')
+      .toLowerCase()
+      .replace(/[\s_-]+/g, '')
+  );
+  const rows = [];
+  let dilewati = 0;
+
+  lines.forEach((cells) => {
+    const row = Object.fromEntries(headers.map((header, index) => [header, cells[index] || '']));
+    const nama = String(row.nama || row.namatujuan || '').trim();
+    const kode = String(row.kode || '').trim();
+    if (!nama || nama.length > 160 || kode.length > 40) {
+      dilewati += 1;
+      return;
+    }
+    rows.push({
+      kode,
+      nama,
+      aktif: parseBoolean(row.aktif || row.status)
+    });
+  });
+
+  return { rows, dilewati };
 };
 
 export const muatAsalTujuan = async () => {
@@ -61,8 +120,8 @@ export const initAsalTujuan = async () => {
       nama: form.elements.nama.value.trim(),
       aktif: form.elements.aktif.checked
     };
-    if (!data.kode || !data.nama) {
-      error.textContent = 'Kode dan nama tujuan wajib diisi.';
+    if (!data.nama) {
+      error.textContent = 'Nama tujuan wajib diisi.';
       error.hidden = false;
       return;
     }
@@ -75,6 +134,28 @@ export const initAsalTujuan = async () => {
     } catch (galat) {
       error.textContent = galat.message || 'Master asal & tujuan gagal disimpan.';
       error.hidden = false;
+    }
+  });
+
+  document.querySelector('#csv-import-asal-tujuan').addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const tombol = event.target;
+    tombol.disabled = true;
+    try {
+      const { rows, dilewati } = await bacaCsv(file);
+      if (!rows.length) {
+        throw new Error('Tidak ada baris valid. Pastikan header KODE,NAMA TUJUAN dan pemisah koma.');
+      }
+      const hasil = await imporAsalTujuan(rows);
+      halaman = 1;
+      await muatAsalTujuan();
+      showToast(`${hasil.jumlah || rows.length} data diimpor; ${dilewati} baris dilewati.`);
+    } catch (galat) {
+      showToast(galat.message || 'Impor CSV gagal.', 'error');
+    } finally {
+      tombol.disabled = false;
+      tombol.value = '';
     }
   });
 

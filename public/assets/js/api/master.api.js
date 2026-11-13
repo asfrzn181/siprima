@@ -24,3 +24,4 @@ export const simpanAsalTujuan = (id, data) =>
   id
     ? api.put(`/master/asal-tujuan/${encodeURIComponent(id)}`, data)
     : api.post('/master/asal-tujuan', data);
+export const imporAsalTujuan = (rows) => api.post('/master/asal-tujuan/impor', { rows });
