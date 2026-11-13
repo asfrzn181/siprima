@@ -1,3 +1,0 @@
-﻿.password-field { display: flex; gap: var(--sp-2); align-items: flex-start; }
-.password-field input { flex: 1; }
-.password-field .button { white-space: nowrap; }

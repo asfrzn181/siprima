@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { DEFAULT_GOLONGAN } from '../src/constants/index.js';
 import {
-  DEFAULT_GOLONGAN,
   defaultFormatGolongan,
   formatSequence,
   golonganUsesKode,
@@ -11,7 +11,7 @@ import {
   renderNomor,
   scopeKeyFor,
   stripKodeToken
-} from '../js/services/letter-numbering-core.js';
+} from '../src/utils/nomor.js';
 
 test('bulan dikonversi ke angka romawi berdasarkan tanggal kalender', () => {
   assert.equal(monthRoman(1), 'I');
