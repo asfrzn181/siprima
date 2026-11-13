@@ -3,7 +3,7 @@
 // Butuh .env valid (DB_*) dan TEST_ADMIN_EMAIL/TEST_ADMIN_PASSWORD.
 // Opsional: TEST_BIDANG_EMAIL/TEST_BIDANG_PASSWORD untuk uji 403 dan IDOR.
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import test, { after } from 'node:test';
 import request from 'supertest';
 
 const aktif = process.env.RUN_MYSQL_TESTS === '1';
@@ -126,4 +126,10 @@ test('cron jobs menolak permintaan tanpa kunci', { skip: lewati }, async () => {
   const respons = await request(app).get('/api/cron/jobs');
   assert.equal(respons.status, 401);
   assert.equal(respons.body.errors[0].code, 'KUNCI_CRON_TIDAK_ADA');
+});
+
+after(async () => {
+  if (!aktif) return;
+  const { tutupPool } = await import('../src/config/db.js');
+  await tutupPool();
 });

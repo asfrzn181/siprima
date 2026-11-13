@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { bungkusAsyncRouter } from '../utils/asyncHandler.js';
 import { authRouter } from './auth.routes.js';
 import { suratMasukRouter } from './suratMasuk.routes.js';
 import { suratKeluarRouter } from './suratKeluar.routes.js';
@@ -26,3 +27,5 @@ apiRouter.use('/audit', auditRouter);
 apiRouter.use('/dashboard', dashboardRouter);
 apiRouter.use('/laporan', laporanRouter);
 apiRouter.use('/cron', cronRouter);
+
+bungkusAsyncRouter(apiRouter);

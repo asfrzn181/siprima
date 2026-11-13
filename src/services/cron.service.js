@@ -33,7 +33,15 @@ export const verifikasiKunci = async (kunciMentah, ip) => {
 };
 
 export const daftarJobCron = async () =>
-  (await daftarJob()).map((job) => ({ ...job, tersedia: Boolean(ambilJob(job.jobName)) }));
+  (await daftarJob()).map((job) => ({
+    job_name: job.jobName,
+    enabled: job.enabled,
+    schedule_note: job.scheduleNote,
+    config: job.config,
+    last_run_at: job.lastRunAt,
+    updated_at: job.updatedAt,
+    available: Boolean(ambilJob(job.jobName))
+  }));
 
 const prosesJob = async (runId, jobName) => {
   const mulai = Date.now();
@@ -77,14 +85,30 @@ export const jalankanJob = async ({ jobName, kunciData, ip, trigger = 'appscript
   }
 
   prosesJob(runId, jobName).catch(() => {});
-  return { runId, jobName, status: 'queued' };
+  return { run_id: runId, job_name: jobName, status: 'queued' };
 };
+
+// Endpoint cron memakai snake_case agar konsisten dengan parameter
+// job_name/run_id dan mudah dipakai Google Apps Script.
+const runPublik = (run) => ({
+  run_id: run.runId,
+  job_name: run.jobName,
+  status: run.status,
+  trigger: run.trigger,
+  started_at: run.startedAt,
+  finished_at: run.finishedAt,
+  duration_ms: run.durationMs,
+  result: run.result,
+  error_message: run.errorMessage,
+  caller_ip: run.callerIp,
+  created_at: run.createdAt
+});
 
 export const ambilRun = async (runId) => {
   const run = await cariRun(runId);
   if (!run) throw galatTidakDitemukan('Run tidak ditemukan.');
-  return run;
+  return runPublik(run);
 };
 
 export const daftarRunCron = async ({ jobName = null, limit = null } = {}) =>
-  daftarRun({ jobName, limit: batasRiwayat(limit) });
+  (await daftarRun({ jobName, limit: batasRiwayat(limit) })).map(runPublik);

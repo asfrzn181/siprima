@@ -128,7 +128,7 @@ Dokumen ini melengkapi `docs/audit-firebase.md` dan `db/ERD.md`. Nama field Fire
 | Firestore | MySQL |
 |---|---|
 | document ID | `name` (UNIQUE) |
-| `last` | `last_value` |
+| `last` | `nilai` |
 
 ### 2.8 `letter_counters/{tahun_scopeKey}` menjadi `letter_counters`
 

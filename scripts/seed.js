@@ -197,7 +197,7 @@ const utama = async () => {
     await seedPengaturan(koneksi);
     await seedCron(koneksi);
   });
-  const [[{ total }]] = await query('SELECT COUNT(*) AS total FROM users');
+  const [{ total }] = await query('SELECT COUNT(*) AS total FROM users');
   tulis(`Selesai. Total pengguna: ${total}.`);
   await tutupPool();
 };

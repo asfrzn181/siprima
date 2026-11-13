@@ -167,16 +167,16 @@ export const buatSuratMasuk = async (payload, { uid, nama }) => {
   const namaCounter = `agendaMasuk_${tahun}`;
 
   const id = await withTransaction(async (koneksi) => {
-    const [counter] = await koneksi.query('SELECT last_value FROM counters WHERE name = ? FOR UPDATE', [
+    const [counter] = await koneksi.query('SELECT nilai FROM counters WHERE name = ? FOR UPDATE', [
       namaCounter
     ]);
     let berikutnya;
     if (counter.length) {
-      berikutnya = Number(counter[0].last_value) + 1;
-      await koneksi.query('UPDATE counters SET last_value = ? WHERE name = ?', [berikutnya, namaCounter]);
+      berikutnya = Number(counter[0].nilai) + 1;
+      await koneksi.query('UPDATE counters SET nilai = ? WHERE name = ?', [berikutnya, namaCounter]);
     } else {
       berikutnya = 1;
-      await koneksi.query('INSERT INTO counters (name, last_value) VALUES (?, 1)', [namaCounter]);
+      await koneksi.query('INSERT INTO counters (name, nilai) VALUES (?, 1)', [namaCounter]);
     }
 
     const [hasil] = await koneksi.query(

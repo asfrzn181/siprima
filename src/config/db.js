@@ -35,8 +35,15 @@ export const pool = mysql.createPool({
   enableKeepAlive: true
 });
 
+// mysql2 menolak NaN/undefined sebagai parameter. Ubah menjadi NULL agar
+// pencarian dengan id tidak valid menghasilkan "tidak ditemukan", bukan 500.
+const bersihkanParams = (params) =>
+  params.map((nilai) =>
+    nilai === undefined || (typeof nilai === 'number' && Number.isNaN(nilai)) ? null : nilai
+  );
+
 export const query = async (sql, params = []) => {
-  const [rows] = await pool.query(sql, params);
+  const [rows] = await pool.query(sql, bersihkanParams(params));
   return rows;
 };
 
