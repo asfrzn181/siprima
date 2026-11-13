@@ -93,7 +93,8 @@
         <label>Sifat<select name="sifat"><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
         <label class="wide">Hal<input name="hal" maxlength="200" required></label>
         <label class="wide">Nomor surat
-          <input name="nomorGenerated" readonly placeholder="Klik Generate Nomor">
+          <input name="nomorGenerated" readonly placeholder="Pilih nomor tersedia atau klik Generate Nomor">
+          <select name="seqPilihan"><option value="">Otomatis — nomor terkecil yang tersedia</option></select>
           <span class="form-actions"><button id="generate-number" class="button secondary" type="button">Generate Nomor</button></span>
         </label>
         <label class="wide">Isi ringkas<textarea name="isiRingkas" rows="4" maxlength="2000" required></textarea></label>
@@ -130,10 +131,6 @@
         </label>
         <div class="form-actions wide">
           <button id="save" class="button primary" type="submit">Simpan dan terbitkan nomor</button>
-          <button id="correct" class="button secondary" type="button" hidden>Koreksi nomor</button>
-          <button id="reuse" class="button secondary" type="button" hidden>Gunakan kembali nomor</button>
-          <a id="file-link" class="button secondary" target="_blank" rel="noopener" hidden>Buka link Drive</a>
-          <button id="download" class="button secondary" type="button" hidden>Unduh scan</button>
           <button id="cancel" class="button secondary" type="button" hidden>Batalkan surat</button>
         </div>
         <p id="error" class="form-error wide" hidden></p>

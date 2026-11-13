@@ -7,6 +7,7 @@ const teks = (maks) => z.string().trim().min(1, 'Wajib diisi.').max(maks);
 export const skemaPayloadSuratKeluar = z.object({
   jenisId: z.string().trim().min(1, 'Jenis nomor wajib dipilih.').max(200),
   reservationId: z.string().trim().max(200).optional().default(''),
+  seqPilihan: z.coerce.number().int().min(1).optional(),
   tglSurat: tanggalWajib,
   bidangPembuat: z.string().trim().max(40).optional(),
   tujuan: teks(200),
@@ -33,15 +34,30 @@ export const skemaUbahSuratKeluar = z.object({
 });
 
 export const skemaReservasi = z.object({
-  jenisId: z.string().trim().min(1, 'Jenis nomor wajib dipilih.').max(200),
+  menu: z.enum(['SURAT_KELUAR', 'SK', 'SE']).default('SURAT_KELUAR'),
+  jenisId: z.string().trim().max(200).optional(),
   bidangKode: z.string().trim().max(40).optional(),
   tanggal: tanggalWajib,
+  seqPilihan: z.coerce.number().int().min(1).optional(),
+  reservationIdLama: z.string().trim().max(200).optional(),
   perihal: z.string().trim().max(200).optional(),
   tujuan: z.string().trim().max(200).optional()
 });
 
+export const skemaTersediaNomor = z.object({
+  menu: z.enum(['SURAT_KELUAR', 'SK', 'SE']).default('SURAT_KELUAR'),
+  jenisId: z.string().trim().max(200).optional(),
+  bidangKode: z.string().trim().max(40).optional(),
+  tanggal: tanggalOpsional,
+  seqPilihan: z.coerce.number().int().min(1).optional()
+});
+
 export const skemaBatal = z.object({
-  alasan: z.string().trim().max(300).default('Surat dibatalkan')
+  alasan: z
+    .string()
+    .trim()
+    .min(1, 'Keterangan pembatalan wajib diisi.')
+    .max(300, 'Keterangan pembatalan maksimal 300 karakter.')
 });
 
 export const skemaKoreksi = z.object({

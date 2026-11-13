@@ -38,5 +38,6 @@ export const urlBerkasKeluar = (id) => `/api/surat-keluar/${encodeURIComponent(i
 
 export const pratinjauNomor = (data) => api.post('/nomor/pratinjau', data);
 export const reservasiNomor = (data) => api.post('/nomor/reservasi', data);
+export const nomorTersedia = (filter) => api.get(`/nomor/tersedia${bangunQuery(filter)}`);
 export const kedaluwarsaNomor = () => api.post('/nomor/kedaluwarsa');
 export const cariNomorLengkap = (nomor) => api.get(`/nomor/cari${bangunQuery({ nomor })}`);

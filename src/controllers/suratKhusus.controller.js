@@ -4,6 +4,8 @@ import { kirimSukses } from '../utils/response.js';
 export const buatController = (jenis) => ({
   daftar: async (req, res) => kirimSukses(res, { data: await service.daftar(jenis, req.query) }),
   ambil: async (req, res) => kirimSukses(res, { data: await service.ambil(jenis, req.params.id) }),
+  tersedia: async (req, res) =>
+    kirimSukses(res, { data: await service.nomorTersedia(jenis, req.query, req.profile) }),
   tambah: async (req, res) =>
     kirimSukses(res, {
       status: 201,
@@ -17,7 +19,7 @@ export const buatController = (jenis) => ({
     }),
   hapus: async (req, res) =>
     kirimSukses(res, {
-      message: `Surat ${jenis} dihapus.`,
-      data: await service.hapus(jenis, req.params.id, req.profile)
+      message: `Surat ${jenis} dibatalkan.`,
+      data: await service.hapus(jenis, req.params.id, req.body.alasan, req.profile)
     })
 });

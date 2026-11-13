@@ -31,7 +31,7 @@ export const tulisAuditDalamTransaksi = async (
     `INSERT INTO letter_audit_log
        (letter_id, action, actor_id, actor_nama, actor_role, timestamp,
         before_json, after_json, prev_hash, hash)
-     VALUES (?, ?, ?, ?, ?, NOW(3), ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP(3), ?, ?, ?, ?)`,
     [
       letterId,
       action,
@@ -44,7 +44,7 @@ export const tulisAuditDalamTransaksi = async (
       hash
     ]
   );
-  await koneksi.query('UPDATE letter_audit_heads SET last_hash = ?, updated_at = NOW(3) WHERE id = 1', [
+  await koneksi.query('UPDATE letter_audit_heads SET last_hash = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = 1', [
     hash
   ]);
   return hash;

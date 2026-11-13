@@ -1,13 +1,14 @@
-﻿import { one, withTransaction } from '../config/db.js';
-import { SCOPE_NOMOR, STATUS_NOMOR } from '../constants/index.js';
+﻿import { one, query, withTransaction, galatSementara } from '../config/db.js';
+import { STATUS_NOMOR } from '../constants/index.js';
 import { AppError } from '../utils/AppError.js';
 import { bagianJakarta, keTanggal } from '../utils/tanggal.js';
 import {
-  defaultFormatGolongan,
-  normalizeGolongan,
+  MENU_NOMOR,
+  bolehPakaiUlangNomor,
+  defaultFormatMenu,
   monthRoman,
-  renderNomor,
-  scopeKeyFor
+  normalizeGolongan,
+  renderNomor
 } from '../utils/nomor.js';
 import { cariBidangByKode, cariNomor } from './master.repository.js';
 import { ambilPengaturan } from './settings.repository.js';
@@ -20,13 +21,30 @@ const dataAktor = (aktor = {}) => ({
   role: aktor.profile?.role || aktor.role || ''
 });
 
+export const MENU_VALID = Object.freeze(Object.values(MENU_NOMOR));
+
+export const normalisasiMenu = (menu, bawaan = MENU_NOMOR.SURAT_KELUAR) => {
+  const nilai = String(menu || '')
+    .trim()
+    .toUpperCase();
+  return MENU_VALID.includes(nilai) ? nilai : bawaan;
+};
+
+export const golonganMenu = (menu) => {
+  if (menu === MENU_NOMOR.SK) return 'SK';
+  if (menu === MENU_NOMOR.SE) return 'SE';
+  return 'LAINNYA';
+};
+
 export const petaNomor = (row) => ({
   id: row.id,
   seq: row.seq,
   seq_suffix: row.seq_suffix,
+  menu: row.menu || MENU_NOMOR.SURAT_KELUAR,
   klasifikasi: row.klasifikasi,
   golongan: row.golongan,
   unit: row.unit,
+  kode_bidang: row.kode_bidang,
   bulan: row.bulan,
   bulan_romawi: row.bulan_romawi,
   tahun: row.tahun,
@@ -65,12 +83,7 @@ const ambilMaster = async (jenisId) => {
   if (!master || master.aktif !== true) {
     throw new AppError(400, 'MASTER_NOMOR_TIDAK_AKTIF', 'Jenis nomor surat tidak aktif.');
   }
-  const golongan = normalizeGolongan(master.golongan);
-  return {
-    ...master,
-    golongan,
-    format: defaultFormatGolongan(golongan)
-  };
+  return master;
 };
 
 const ambilBidang = async (kode) => {
@@ -88,39 +101,103 @@ const ambilBidang = async (kode) => {
 const ambilPengaturanNomor = async () => {
   const pengaturan = await ambilPengaturan();
   return {
-    scope:
-      pengaturan.numberingScope === SCOPE_NOMOR.PER_KLASIFIKASI
-        ? SCOPE_NOMOR.PER_KLASIFIKASI
-        : SCOPE_NOMOR.GLOBAL_PER_TAHUN,
     reservationMinutes: Math.max(1, Number(pengaturan.reservationMinutes || 15))
   };
 };
 
-const bangunNomor = ({ master, unit, seq, seqSuffix = null, date, scopeKey }) => {
+export const siapkanKonteks = async ({ menu, jenisId, bidangKode }) => {
+  const menuFinal = normalisasiMenu(menu);
+  if (menuFinal !== MENU_NOMOR.SE && !jenisId) {
+    throw new AppError(400, 'JENIS_WAJIB', 'Jenis nomor wajib dipilih.');
+  }
+  const master = menuFinal === MENU_NOMOR.SE ? null : await ambilMaster(jenisId);
+  const bidang = menuFinal === MENU_NOMOR.SURAT_KELUAR ? await ambilBidang(bidangKode) : null;
+  return { menu: menuFinal, master, bidangKode: bidang ? bidang.kode : null, bidang };
+};
+
+export const bangunNomor = ({ menu, master, bidangKode, seq, date }) => {
   const bagian = bagianJakarta(date);
-  const golongan = normalizeGolongan(master.golongan);
+  const golongan = golonganMenu(menu);
+  const kode = master ? String(master.kode || '') : '';
   return {
     seq: Number(seq),
-    seq_suffix: seqSuffix === null || seqSuffix === undefined ? null : String(seqSuffix),
-    klasifikasi: String(master.kode || ''),
+    seq_suffix: null,
+    menu,
+    klasifikasi: kode,
     golongan,
-    unit: String(unit),
+    unit: bidangKode || 'BKPSDMD',
+    kode_bidang: bidangKode || null,
     bulan: bagian.month,
     bulan_romawi: monthRoman(bagian.month),
     tahun: bagian.year,
-    scope_key: scopeKey,
-    full_number: renderNomor(master.format, {
-      KODE: master.kode,
+    scope_key: menu,
+    full_number: renderNomor(defaultFormatMenu(menu), {
+      KODE: kode,
       GOLONGAN: golongan,
       URUT: seq,
-      URUT_SUFFIX: seqSuffix ? `.${seqSuffix}` : '',
-      UNIT: unit,
+      UNIT: bidangKode || 'BKPSDMD',
+      BIDANG: bidangKode || '',
       TAHUN: bagian.year,
       BULAN: String(bagian.month).padStart(2, '0'),
-      BULAN_ROMAWI: monthRoman(bagian.month),
-      BIDANG: unit
+      BULAN_ROMAWI: monthRoman(bagian.month)
     })
   };
+};
+
+export const bolehPakaiUlang = (menu, row, hariIni, tahun) =>
+  bolehPakaiUlangNomor({
+    menu,
+    status: row.status,
+    voidedAt: row.voided_at,
+    letterDate: row.letter_date,
+    tahunNomor: row.tahun,
+    tahunAcuan: tahun,
+    hariIni
+  });
+
+const kumpulkanTersedia = async ({ menu, tahun, koneksi = null }) => {
+  const sql = `SELECT id, seq, status, letter_date, voided_at, tahun
+               FROM letter_numbers WHERE menu = ? AND tahun = ?
+               ORDER BY seq ASC`;
+  const rows = koneksi
+    ? (await koneksi.query(sql, [menu, tahun]))[0]
+    : await query(sql, [menu, tahun]);
+  const peta = new Map(rows.map((row) => [Number(row.seq), row]));
+  const maks = rows.reduce((hasil, row) => Math.max(hasil, Number(row.seq)), 0);
+  const hariIni = bagianJakarta(new Date());
+  const tersedia = [];
+  for (let seq = 1; seq <= maks; seq += 1) {
+    const row = peta.get(seq);
+    if (!row) {
+      tersedia.push({ seq, sumber: 'BOLONG', row: null });
+      continue;
+    }
+    if (bolehPakaiUlang(menu, row, hariIni, tahun)) {
+      tersedia.push({ seq, sumber: 'BATAL', row });
+    }
+  }
+  return { tersedia, maks, rows };
+};
+
+const pilihSeq = (tersedia, maks, seqPilihan) => {
+  const pilihan =
+    seqPilihan === null || seqPilihan === undefined || seqPilihan === '' ? null : Number(seqPilihan);
+  if (pilihan !== null) {
+    if (!Number.isInteger(pilihan) || pilihan < 1) {
+      throw new AppError(400, 'NOMOR_TIDAK_VALID', 'Nomor urut yang dipilih tidak valid.');
+    }
+    const item = tersedia.find((butir) => butir.seq === pilihan);
+    if (!item) {
+      throw new AppError(
+        409,
+        'NOMOR_TIDAK_TERSEDIA',
+        'Nomor yang dipilih sudah terpakai atau belum tersedia. Muat ulang daftar nomor.'
+      );
+    }
+    return item;
+  }
+  if (tersedia.length) return tersedia[0];
+  return { seq: maks + 1, sumber: 'BARU', row: null };
 };
 
 const ambilNomor = async (id) => {
@@ -128,132 +205,352 @@ const ambilNomor = async (id) => {
   return row ? petaNomor(row) : null;
 };
 
-export const reservasiNomor = async ({
-  jenisId,
-  bidangKode,
-  tanggal,
-  aktor,
-  idempotencyKey,
-  metadata = {}
-}) => {
-  const [master, bidang, pengaturan] = await Promise.all([
-    ambilMaster(jenisId),
-    ambilBidang(bidangKode),
-    ambilPengaturanNomor()
-  ]);
-  const tanggalSurat = keTanggal(tanggal);
-  if (!tanggalSurat) throw new AppError(400, 'TANGGAL_TIDAK_VALID', 'Tanggal surat tidak valid.');
-  const bagian = bagianJakarta(tanggalSurat);
-  const scopeKey = scopeKeyFor({ golongan: master.golongan, kode: master.kode, scope: pengaturan.scope });
-  const idemKey = String(
-    idempotencyKey || `${aktor.uid}_${master.id}_${tanggalSurat.toISOString()}`
-  ).slice(0, 200);
+const tulisIdempotensi = async (koneksi, idemKey, letterId) => {
+  if (!idemKey) return;
+  await koneksi.query(
+    `INSERT INTO letter_idempotency (idem_key, letter_id) VALUES (?, ?)
+     ON DUPLICATE KEY UPDATE letter_id = letter_id`,
+    [idemKey, letterId]
+  );
+};
 
-  const id = await withTransaction(async (koneksi) => {
+// Pastikan baris counter sudah ada SEBELUM transaksi alokasi dimulai. Dengan
+// begitu transaksi hanya perlu SELECT ... FOR UPDATE pada baris yang sudah ada,
+// sehingga tidak ada balapan INSERT yang memicu deadlock.
+export const pastikanCounter = async (tahun, menu) => {
+  const menuFinal = normalisasiMenu(menu);
+  for (let percobaan = 0; ; percobaan += 1) {
+    try {
+      await query(
+        `INSERT IGNORE INTO letter_counters (tahun, scope, scope_key, last_seq)
+         VALUES (?, 'GLOBAL_PER_TAHUN', ?, 0)`,
+        [Number(tahun), menuFinal]
+      );
+      return;
+    } catch (error) {
+      if (percobaan >= 4 || !galatSementara(error)) throw error;
+      await new Promise((selesai) => setTimeout(selesai, 20 * (percobaan + 1)));
+    }
+  }
+};
+
+/**
+ * Mengalokasikan nomor di dalam transaksi yang sudah berjalan.
+ * Dipakai oleh Surat Keluar (reservasi) dan SK/SE (langsung terbit).
+ */
+export const alokasikanDalamTransaksi = async (
+  koneksi,
+  {
+    menu,
+    master,
+    bidangKode,
+    tanggal,
+    aktor,
+    seqPilihan = null,
+    metadata = {},
+    status = STATUS_NOMOR.RESERVED,
+    idempotencyKey = '',
+    reservationIdLama = null,
+    reservationMinutes = 15
+  }
+) => {
+  const menuFinal = normalisasiMenu(menu);
+  const bagian = bagianJakarta(tanggal);
+  const idemKey = String(idempotencyKey || '').slice(0, 200);
+
+  if (idemKey) {
     const [idem] = await koneksi.query(
       'SELECT letter_id FROM letter_idempotency WHERE idem_key = ? FOR UPDATE',
       [idemKey]
     );
     if (idem.length) {
-      const [ada] = await koneksi.query('SELECT id FROM letter_numbers WHERE id = ?', [idem[0].letter_id]);
-      if (!ada.length) {
-        throw new AppError(409, 'IDEMPOTENSI_RUSAK', 'Kunci idempotensi menunjuk nomor yang tidak ada.');
-      }
-      return ada[0].id;
+      return { id: idem[0].letter_id, nomor: null, reuse: false, existing: true };
     }
+  }
 
-    const [counter] = await koneksi.query(
-      'SELECT last_seq FROM letter_counters WHERE tahun = ? AND scope_key = ? FOR UPDATE',
-      [bagian.year, scopeKey]
+  const [counterRows] = await koneksi.query(
+    'SELECT last_seq FROM letter_counters WHERE tahun = ? AND scope_key = ? FOR UPDATE',
+    [bagian.year, menuFinal]
+  );
+  if (!counterRows.length) {
+    // Jaring pengaman bila pemanggil lupa menyiapkan counter sebelum transaksi.
+    await koneksi.query(
+      `INSERT INTO letter_counters (tahun, scope, scope_key, last_seq)
+       VALUES (?, 'GLOBAL_PER_TAHUN', ?, 0)`,
+      [bagian.year, menuFinal]
     );
-    let seq;
-    if (counter.length) {
-      seq = Number(counter[0].last_seq) + 1;
-      await koneksi.query(
-        'UPDATE letter_counters SET last_seq = ?, updated_at = NOW(3) WHERE tahun = ? AND scope_key = ?',
-        [seq, bagian.year, scopeKey]
-      );
-    } else {
-      seq = 1;
-      await koneksi.query(
-        `INSERT INTO letter_counters (tahun, scope, scope_key, last_seq)
-         VALUES (?, ?, ?, 1)`,
-        [bagian.year, pengaturan.scope, scopeKey]
-      );
-    }
+  }
 
-    const nomor = bangunNomor({ master, unit: bidang.kode, seq, date: tanggalSurat, scopeKey });
-    const [duplikat] = await koneksi.query('SELECT id FROM letter_numbers WHERE full_number = ?', [
-      nomor.full_number
+  let auditHead = await bacaAuditHead(koneksi);
+  const aktorData = dataAktor(aktor);
+
+  // Reservasi lama dilepas lebih dulu agar nomornya kembali tersedia dan bisa
+  // dipakai ulang pada hari yang sama (mis. saat pengguna mengganti jenis nomor).
+  if (reservationIdLama) {
+    const [lamaReservasi] = await koneksi.query(
+      'SELECT * FROM letter_numbers WHERE id = ? FOR UPDATE',
+      [Number(reservationIdLama)]
+    );
+    if (lamaReservasi.length && lamaReservasi[0].status === STATUS_NOMOR.RESERVED) {
+      const lama = lamaReservasi[0];
+      const versiLama = Number(lama.row_version || 1) + 1;
+      await koneksi.query(
+        `UPDATE letter_numbers
+            SET status = 'VOID', voided_at = UTC_TIMESTAMP(3), voided_by_id = ?, voided_by_nama = ?,
+                void_reason = ?, row_version = ?
+          WHERE id = ?`,
+        [
+          aktorData.uid,
+          aktorData.nama,
+          'Reservasi diganti karena parameter nomor berubah',
+          versiLama,
+          Number(lama.id)
+        ]
+      );
+      auditHead = await tulisAuditDalamTransaksi(koneksi, {
+        letterId: Number(lama.id),
+        action: 'VOID',
+        actor: aktor,
+        before: petaNomor(lama),
+        after: {
+          ...petaNomor(lama),
+          status: STATUS_NOMOR.VOID,
+          voided_at: new Date(),
+          voided_by: { uid: aktorData.uid, nama: aktorData.nama },
+          void_reason: 'Reservasi diganti karena parameter nomor berubah',
+          row_version: versiLama
+        },
+        previousHash: auditHead
+      });
+    }
+  }
+
+  const { tersedia, maks } = await kumpulkanTersedia({
+    koneksi,
+    menu: menuFinal,
+    tahun: bagian.year
+  });
+  const pilihan = pilihSeq(tersedia, maks, seqPilihan);
+  const nomor = bangunNomor({
+    menu: menuFinal,
+    master,
+    bidangKode,
+    seq: pilihan.seq,
+    date: tanggal
+  });
+
+  const kedaluwarsa = new Date(Date.now() + Math.max(1, reservationMinutes) * 60000);
+  const terbit = status === STATUS_NOMOR.ISSUED;
+  let letterId;
+  let aksi;
+  let before = null;
+
+  if (pilihan.row) {
+    const [lamaRows] = await koneksi.query('SELECT * FROM letter_numbers WHERE id = ? FOR UPDATE', [
+      Number(pilihan.row.id)
     ]);
-    if (duplikat.length) {
-      throw new AppError(409, 'NOMOR_DUPLIKAT', 'Nomor surat sudah terdaftar. Ulangi Generate Nomor.');
+    if (!lamaRows.length) {
+      throw new AppError(409, 'NOMOR_TIDAK_DITEMUKAN', 'Nomor yang akan dipakai ulang tidak ditemukan.');
     }
-
-    const auditHead = await bacaAuditHead(koneksi);
-    const kedaluwarsa = new Date(Date.now() + pengaturan.reservationMinutes * 60000);
-    const aktorData = dataAktor(aktor);
-
-    const [hasil] = await koneksi.query(
-      `INSERT INTO letter_numbers
-         (seq, seq_suffix, klasifikasi, golongan, unit, bulan, bulan_romawi, tahun, scope_key,
-          full_number, jenis_id, status, letter_date, perihal, tujuan,
-          created_by_id, created_by_nama, created_by_role, reservation_expires_at,
-          idempotency_key, row_version)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'RESERVED', ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+    before = petaNomor(lamaRows[0]);
+    await koneksi.query(
+      `UPDATE letter_numbers
+          SET klasifikasi = ?, golongan = ?, unit = ?, kode_bidang = ?, bulan = ?,
+              bulan_romawi = ?, tahun = ?, scope_key = ?, full_number = ?, jenis_id = ?,
+              status = ?, letter_date = ?, perihal = ?, tujuan = ?,
+              created_by_id = ?, created_by_nama = ?, created_by_role = ?,
+              letter_id = NULL, issued_at = ?, reservation_expires_at = ?, idempotency_key = ?,
+              reused_at = UTC_TIMESTAMP(3), reused_by_id = ?, reused_by_nama = ?,
+              reuse_count = reuse_count + 1, reuse_reason = ?,
+              row_version = row_version + 1
+        WHERE id = ?`,
       [
-        nomor.seq,
-        nomor.seq_suffix,
         nomor.klasifikasi,
         nomor.golongan,
         nomor.unit,
+        nomor.kode_bidang,
         nomor.bulan,
         nomor.bulan_romawi,
         nomor.tahun,
         nomor.scope_key,
         nomor.full_number,
-        master.id,
-        tanggalSurat,
+        master ? master.id : null,
+        status,
+        tanggal,
         metadata.perihal || '',
         metadata.tujuan || '',
         aktorData.uid,
         aktorData.nama,
         aktorData.role,
+        terbit ? new Date() : null,
+        kedaluwarsa,
+        idemKey,
+        aktorData.uid,
+        aktorData.nama,
+        metadata.reuseReason || 'Nomor batal digunakan kembali otomatis',
+        Number(pilihan.row.id)
+      ]
+    );
+    letterId = Number(pilihan.row.id);
+    aksi = 'REUSE_VOID';
+  } else {
+    const [hasil] = await koneksi.query(
+      `INSERT INTO letter_numbers
+         (seq, seq_suffix, menu, klasifikasi, golongan, unit, kode_bidang, bulan, bulan_romawi,
+          tahun, scope_key, full_number, jenis_id, status, letter_date, perihal, tujuan,
+          created_by_id, created_by_nama, created_by_role, issued_at, reservation_expires_at,
+          idempotency_key, row_version)
+       VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+      [
+        nomor.seq,
+        nomor.menu,
+        nomor.klasifikasi,
+        nomor.golongan,
+        nomor.unit,
+        nomor.kode_bidang,
+        nomor.bulan,
+        nomor.bulan_romawi,
+        nomor.tahun,
+        nomor.scope_key,
+        nomor.full_number,
+        master ? master.id : null,
+        status,
+        tanggal,
+        metadata.perihal || '',
+        metadata.tujuan || '',
+        aktorData.uid,
+        aktorData.nama,
+        aktorData.role,
+        terbit ? new Date() : null,
         kedaluwarsa,
         idemKey
       ]
     );
-    const letterId = hasil.insertId;
-    await koneksi.query('INSERT INTO letter_idempotency (idem_key, letter_id) VALUES (?, ?)', [
-      idemKey,
-      letterId
-    ]);
+    letterId = hasil.insertId;
+    aksi = terbit ? 'ISSUE' : 'RESERVE';
+  }
 
-    const after = {
-      id: letterId,
-      ...nomor,
-      jenisId: master.id,
-      status: STATUS_NOMOR.RESERVED,
-      letter_date: tanggalSurat,
-      perihal: metadata.perihal || '',
-      tujuan: metadata.tujuan || '',
-      created_by: aktorData,
-      reservation_expires_at: kedaluwarsa,
-      idempotency_key: idemKey,
-      row_version: 1
-    };
-    await tulisAuditDalamTransaksi(koneksi, {
-      letterId,
-      action: 'RESERVE',
-      actor: aktor,
-      before: null,
-      after,
-      previousHash: auditHead
-    });
-    return letterId;
+  await koneksi.query(
+    `UPDATE letter_counters
+        SET last_seq = GREATEST(last_seq, ?), updated_at = UTC_TIMESTAMP(3)
+      WHERE tahun = ? AND scope_key = ?`,
+    [nomor.seq, bagian.year, menuFinal]
+  );
+  await tulisIdempotensi(koneksi, idemKey, letterId);
+
+  const after = {
+    id: letterId,
+    ...nomor,
+    jenisId: master ? master.id : null,
+    status,
+    letter_date: tanggal,
+    perihal: metadata.perihal || '',
+    tujuan: metadata.tujuan || '',
+    created_by: aktorData,
+    reservation_expires_at: kedaluwarsa,
+    idempotency_key: idemKey,
+    row_version: before ? Number(before.row_version || 1) + 1 : 1,
+    ...(pilihan.row
+      ? {
+          reused_at: new Date(),
+          reused_by: { uid: aktorData.uid, nama: aktorData.nama },
+          reuse_count: Number(before?.reuse_count || 0) + 1,
+          reuse_reason: metadata.reuseReason || 'Nomor batal digunakan kembali otomatis'
+        }
+      : {})
+  };
+  await tulisAuditDalamTransaksi(koneksi, {
+    letterId,
+    action: aksi,
+    actor: aktor,
+    before,
+    after,
+    previousHash: auditHead
   });
 
-  return ambilNomor(id);
+  return { id: letterId, nomor, reuse: Boolean(pilihan.row), existing: false };
+};
+
+export const reservasiNomor = async ({
+  menu = MENU_NOMOR.SURAT_KELUAR,
+  jenisId,
+  bidangKode,
+  tanggal,
+  aktor,
+  idempotencyKey,
+  metadata = {},
+  seqPilihan = null,
+  reservationIdLama = null
+}) => {
+  const konteks = await siapkanKonteks({ menu, jenisId, bidangKode });
+  const tanggalSurat = keTanggal(tanggal);
+  if (!tanggalSurat) throw new AppError(400, 'TANGGAL_TIDAK_VALID', 'Tanggal surat tidak valid.');
+  const pengaturan = await ambilPengaturanNomor();
+  const idemKey = String(
+    idempotencyKey || `${aktor.uid}_${konteks.menu}_${tanggalSurat.toISOString()}`
+  ).slice(0, 200);
+  await pastikanCounter(bagianJakarta(tanggalSurat).year, konteks.menu);
+
+  const hasil = await withTransaction((koneksi) =>
+    alokasikanDalamTransaksi(koneksi, {
+      menu: konteks.menu,
+      master: konteks.master,
+      bidangKode: konteks.bidangKode,
+      tanggal: tanggalSurat,
+      aktor,
+      seqPilihan,
+      metadata,
+      status: STATUS_NOMOR.RESERVED,
+      idempotencyKey: idemKey,
+      reservationIdLama,
+      reservationMinutes: pengaturan.reservationMinutes
+    })
+  );
+
+  return ambilNomor(hasil.id);
+};
+
+export const tersediaNomor = async ({
+  menu = MENU_NOMOR.SURAT_KELUAR,
+  jenisId,
+  bidangKode,
+  tanggal,
+  seqPilihan = null
+}) => {
+  const konteks = await siapkanKonteks({ menu, jenisId, bidangKode });
+  const tanggalSurat = keTanggal(tanggal) || new Date();
+  const bagian = bagianJakarta(tanggalSurat);
+  const { tersedia, maks } = await kumpulkanTersedia({
+    menu: konteks.menu,
+    tahun: bagian.year
+  });
+  const items = tersedia.map((item) => ({
+    seq: item.seq,
+    sumber: item.sumber,
+    nomor: bangunNomor({
+      menu: konteks.menu,
+      master: konteks.master,
+      bidangKode: konteks.bidangKode,
+      seq: item.seq,
+      date: tanggalSurat
+    }).full_number
+  }));
+  const nomorBerikutnya = bangunNomor({
+    menu: konteks.menu,
+    master: konteks.master,
+    bidangKode: konteks.bidangKode,
+    seq: maks + 1,
+    date: tanggalSurat
+  }).full_number;
+  return {
+    menu: konteks.menu,
+    tahun: bagian.year,
+    items,
+    berikutnya: maks + 1,
+    nomorBerikutnya,
+    kecilTersedia: items.length ? items[0].seq : maks + 1,
+    terjadwal: seqPilihan ? Number(seqPilihan) : null
+  };
 };
 
 export const terbitkanNomor = async ({ reservationId, payload, aktor }) =>
@@ -283,6 +580,29 @@ export const terbitkanNomor = async ({ reservationId, payload, aktor }) =>
         'Reservasi nomor sudah kedaluwarsa. Generate nomor baru.'
       );
     }
+    if (payload.jenisId && Number(payload.jenisId) !== Number(before.jenis_id)) {
+      throw new AppError(
+        409,
+        'RESERVASI_TIDAK_COCOK',
+        'Jenis nomor berubah sejak nomor dibuat. Generate ulang nomor.'
+      );
+    }
+    if (payload.bidangPembuat && String(payload.bidangPembuat) !== String(before.unit)) {
+      throw new AppError(
+        409,
+        'RESERVASI_TIDAK_COCOK',
+        'Bidang pembuat berubah sejak nomor dibuat. Generate ulang nomor.'
+      );
+    }
+    const tahunReservasi = bagianJakarta(before.letter_date).year;
+    const tahunPayload = bagianJakarta(payload.tglSurat).year;
+    if (tahunReservasi !== tahunPayload) {
+      throw new AppError(
+        409,
+        'RESERVASI_TIDAK_COCOK',
+        'Tahun surat berubah sejak nomor dibuat. Generate ulang nomor.'
+      );
+    }
 
     const auditHead = await bacaAuditHead(koneksi);
     const aktorData = dataAktor(aktor);
@@ -295,7 +615,7 @@ export const terbitkanNomor = async ({ reservationId, payload, aktor }) =>
          (no_surat, jenis_id, golongan, tgl_surat, tujuan, hal, isi_ringkas, sifat, tanda_tangan,
           file_id, file_url, bidang_pembuat_kode, dibuat_oleh_id, dibuat_oleh_nama,
           status, alasan_batal, dikirim_ke_luar, letter_number_id, letter_row_version, dibuat_pada)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, 'Aktif', '', 0, ?, ?, NOW(3))`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, 'Aktif', '', 0, ?, ?, UTC_TIMESTAMP(3))`,
       [
         before.full_number,
         Number(payload.jenisId) || before.jenis_id,
@@ -325,7 +645,7 @@ export const terbitkanNomor = async ({ reservationId, payload, aktor }) =>
     await koneksi.query(
       `UPDATE letter_numbers
           SET status = 'ISSUED', letter_id = ?, perihal = ?, tujuan = ?, letter_date = ?,
-              issued_at = NOW(3), row_version = ?
+              issued_at = UTC_TIMESTAMP(3), row_version = ?
         WHERE id = ?`,
       [suratId, payload.hal, payload.tujuan, payload.tglSurat, versi, before.id]
     );

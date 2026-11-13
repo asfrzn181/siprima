@@ -56,6 +56,7 @@
               <th>Nomor SK</th>
               <th>Tanggal SK</th>
               <th>Keterangan</th>
+              <th>Status</th>
               <th><span class="sr-only">Aksi</span></th>
             </tr>
           </thead>
@@ -81,11 +82,19 @@
         <form id="form" class="form-grid">
         <input name="id" type="hidden">
         <label class="wide">Surat Keputusan Tentang<input name="tentang" maxlength="200" required></label>
-        <label>Nomor SK<input name="nomor" maxlength="120" required></label>
+        <label>Jenis nomor (klasifikasi)
+          <input name="jenisCari" placeholder="Ketik kode, contoh 800" autocomplete="off">
+          <select name="jenisId" hidden></select>
+        </label>
         <label>Tanggal SK<input name="tanggal" type="date" required></label>
+        <label class="wide">Nomor SK
+          <input name="nomorGenerated" readonly placeholder="Nomor dibuat otomatis">
+          <select name="seqPilihan"><option value="">Otomatis — nomor terkecil yang tersedia</option></select>
+        </label>
         <label class="wide">Keterangan<textarea name="keterangan" rows="3" maxlength="1000"></textarea></label>
         <div class="form-actions wide">
           <button id="save" class="button primary" type="submit">Simpan</button>
+          <button id="cancel-record" class="button secondary" type="button" hidden>Batalkan SK</button>
         </div>
         <p id="form-error" class="form-error wide" role="alert" hidden></p>
       </form>

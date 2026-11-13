@@ -21,7 +21,7 @@ import {
 } from '../utils/akses.js';
 import { potongHalaman } from '../utils/pagination.js';
 import { serialisasi } from '../utils/serialisasi.js';
-import { tanggalInput } from '../utils/tanggal.js';
+import { bagianJakarta, tanggalInput } from '../utils/tanggal.js';
 import {
   batalkanNomor,
   koreksi as koreksiNomor,
@@ -30,6 +30,7 @@ import {
   reservasi,
   terbitkan
 } from './numbering.service.js';
+import { cariRegisterNomor } from '../repositories/numberingQuery.repository.js';
 
 const modeUntuk = (profil, sifat) => {
   if (profil.role !== PERAN.BIDANG) return sifat === 'semua' ? ['semua'] : [sifat];
@@ -132,6 +133,30 @@ export const tambahKeluar = async (payload, profil) => {
     bidangPembuat: bidang,
     idempotencyKey: payload.idempotencyKey || randomUUID()
   };
+  if (final.reservationId) {
+    const register = await cariRegisterNomor(final.reservationId);
+    const belumKedaluwarsa =
+      !register?.reservation_expires_at ||
+      new Date(register.reservation_expires_at).getTime() > Date.now();
+    const cocok =
+      register &&
+      register.status === 'RESERVED' &&
+      belumKedaluwarsa &&
+      Number(register.jenisId) === Number(final.jenisId) &&
+      String(register.unit) === String(bidang) &&
+      bagianJakarta(register.letter_date).year === bagianJakarta(final.tglSurat).year;
+    if (!cocok) {
+      if (register && register.status === 'RESERVED') {
+        await batalkanNomor({
+          letterNumberId: register.id,
+          alasan: 'Reservasi diganti karena jenis nomor, bidang, atau tahun surat berubah',
+          profil
+        });
+      }
+      final.reservationId = '';
+      final.idempotencyKey = randomUUID();
+    }
+  }
   if (!final.reservationId) {
     const hasilReservasi = await reservasi(
       {
@@ -139,6 +164,7 @@ export const tambahKeluar = async (payload, profil) => {
         bidangKode: bidang,
         tanggal: final.tglSurat,
         idempotencyKey: final.idempotencyKey,
+        seqPilihan: final.seqPilihan,
         perihal: final.hal,
         tujuan: final.tujuan
       },

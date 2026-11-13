@@ -52,18 +52,31 @@ export const one = async (sql, params = []) => {
   return rows[0] || null;
 };
 
-export const withTransaction = async (handler) => {
-  const koneksi = await pool.getConnection();
-  try {
-    await koneksi.beginTransaction();
-    const hasil = await handler(koneksi);
-    await koneksi.commit();
-    return hasil;
-  } catch (error) {
-    await koneksi.rollback();
-    throw error;
-  } finally {
-    koneksi.release();
+// Deadlock/lock timeout adalah kondisi sementara pada MySQL. Transaksi sudah
+// di-rollback, jadi aman untuk diulang dari awal.
+export const galatSementara = (error) =>
+  error?.code === 'ER_LOCK_DEADLOCK' || error?.code === 'ER_LOCK_WAIT_TIMEOUT';
+
+export const withTransaction = async (handler, { retries = 3 } = {}) => {
+  let percobaan = 0;
+  for (;;) {
+    const koneksi = await pool.getConnection();
+    try {
+      await koneksi.beginTransaction();
+      const hasil = await handler(koneksi);
+      await koneksi.commit();
+      return hasil;
+    } catch (error) {
+      await koneksi.rollback();
+      if (percobaan < retries && galatSementara(error)) {
+        percobaan += 1;
+        await new Promise((selesai) => setTimeout(selesai, 20 * percobaan + Math.random() * 20));
+        continue;
+      }
+      throw error;
+    } finally {
+      koneksi.release();
+    }
   }
 };
 

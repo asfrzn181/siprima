@@ -1,14 +1,17 @@
 import { punyaIzin, wajibMasuk } from '../api/client.js';
+import { cariNomor } from '../api/master.api.js';
 import {
+  batalkanSuratKhusus,
   daftarSuratKhusus,
-  hapusSuratKhusus,
+  nomorTersediaSuratKhusus,
   tambahSuratKhusus,
   ubahSuratKhusus
 } from '../api/suratKhusus.api.js';
-import { renderShell, showToast } from '../components/ui.js';
+import { createAutocomplete } from '../components/autocomplete.js';
+import { badge, renderShell, showToast } from '../components/ui.js';
 import { pesanTabel } from '../utils/dom.js';
 import { eksporExcel } from '../utils/excel.js';
-import { formatTanggal, inputTanggal, tanggalIso } from '../utils/format.js';
+import { formatStatusKind, formatTanggal, inputTanggal, tanggalIso } from '../utils/format.js';
 
 export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }) => {
   const sesi = await wajibMasuk();
@@ -22,6 +25,7 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
   const bolehTulis = punyaIzin(sesi.profile, `${kunci}.tulis`);
   const bolehHapus = punyaIzin(sesi.profile, `${kunci}.hapus`);
   const bolehCetak = punyaIzin(sesi.profile, `${kunci}.cetak`);
+  const perluJenis = jenis === 'SK';
 
   const body = document.querySelector('#list-body');
   const note = document.querySelector('#list-note');
@@ -32,7 +36,11 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
   const form = document.querySelector('#form');
   const formError = document.querySelector('#form-error');
   const saveButton = document.querySelector('#save');
+  const cancelButton = document.querySelector('#cancel-record');
   const exportButton = document.querySelector('#export');
+  const jenisCari = form.elements.jenisCari;
+  const jenisId = form.elements.jenisId;
+  const seqPilihan = form.elements.seqPilihan;
 
   let halaman = 1;
   let totalHalaman = 1;
@@ -48,7 +56,7 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
 
   const render = () => {
     if (!items.length) {
-      pesanTabel(body, 6, 'Tidak ada data sesuai filter.', 'Ubah kata kunci atau tambah data baru.');
+      pesanTabel(body, 7, 'Tidak ada data sesuai filter.', 'Ubah kata kunci atau tambah data baru.');
       return;
     }
     const mulai = (halaman - 1) * 20;
@@ -61,17 +69,17 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
         const detail = document.createElement('button');
         detail.className = 'button small secondary';
         detail.type = 'button';
-        detail.textContent = bolehTulis ? 'Ubah' : 'Lihat';
-        detail.addEventListener('click', () => buka(item, !bolehTulis));
+        detail.textContent = bolehTulis && item.status !== 'Dibatalkan' ? 'Ubah' : 'Lihat';
+        detail.addEventListener('click', () => buka(item, !bolehTulis || item.status === 'Dibatalkan'));
         aksi.append(detail);
 
-        if (bolehHapus) {
+        if (bolehHapus && item.status !== 'Dibatalkan') {
           const hapus = document.createElement('button');
           hapus.className = 'button small secondary';
           hapus.type = 'button';
-          hapus.textContent = 'Hapus';
+          hapus.textContent = 'Batalkan';
           hapus.style.marginLeft = '0.4rem';
-          hapus.addEventListener('click', () => hapusData(item));
+          hapus.addEventListener('click', () => batalkanData(item));
           aksi.append(hapus);
         }
 
@@ -81,7 +89,15 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
         } else {
           kolom.push(sel(labelNomor, item.nomor), sel(labelTentang, item.tentang));
         }
-        kolom.push(sel('Tanggal', formatTanggal(item.tanggal)), sel('Keterangan', item.keterangan), aksi);
+        const status = document.createElement('td');
+        status.dataset.label = 'Status';
+        status.append(badge(item.status || 'Aktif', formatStatusKind(item.status)));
+        kolom.push(
+          sel('Tanggal', formatTanggal(item.tanggal)),
+          sel('Keterangan', item.keterangan),
+          status,
+          aksi
+        );
         baris.append(...kolom);
         return baris;
       })
@@ -100,8 +116,35 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
       pageLabel.textContent = `Halaman ${halaman} dari ${totalHalaman}`;
       note.textContent = `${hasil.pagination.total} data ditemukan.`;
     } catch (error) {
-      pesanTabel(body, 6, 'Data gagal dimuat.', error.message);
+      pesanTabel(body, 7, 'Data gagal dimuat.', error.message);
       note.textContent = 'Gagal memuat data.';
+    }
+  };
+
+  const muatTersedia = async () => {
+    if (!form.elements.tanggal.value) return;
+    if (perluJenis && !jenisId.value) {
+      form.elements.nomorGenerated.value = '';
+      return;
+    }
+    seqPilihan.replaceChildren();
+    seqPilihan.append(new Option('Otomatis — nomor terkecil yang tersedia', ''));
+    try {
+      const hasil = await nomorTersediaSuratKhusus(jenis, {
+        jenisId: jenisId.value || undefined,
+        tanggal: tanggalIso(form.elements.tanggal.value)
+      });
+      (hasil.items || []).forEach((item) => {
+        const label = `${item.nomor} — ${item.sumber === 'BATAL' ? 'batal, dapat dipakai ulang' : 'nomor bolong'}`;
+        seqPilihan.append(new Option(label, item.seq));
+      });
+      form.elements.nomorGenerated.value = hasil.items?.length
+        ? hasil.items[0].nomor
+        : hasil.nomorBerikutnya || '';
+    } catch (error) {
+      form.elements.nomorGenerated.value = '';
+      formError.textContent = error.message || 'Daftar nomor tersedia gagal dimuat.';
+      formError.hidden = false;
     }
   };
 
@@ -109,6 +152,7 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
     formError.hidden = true;
     form.reset();
     panel.hidden = false;
+    const dibatalkan = item?.status === 'Dibatalkan';
     document.querySelector('#form-title').textContent = item
       ? bacaSaja
         ? `Detail ${judul}`
@@ -116,31 +160,85 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
       : `Tambah ${judul}`;
     form.elements.id.value = item?.id || '';
     form.elements.tentang.value = item?.tentang || '';
-    form.elements.nomor.value = item?.nomor || '';
     form.elements.tanggal.value = inputTanggal(item?.tanggal || new Date());
     form.elements.keterangan.value = item?.keterangan || '';
-    form.querySelectorAll('input, textarea').forEach((field) => {
-      field.disabled = bacaSaja;
-    });
-    saveButton.hidden = bacaSaja || !bolehTulis;
+    form.elements.nomorGenerated.value = item?.nomor || '';
+
+    if (perluJenis) {
+      jenisId.replaceChildren();
+      if (item?.jenisId) {
+        jenisId.append(new Option(String(item.jenisId), item.jenisId));
+        jenisId.value = item.jenisId;
+      }
+      jenisCari.value = item?.nomor ? item.nomor.split('/')[0] : '';
+      jenisCari.disabled = Boolean(item) || bacaSaja || !bolehTulis;
+      jenisId.disabled = Boolean(item) || bacaSaja;
+    }
+
+    seqPilihan.replaceChildren();
+    seqPilihan.append(new Option('Otomatis — nomor terkecil yang tersedia', ''));
+    seqPilihan.disabled = Boolean(item) || bacaSaja || !bolehTulis;
+    form.querySelectorAll('input[name="tentang"], input[name="tanggal"], textarea[name="keterangan"]').forEach(
+      (field) => {
+        field.disabled = bacaSaja || dibatalkan;
+      }
+    );
+    saveButton.hidden = bacaSaja || dibatalkan || !bolehTulis;
+    cancelButton.hidden = !item || dibatalkan || !bolehHapus;
+    cancelButton.textContent = `Batalkan ${jenis}`;
+    if (!item && bolehTulis) muatTersedia();
     panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const tutup = () => {
     panel.hidden = true;
-    form.querySelectorAll('input, textarea').forEach((field) => {
-      field.disabled = false;
-    });
   };
 
-  const hapusData = async (item) => {
-    if (!confirm(`Hapus ${judul} "${item.tentang}"?`)) return;
+  if (perluJenis) {
+    createAutocomplete({
+      input: jenisCari,
+      loadSuggestions: (kataKunci) => cariNomor(kataKunci, 5),
+      renderItem: (item) => {
+        const wadah = document.createElement('span');
+        wadah.append(
+          Object.assign(document.createElement('strong'), { textContent: item.kode || '—' }),
+          Object.assign(document.createElement('small'), { textContent: item.nama || 'Tanpa keterangan' })
+        );
+        return wadah;
+      },
+      formatSelected: (item) => `${item.kode || ''} — ${item.nama || 'Tanpa keterangan'}`,
+      onSelect: (item) => {
+        let opsi = [...jenisId.options].find((option) => option.value === String(item.id));
+        if (!opsi) {
+          opsi = new Option(item.kode || item.nama || String(item.id), item.id);
+          jenisId.append(opsi);
+        }
+        jenisId.value = item.id;
+        muatTersedia();
+      }
+    });
+    jenisCari.addEventListener('input', () => {
+      if (!jenisCari.value.trim()) {
+        jenisId.replaceChildren();
+        form.elements.nomorGenerated.value = '';
+      }
+    });
+  }
+
+  form.elements.tanggal.addEventListener('change', muatTersedia);
+
+  const batalkanData = async (item) => {
+    const alasan = prompt(`Keterangan pembatalan ${judul} "${item.tentang}" wajib diisi:`);
+    if (!alasan || !alasan.trim()) {
+      showToast('Keterangan pembatalan wajib diisi.', 'error');
+      return;
+    }
     try {
-      await hapusSuratKhusus(jenis, item.id);
-      showToast(`${judul} dihapus.`);
+      await batalkanSuratKhusus(jenis, item.id, alasan.trim());
+      showToast(`${judul} dibatalkan.`);
       await muat();
     } catch (error) {
-      showToast(error.message || 'Data gagal dihapus.', 'error');
+      showToast(error.message || 'Data gagal dibatalkan.', 'error');
     }
   };
 
@@ -149,6 +247,12 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
   document.querySelector('#close-form').addEventListener('click', tutup);
   panel.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') tutup();
+  });
+
+  cancelButton.addEventListener('click', async () => {
+    const id = form.elements.id.value;
+    const item = items.find((row) => String(row.id) === String(id));
+    if (item) await batalkanData(item);
   });
 
   document.querySelector('#filter-form').addEventListener('submit', async (event) => {
@@ -185,8 +289,9 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
         'No. Urut': index + 1,
         [labelNomor]: item.nomor,
         [labelTentang]: item.tentang,
-        'Tanggal': formatTanggal(item.tanggal),
-        Keterangan: item.keterangan
+        Tanggal: formatTanggal(item.tanggal),
+        Keterangan: item.keterangan,
+        Status: item.status
       }));
       await eksporExcel(rows, `${kunci}.xlsx`, jenis);
     } catch (error) {
@@ -200,12 +305,18 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
     const id = form.elements.id.value;
     const data = {
       tentang: form.elements.tentang.value.trim(),
-      nomor: form.elements.nomor.value.trim(),
       tanggal: tanggalIso(form.elements.tanggal.value),
-      keterangan: form.elements.keterangan.value.trim()
+      keterangan: form.elements.keterangan.value.trim(),
+      seqPilihan: seqPilihan.value ? Number(seqPilihan.value) : undefined
     };
-    if (!data.tentang || !data.nomor || !data.tanggal) {
-      formError.textContent = `${labelTentang}, ${labelNomor}, dan tanggal wajib diisi.`;
+    if (perluJenis) data.jenisId = jenisId.value || undefined;
+    if (!data.tentang || !data.tanggal) {
+      formError.textContent = `${labelTentang} dan tanggal wajib diisi.`;
+      formError.hidden = false;
+      return;
+    }
+    if (perluJenis && !data.jenisId) {
+      formError.textContent = 'Jenis nomor (klasifikasi) wajib dipilih.';
       formError.hidden = false;
       return;
     }

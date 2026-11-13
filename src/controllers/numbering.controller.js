@@ -1,5 +1,6 @@
 import {
   cariNomorLengkap,
+  daftarTersedia,
   kedaluwarsa,
   pratinjau,
   reservasi,
@@ -9,6 +10,9 @@ import { kirimSukses } from '../utils/response.js';
 
 export const pratinjauNomor = async (req, res) =>
   kirimSukses(res, { data: await pratinjau(req.body, req.profile) });
+
+export const tersedia = async (req, res) =>
+  kirimSukses(res, { data: await daftarTersedia(req.query, req.profile) });
 
 export const reservasiNomor = async (req, res) =>
   kirimSukses(res, {

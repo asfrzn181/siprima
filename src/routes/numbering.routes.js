@@ -6,12 +6,18 @@ import { verifikasiCsrf } from '../middlewares/csrf.js';
 import { izinkan, wajibIzin } from '../middlewares/role.js';
 import { validasi } from '../middlewares/validate.js';
 import { skemaCariNomorLengkap, skemaVerifikasiNomor } from '../validators/master.validator.js';
-import { skemaReservasi } from '../validators/suratKeluar.validator.js';
+import { skemaReservasi, skemaTersediaNomor } from '../validators/suratKeluar.validator.js';
 
 export const numberingRouter = Router();
 
 numberingRouter.use(wajibLogin);
 
+numberingRouter.get(
+  '/tersedia',
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.BIDANG, PERAN.PIMPINAN),
+  validasi(skemaTersediaNomor, 'query'),
+  controller.tersedia
+);
 numberingRouter.get(
   '/cari',
   wajibIzin(IZIN.SURAT_KELUAR_BACA),

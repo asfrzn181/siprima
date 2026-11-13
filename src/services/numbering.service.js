@@ -1,4 +1,5 @@
 import { PERAN } from '../constants/index.js';
+import { MENU_NOMOR } from '../utils/nomor.js';
 import { cariSuratKeluar } from '../repositories/suratKeluar.repository.js';
 import { reservasiNomor, terbitkanNomor } from '../repositories/numbering.repository.js';
 import {
@@ -13,26 +14,43 @@ import {
   pratinjauNomor,
   verifikasiUrutan
 } from '../repositories/numberingQuery.repository.js';
+import { tersediaNomor } from '../repositories/numbering.repository.js';
 import { AppError, galatAkses, galatTidakDitemukan } from '../utils/AppError.js';
 import { adalahAdmin, adalahPengelola } from '../utils/akses.js';
 import { serialisasi } from '../utils/serialisasi.js';
 
 const aktorDari = (profil) => ({ uid: profil.uid, nama: profil.nama, profile: profil });
 
+const bidangPayload = (payload, profil) =>
+  profil.role === PERAN.BIDANG ? profil.bidang : payload.bidangKode || profil.bidang;
+
 export const pratinjau = (payload, profil) =>
   pratinjauNomor({
+    menu: payload.menu || MENU_NOMOR.SURAT_KELUAR,
     jenisId: payload.jenisId,
-    bidangKode: profil.role === PERAN.BIDANG ? profil.bidang : payload.bidangKode || profil.bidang,
+    bidangKode: bidangPayload(payload, profil),
     tanggal: payload.tanggal
+  });
+
+export const daftarTersedia = (payload, profil) =>
+  tersediaNomor({
+    menu: payload.menu || MENU_NOMOR.SURAT_KELUAR,
+    jenisId: payload.jenisId,
+    bidangKode: bidangPayload(payload, profil),
+    tanggal: payload.tanggal,
+    seqPilihan: payload.seqPilihan
   });
 
 export const reservasi = (payload, profil) =>
   reservasiNomor({
+    menu: payload.menu || MENU_NOMOR.SURAT_KELUAR,
     jenisId: payload.jenisId,
-    bidangKode: profil.role === PERAN.BIDANG ? profil.bidang : payload.bidangKode || profil.bidang,
+    bidangKode: bidangPayload(payload, profil),
     tanggal: payload.tanggal,
     aktor: aktorDari(profil),
     idempotencyKey: payload.idempotencyKey,
+    seqPilihan: payload.seqPilihan,
+    reservationIdLama: payload.reservationIdLama,
     metadata: { perihal: payload.perihal || '', tujuan: payload.tujuan || '' }
   });
 
@@ -84,6 +102,7 @@ export const koreksi = async ({ suratId, payload, reason, profil }) => {
     throw new AppError(400, 'TANPA_REGISTER_NOMOR', 'Surat lama tidak memiliki register nomor.');
   }
   const reservasiBaru = await reservasiNomor({
+    menu: MENU_NOMOR.SURAT_KELUAR,
     jenisId: payload.jenisId,
     bidangKode: payload.bidangPembuat || lama.bidangPembuat,
     tanggal: payload.tglSurat,

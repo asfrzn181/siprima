@@ -14,7 +14,10 @@ const dataAktor = (aktor = {}) => ({
 });
 
 export const voidNomor = async ({ letterNumberId, reason, aktor, replacedById = null, suratId = null }) => {
-  const alasan = String(reason || '').trim() || 'Surat dibatalkan';
+  const alasan = String(reason || '').trim();
+  if (!alasan) {
+    throw new AppError(400, 'ALASAN_WAJIB', 'Keterangan pembatalan wajib diisi.');
+  }
   return withTransaction(async (koneksi) => {
     const [rows] = await koneksi.query('SELECT * FROM letter_numbers WHERE id = ? FOR UPDATE', [
       letterNumberId
@@ -27,7 +30,8 @@ export const voidNomor = async ({ letterNumberId, reason, aktor, replacedById = 
       throw new AppError(409, 'NOMOR_SUDAH_DIBATALKAN', 'Nomor sudah dibatalkan.');
     }
 
-    const suratTertaut = suratId || before.letter_id;
+    const menu = before.menu || 'SURAT_KELUAR';
+    const suratTertaut = suratId || (menu === 'SURAT_KELUAR' ? before.letter_id : null);
     let suratRow = null;
     if (suratTertaut) {
       const [surat] = await koneksi.query('SELECT * FROM surat_keluar WHERE id = ? FOR UPDATE', [
@@ -43,15 +47,24 @@ export const voidNomor = async ({ letterNumberId, reason, aktor, replacedById = 
 
     await koneksi.query(
       `UPDATE letter_numbers
-          SET status = 'VOID', voided_at = NOW(3), voided_by_id = ?, voided_by_nama = ?,
+          SET status = 'VOID', voided_at = UTC_TIMESTAMP(3), voided_by_id = ?, voided_by_nama = ?,
               void_reason = ?, replaced_by_id = ?, row_version = ?
         WHERE id = ?`,
       [aktorData.uid, aktorData.nama, alasan, pengganti, versi, letterNumberId]
     );
+    if (menu !== 'SURAT_KELUAR') {
+      await koneksi.query(
+        `UPDATE surat_khusus
+            SET status = 'Dibatalkan', alasan_batal = ?, dibatalkan_pada = UTC_TIMESTAMP(3),
+                dibatalkan_oleh_id = ?, dibatalkan_oleh_nama = ?, diubah_pada = UTC_TIMESTAMP(3)
+          WHERE letter_number_id = ? AND status = 'Aktif'`,
+        [alasan, aktorData.uid, aktorData.nama, letterNumberId]
+      );
+    }
     if (suratRow) {
       await koneksi.query(
         `UPDATE surat_keluar
-            SET status = 'Dibatalkan', alasan_batal = ?, letter_row_version = ?, diubah_pada = NOW(3)
+            SET status = 'Dibatalkan', alasan_batal = ?, letter_row_version = ?, diubah_pada = UTC_TIMESTAMP(3)
           WHERE id = ?`,
         [alasan, versi, suratRow.id]
       );
@@ -87,19 +100,28 @@ export const gunakanUlangNomor = async ({ letterNumberId, payload, aktor }) =>
       throw new AppError(404, 'NOMOR_TIDAK_DITEMUKAN', 'Register nomor tidak ditemukan.');
     }
     const before = rows[0];
+    if ((before.menu || 'SURAT_KELUAR') !== 'SURAT_KELUAR') {
+      throw new AppError(409, 'MENU_TIDAK_DIDUKUNG', 'Pemakaian ulang manual hanya untuk surat keluar.');
+    }
     if (before.status !== STATUS_NOMOR.VOID) {
       throw new AppError(409, 'NOMOR_BUKAN_VOID', 'Hanya nomor VOID yang dapat digunakan kembali.');
     }
 
     const tanggal = keTanggal(payload.tglSurat);
-    const tanggalLama = before.letter_date ? new Date(before.letter_date) : null;
-    const lama = tanggalLama ? bagianJakarta(tanggalLama) : null;
+    const tanggalTerbit = before.letter_date ? new Date(before.letter_date) : null;
+    const tanggalBatal = before.voided_at ? new Date(before.voided_at) : null;
+    if (!tanggal || !tanggalTerbit || !tanggalBatal) {
+      throw new AppError(400, 'TANGGAL_TIDAK_VALID', 'Tanggal penerbitan atau pembatalan tidak valid.');
+    }
+    const terbit = bagianJakarta(tanggalTerbit);
+    const batal = bagianJakarta(tanggalBatal);
     const baru = bagianJakarta(tanggal);
-    if (lama && (lama.year !== baru.year || lama.month !== baru.month || lama.day !== baru.day)) {
+    const samaHari = (a, b) => a.year === b.year && a.month === b.month && a.day === b.day;
+    if (!samaHari(terbit, batal) || !samaHari(terbit, baru)) {
       throw new AppError(
         400,
         'TANGGAL_TIDAK_SAMA',
-        'Tanggal penerbitan harus sama persis dengan tanggal nomor yang dibatalkan.'
+        'Nomor hanya dapat dipakai ulang pada hari yang sama dengan tanggal terbit dan pembatalannya.'
       );
     }
 
@@ -130,7 +152,7 @@ export const gunakanUlangNomor = async ({ letterNumberId, payload, aktor }) =>
     await koneksi.query(
       `UPDATE letter_numbers
           SET status = 'ISSUED', letter_id = ?, letter_date = ?, perihal = ?, tujuan = ?,
-              issued_at = NOW(3), reused_at = NOW(3), reused_by_id = ?, reused_by_nama = ?,
+              issued_at = UTC_TIMESTAMP(3), reused_at = UTC_TIMESTAMP(3), reused_by_id = ?, reused_by_nama = ?,
               reuse_count = reuse_count + 1, reuse_reason = ?, row_version = ?
         WHERE id = ?`,
       [
@@ -154,7 +176,7 @@ export const gunakanUlangNomor = async ({ letterNumberId, payload, aktor }) =>
             SET no_surat = ?, jenis_id = ?, golongan = ?, tgl_surat = ?, tujuan = ?, hal = ?,
                 isi_ringkas = ?, sifat = ?, tanda_tangan = ?, file_url = ?, bidang_pembuat_kode = ?,
                 status = 'Aktif', alasan_batal = '', dikirim_ke_luar = 0,
-                letter_number_id = ?, letter_row_version = ?, diubah_pada = NOW(3)
+                letter_number_id = ?, letter_row_version = ?, diubah_pada = UTC_TIMESTAMP(3)
           WHERE id = ?`,
         [
           before.full_number,
@@ -180,7 +202,7 @@ export const gunakanUlangNomor = async ({ letterNumberId, payload, aktor }) =>
            (no_surat, jenis_id, golongan, tgl_surat, tujuan, hal, isi_ringkas, sifat, tanda_tangan,
             file_id, file_url, bidang_pembuat_kode, dibuat_oleh_id, dibuat_oleh_nama,
             status, alasan_batal, dikirim_ke_luar, letter_number_id, letter_row_version, dibuat_pada)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, 'Aktif', '', 0, ?, ?, NOW(3))`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, 'Aktif', '', 0, ?, ?, UTC_TIMESTAMP(3))`,
         [
           before.full_number,
           before.jenis_id,
@@ -254,6 +276,17 @@ export const perbaruiMetadataNomor = async ({
     if (Number(before.row_version || 1) !== Number(expectedVersion)) {
       throw new AppError(409, 'VERSI_BERUBAH', 'Data sudah berubah. Muat ulang sebelum menyimpan.');
     }
+    if (
+      changes.letter_date &&
+      before.letter_date &&
+      bagianJakarta(changes.letter_date).year !== bagianJakarta(before.letter_date).year
+    ) {
+      throw new AppError(
+        409,
+        'TAHUN_TIDAK_DAPAT_DIUBAH',
+        'Tahun surat tidak dapat diubah karena nomor sudah terbit. Buat surat baru untuk tahun tersebut.'
+      );
+    }
 
     const suratTertaut = suratId || before.letter_id;
     let suratRow = null;
@@ -279,7 +312,7 @@ export const perbaruiMetadataNomor = async ({
     if (suratRow) {
       await koneksi.query(
         `UPDATE surat_keluar
-            SET tujuan = ?, hal = ?, tgl_surat = ?, letter_row_version = ?, diubah_pada = NOW(3)
+            SET tujuan = ?, hal = ?, tgl_surat = ?, letter_row_version = ?, diubah_pada = UTC_TIMESTAMP(3)
           WHERE id = ?`,
         [tujuan, perihal, letterDate, versi, suratRow.id]
       );
@@ -302,7 +335,7 @@ export { voidNomor as voidLetterNumber, gunakanUlangNomor as reuseVoidedLetterNu
 export const kedaluwarsakanReservasi = async (aktor) => {
   const rows = await query(
     `SELECT id FROM letter_numbers
-      WHERE status = 'RESERVED' AND reservation_expires_at <= NOW(3)
+      WHERE status = 'RESERVED' AND reservation_expires_at <= UTC_TIMESTAMP(3)
       ORDER BY reservation_expires_at ASC LIMIT 100`
   );
   const hasil = [];
