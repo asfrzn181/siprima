@@ -194,6 +194,7 @@ Catatan:
 | GET          | `/api/auth/csrf`                                                     | publik (token CSRF)            |
 | POST         | `/api/auth/login`, `/register`, `/refresh`, `/logout`                | publik/login + rate limit      |
 | POST         | `/api/auth/password/forgot`, `/password/reset`                       | publik + rate limit            |
+| PUT          | `/api/auth/password`                                                 | login, izin `sandi.ubah`       |
 | GET          | `/api/auth/session`                                                  | login                          |
 | GET/POST/PUT | `/api/surat-masuk`, `/:id`, `/:id/berkas`                            | izin `surat_masuk.*` per aksi  |
 | POST         | `/api/surat-masuk/:id/disposisi`                                     | izin `surat_masuk.disposisi`   |
@@ -209,6 +210,9 @@ Catatan:
 | GET/POST/PUT | `/api/master/asal-tujuan` (`/cari`, `/halaman`)                      | baca: login; tulis: admin      |
 | GET/PUT      | `/api/pengaturan`                                                    | login; tulis: admin            |
 | GET          | `/api/audit`                                                         | admin                          |
+| GET          | `/api/menus`                                                         | login (dipisah per izin pengguna) |
+| GET          | `/api/menus/semua`                                                   | admin + izin `menu.kelola`     |
+| POST/PUT/DEL | `/api/menus`, `/api/menus/:id`                                       | admin + izin `menu.kelola`     |
 | GET          | `/api/nomor/cari`, `/verifikasi`                                     | login / admin+pimpinan         |
 | GET/POST     | `/api/cron/*`                                                        | kunci API cron                 |
 
@@ -272,6 +276,9 @@ Log error ditulis ke `LOG_DIR/LOG_FILE` dan juga stderr Passenger.
 - Migrasi bersifat fresh: tidak ada data atau pengguna Firebase yang dipindahkan (FASE 5 dilewati).
 - ID internal memakai `BIGINT UNSIGNED AUTO_INCREMENT`; `cron_runs.run_id` memakai UUID publik.
 - Peran: `admin` (akses penuh), `operator`/staf (tambah & ubah menu yang diizinkan), `pimpinan`/viewer (lihat & cetak saja), `bidang` (scoping per bidang). Izin per menu dan per tindakan disimpan di tabel `permissions`/`role_permissions` dan dapat diatur di halaman **Peran & Hak Akses**.
+- Navigasi bersifat dinamis: pohon menu (induk/anak) disimpan di tabel `menus`, tiap menu dipetakan ke satu izin (`menus.izin`), dan hanya menu yang izinnya dimiliki pengguna yang tampil. Menu dapat diatur di **Menu Navigasi** (izin `menu.kelola`). Setiap pengguna dapat mengganti kata sandinya sendiri di **Setting → Ganti Password** (izin `sandi.ubah`).
+- Tanggal memakai datepicker Indonesia buatan sendiri (tanpa CDN); nilai ditampilkan sebagai `1 Maret 2026` dan dikirim ke API sebagai ISO.
+- Unggahan scan bersifat opsional dengan dua pilihan: unggah berkas atau tempel tautan Google Drive.
 - Scan baru disimpan lokal privat; field `fileUrl` tetap dipakai untuk tautan Drive lama.
 - Surat Keputusan (SK) dan Surat Edaran (SE) dikelola sebagai menu & tabel tersendiri (satu tabel `surat_khusus` dengan kolom `jenis`).
 - Master asal & tujuan hanya menyimpan `kode` + `nama`, dipakai sebagai saran autocomplete pada form surat masuk.

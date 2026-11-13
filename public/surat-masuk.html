@@ -106,9 +106,23 @@
             </label>
             <label>Catatan disposisi<textarea name="catatanDisposisi" rows="2" maxlength="1000"></textarea></label>
           </fieldset>
-          <label id="file-label" class="wide">Scan surat (PDF/JPG/PNG, maksimal 5 MB)
-            <input name="scan" type="file" accept="application/pdf,image/jpeg,image/png" capture="environment">
-          </label>
+          <div id="berkas-opsi" class="wide" data-berkas>
+            <span class="segmented" role="radiogroup" aria-label="Sumber berkas scan">
+              <label><input type="radio" name="sumberBerkas" value="upload" checked> Unggah berkas</label>
+              <label><input type="radio" name="sumberBerkas" value="drive"> Tautan Google Drive</label>
+            </span>
+            <div id="file-label" data-berkas-panel="upload" class="segmented-panel">
+              <label>Scan surat — opsional (PDF/JPG/PNG, maksimal 5 MB)
+                <input name="scan" type="file" accept="application/pdf,image/jpeg,image/png" capture="environment">
+              </label>
+            </div>
+            <div data-berkas-panel="drive" class="segmented-panel" hidden>
+              <label>Link dokumen scan — opsional
+                <small class="muted">Tempel URL Google Drive atau dokumen lain yang dapat diakses pengguna.</small>
+                <input name="scanUrl" type="url" maxlength="1000" placeholder="https://drive.google.com/...">
+              </label>
+            </div>
+          </div>
           <div class="form-actions wide">
             <button id="save-button" class="button primary" type="submit">Simpan</button>
             <button id="disposition-button" class="button secondary" type="submit" data-action="disposition" hidden>Simpan dan disposisikan</button>

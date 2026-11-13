@@ -1,10 +1,13 @@
 import { randomBytes } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { env } from '../config/env.js';
-import { PERAN } from '../constants/index.js';
+import { AKSI_AUDIT, PERAN } from '../constants/index.js';
 import { hashSha256 } from '../utils/hash.js';
 import { AppError, galatKonflik, galatLogin, galatSesi } from '../utils/AppError.js';
+import { catatAudit } from '../repositories/audit.repository.js';
+import { menuUntukProfil } from './menu.service.js';
 import {
+  cariHashUser,
   cariUser,
   cariUserByEmail,
   perbaruiLoginTerakhir,
@@ -36,6 +39,9 @@ export const profilPublik = (user) => ({
   izin: user.izin || []
 });
 
+// Sertakan pohon menu (parent/child) yang boleh dilihat sesuai izin profil.
+const denganMenu = async (profile) => ({ ...profile, menu: await menuUntukProfil(profile) });
+
 export const login = async ({ email, password }, { userAgent = '', ip = '' } = {}) => {
   const user = await cariUserByEmail(email);
   if (!user || !user.aktif) throw galatLogin();
@@ -55,13 +61,13 @@ export const login = async ({ email, password }, { userAgent = '', ip = '' } = {
   return {
     cookie: token,
     user: { id: user.id, email: user.email },
-    profile: profilPublik(user)
+    profile: await denganMenu(profilPublik(user))
   };
 };
 
-export const sesiSaatIni = (req) => ({
+export const sesiSaatIni = async (req) => ({
   user: req.user,
-  profile: profilPublik(req.profile)
+  profile: await denganMenu(profilPublik(req.profile))
 });
 
 export const logout = async (token) => {
@@ -80,7 +86,7 @@ export const refresh = async (token, { userAgent = '', ip = '' } = {}) => {
   return {
     cookie: baru,
     user: { id: user.id, email: user.email },
-    profile: profilPublik(user),
+    profile: await denganMenu(profilPublik(user)),
     meta: { userAgent, ip }
   };
 };
@@ -121,5 +127,22 @@ export const konfirmasiResetPassword = async (token, password) => {
   await ubahSandi(reset.user_id, passwordHash);
   await tandaiResetDipakai(reset.id);
   await cabutSesiUser(reset.user_id);
+  return { berhasil: true };
+};
+
+export const ubahSandiSendiri = async (aktor, { sandiLama, sandiBaru }) => {
+  const hash = await cariHashUser(aktor.uid);
+  if (!hash || !(await bcrypt.compare(sandiLama, hash))) {
+    throw new AppError(400, 'SANDI_LAMA_SALAH', 'Kata sandi lama tidak sesuai.');
+  }
+  const passwordHash = await bcrypt.hash(sandiBaru, env.BCRYPT_ROUNDS);
+  await ubahSandi(aktor.uid, passwordHash);
+  await catatAudit({
+    uid: aktor.uid,
+    nama: aktor.nama,
+    aksi: AKSI_AUDIT.UBAH_SANDI,
+    koleksi: 'users',
+    docId: aktor.uid
+  });
   return { berhasil: true };
 };

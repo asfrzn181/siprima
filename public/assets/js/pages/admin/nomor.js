@@ -1,12 +1,11 @@
 import { halamanNomor, imporNomor, simpanNomor } from '../../api/master.api.js';
 import { badge, showToast } from '../../components/ui.js';
-import { LABEL_GOLONGAN, normalisasiGolongan } from '../../utils/format.js';
+import { normalisasiGolongan } from '../../utils/format.js';
 import { bukaModal, pesanBaris, renderPager, selTeks, tutupModal } from './shared.js';
 
 const body = document.querySelector('#nomor-body');
 const pager = document.querySelector('#nomor-pager');
 const form = document.querySelector('#nomor-form');
-const golongan = form.elements.golongan;
 const error = document.querySelector('#nomor-error');
 
 let halaman = 1;
@@ -16,7 +15,6 @@ const buka = (item = null) => {
   form.reset();
   form.elements.id.value = item?.id || '';
   form.elements.nama.value = item?.nama || '';
-  golongan.value = normalisasiGolongan(item?.golongan);
   form.elements.kode.value = item?.kode || '800';
   form.elements.resetTahunan.checked = item?.resetTahunan !== false;
   form.elements.urutanPerBidang.checked = item?.urutanPerBidang === true;
@@ -25,13 +23,12 @@ const buka = (item = null) => {
 };
 
 export const muatNomor = async () => {
-  pesanBaris(body, 6, 'Memuat…');
+  pesanBaris(body, 4, 'Memuat…');
   try {
     const hasil = await halamanNomor(halaman);
     body.replaceChildren();
-    if (!hasil.items.length) pesanBaris(body, 6, 'Belum ada jenis nomor.');
-    const mulai = (halaman - 1) * (hasil.pagination.limit || 20);
-    hasil.items.forEach((item, index) => {
+    if (!hasil.items.length) pesanBaris(body, 4, 'Belum ada jenis nomor.');
+    hasil.items.forEach((item) => {
       const baris = document.createElement('tr');
       const status = document.createElement('td');
       status.append(badge(item.aktif ? 'Aktif' : 'Nonaktif', item.aktif ? 'success' : 'muted'));
@@ -42,14 +39,7 @@ export const muatNomor = async () => {
       edit.textContent = 'Edit';
       edit.addEventListener('click', () => buka(item));
       aksi.append(edit);
-      baris.append(
-        selTeks(String(mulai + index + 1)),
-        selTeks(LABEL_GOLONGAN[normalisasiGolongan(item.golongan)] || item.golongan),
-        selTeks(item.kode),
-        selTeks(item.nama),
-        status,
-        aksi
-      );
+      baris.append(selTeks(item.kode), selTeks(item.nama), status, aksi);
       body.append(baris);
     });
     renderPager(pager, hasil.pagination, (halamanBaru) => {
@@ -57,7 +47,7 @@ export const muatNomor = async () => {
       muatNomor();
     });
   } catch (galat) {
-    pesanBaris(body, 6, galat.message || 'Gagal memuat master nomor.');
+    pesanBaris(body, 4, galat.message || 'Gagal memuat master nomor.');
   }
 };
 
@@ -135,7 +125,7 @@ export const initNomor = async () => {
     const data = {
       nama: form.elements.nama.value.trim(),
       kode: form.elements.kode.value.trim(),
-      golongan: normalisasiGolongan(golongan.value),
+      golongan: 'LAINNYA',
       resetTahunan: form.elements.resetTahunan.checked,
       urutanPerBidang: form.elements.urutanPerBidang.checked,
       aktif: form.elements.aktif.checked

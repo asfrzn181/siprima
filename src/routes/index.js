@@ -15,10 +15,12 @@ import { auditRouter } from './audit.routes.js';
 import { dashboardRouter } from './dashboard.routes.js';
 import { laporanRouter } from './laporan.routes.js';
 import { cronRouter } from './cron.routes.js';
+import { menuRouter } from './menu.routes.js';
 
 export const apiRouter = Router();
 
 apiRouter.use('/auth', authRouter);
+apiRouter.use('/menus', menuRouter);
 apiRouter.use('/surat-masuk', suratMasukRouter);
 apiRouter.use('/surat-keluar', suratKeluarRouter);
 apiRouter.use('/sk', suratSkRouter);

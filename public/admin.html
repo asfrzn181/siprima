@@ -36,6 +36,7 @@
       <button class="tab-button" data-tab="settings" type="button">Pengaturan</button>
       <button class="tab-button" data-tab="audit" type="button">Audit Log</button>
       <button class="tab-button" data-tab="cleaner" type="button">Pembersih Nomor Ganda</button>
+      <button class="tab-button" data-tab="menu" type="button">Menu Navigasi</button>
     </nav>
 
     <section id="tab-users" class="tab-panel">
@@ -101,7 +102,7 @@
         <p class="csv-help">CSV klasifikasi memakai header <code>KODE,NAMA KLASIFIKASI</code>. Golongan, reset tahunan, dan status memakai nilai default.</p>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>No. Urut</th><th>Golongan</th><th>Kode</th><th>Nama klasifikasi</th><th>Status</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Kode</th><th>Nama klasifikasi</th><th>Status</th><th>Aksi</th></tr></thead>
             <tbody id="nomor-body"></tbody>
           </table>
         </div>
@@ -173,6 +174,24 @@
             <tbody id="cleaner-body">
               <tr><td colspan="4" class="muted" style="text-align:center">Belum diperiksa. Pilih tahun dan klik Periksa Duplikasi.</td></tr>
             </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-menu" class="tab-panel" hidden>
+      <div class="panel">
+        <div class="admin-toolbar">
+          <div>
+            <h2>Menu navigasi</h2>
+            <p class="muted">Atur menu induk/anak dan izin yang dibutuhkan. Menu hanya tampil bila pengguna punya izinnya.</p>
+          </div>
+          <button id="new-menu" class="button accent" type="button">+ Tambah menu</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Label</th><th>Kunci</th><th>Induk</th><th>Tautan</th><th>Izin</th><th>Urutan</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="menu-body"></tbody>
           </table>
         </div>
       </div>
@@ -252,19 +271,33 @@
       <form id="nomor-form" class="form-grid">
         <input name="id" type="hidden">
         <label>Nama klasifikasi<input name="nama" required maxlength="120"></label>
-        <label>Golongan
-          <select name="golongan">
-            <option value="SK">SK - Surat Keputusan</option>
-            <option value="SE">SE - Surat Edaran</option>
-            <option value="LAINNYA" selected>Surat lainnya</option>
-          </select>
-        </label>
         <label>Kode klasifikasi<input name="kode" required maxlength="40" value="800"></label>
         <label>Reset tahunan<input name="resetTahunan" type="checkbox" checked></label>
         <label>Urutan per bidang<input name="urutanPerBidang" type="checkbox"></label>
         <label>Status aktif<input name="aktif" type="checkbox" checked></label>
         <p id="nomor-error" class="form-error wide" hidden></p>
         <div class="form-actions wide"><button class="button primary" type="submit">Simpan jenis nomor</button></div>
+      </form>
+    </div>
+  </section>
+
+  <section id="menu-modal" class="modal-panel" hidden>
+    <div class="modal-card">
+      <div class="panel-heading">
+        <div><h2 id="menu-title">Tambah menu</h2><p class="muted">Menu induk boleh tanpa tautan; menu anak tampil di bawah induknya.</p></div>
+        <button class="button secondary modal-close" data-close="menu-modal" type="button">Tutup</button>
+      </div>
+      <form id="menu-form" class="form-grid">
+        <input name="id" type="hidden">
+        <label>Label<input name="label" maxlength="120" required></label>
+        <label>Kunci<input name="kunci" maxlength="60" pattern="[a-z0-9\-]+" placeholder="contoh: surat-masuk" required></label>
+        <label>Menu induk<select name="parentId"></select></label>
+        <label>Tautan<input name="href" maxlength="160" placeholder="dashboard.html atau admin.html#nomor"></label>
+        <label>Izin yang dibutuhkan<select name="izin"><option value="">— Semua pengguna —</option></select></label>
+        <label>Urutan<input name="urutan" type="number" min="0" max="9999" value="0"></label>
+        <label>Status aktif<input name="aktif" type="checkbox" checked></label>
+        <p id="menu-error" class="form-error wide" hidden></p>
+        <div class="form-actions wide"><button class="button primary" type="submit">Simpan menu</button></div>
       </form>
     </div>
   </section>

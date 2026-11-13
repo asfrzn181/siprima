@@ -242,5 +242,10 @@ exportButton.addEventListener('click', async () => {
   }
 });
 
+const jenisAwal = new URLSearchParams(window.location.search).get('jenis');
+if (jenisAwal === 'masuk' || jenisAwal === 'keluar') {
+  jenis = jenisAwal;
+}
+jenisSelect.value = jenis;
 isiStatus();
 renderThead();

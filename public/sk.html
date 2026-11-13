@@ -70,14 +70,15 @@
     </section>
 
     <section id="form-panel" class="panel" hidden>
-      <div class="panel-heading">
-        <div>
-          <h2 id="form-title">Tambah SK</h2>
-          <p class="muted">Isi data Surat Keputusan.</p>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="form-title">
+        <div class="panel-heading">
+          <div>
+            <h2 id="form-title">Tambah SK</h2>
+            <p class="muted">Isi data Surat Keputusan.</p>
+          </div>
+          <button id="close-form" class="button secondary" type="button">Tutup</button>
         </div>
-        <button id="close-form" class="button secondary" type="button">Tutup</button>
-      </div>
-      <form id="form" class="form-grid">
+        <form id="form" class="form-grid">
         <input name="id" type="hidden">
         <label class="wide">Surat Keputusan Tentang<input name="tentang" maxlength="200" required></label>
         <label>Nomor SK<input name="nomor" maxlength="120" required></label>
@@ -88,6 +89,7 @@
         </div>
         <p id="form-error" class="form-error wide" role="alert" hidden></p>
       </form>
+      </div>
     </section>
   </main>
   <script type="module" src="assets/js/pages/sk.js"></script>

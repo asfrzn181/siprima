@@ -82,6 +82,11 @@ export const ubahUser = async (id, data) => {
 export const ubahSandi = (id, passwordHash) =>
   query('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, id]);
 
+export const cariHashUser = async (id) => {
+  const row = await one('SELECT password_hash FROM users WHERE id = ?', [id]);
+  return row ? row.password_hash : null;
+};
+
 export const perbaruiLoginTerakhir = (id) =>
   query('UPDATE users SET last_login_at = NOW(3) WHERE id = ?', [id]);
 

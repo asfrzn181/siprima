@@ -1,10 +1,57 @@
 import { logout, navUntuk } from '../api/client.js';
+import { pasangPilihanBerkas } from './berkas.js';
+import { pasangDatepicker } from './datepicker.js';
 
 export const badge = (label, kind = 'muted') => {
   const node = document.createElement('span');
   node.className = `badge ${kind}`;
   node.textContent = label;
   return node;
+};
+
+const LEWATI_WAJIB = ['hidden', 'checkbox', 'radio', 'submit', 'button', 'reset', 'file'];
+
+// Tambahkan penanda bintang merah untuk setiap field yang wajib diisi.
+export const tandaiWajib = (scope = document) => {
+  scope.querySelectorAll('input[required], select[required], textarea[required]').forEach((field) => {
+    const tipe = (field.getAttribute('type') || field.tagName.toLowerCase()).toLowerCase();
+    if (LEWATI_WAJIB.includes(tipe)) return;
+    const label = field.closest('label');
+    if (!label || label.querySelector('.req')) return;
+    const bintang = document.createElement('span');
+    bintang.className = 'req';
+    bintang.setAttribute('aria-hidden', 'true');
+    bintang.textContent = '*';
+    field.before(bintang);
+  });
+};
+
+const berkasSekarang = () => window.location.pathname.split('/').pop() || 'index.html';
+
+const nodeAktif = (node) => {
+  if (!node?.href) return false;
+  const url = new URL(node.href, document.baseURI);
+  const ini = new URL(window.location.href);
+  if (url.pathname !== ini.pathname) return false;
+  const jenisNode = url.searchParams.get('jenis');
+  if (jenisNode && jenisNode !== ini.searchParams.get('jenis')) return false;
+  const hashIni = ini.hash || (berkasSekarang() === 'admin.html' ? '#users' : '');
+  if (url.hash && url.hash !== hashIni) return false;
+  return true;
+};
+
+const adaAnakAktif = (node) =>
+  nodeAktif(node) || (node.children || []).some((anak) => adaAnakAktif(anak));
+
+const cariLabel = (nodes, active) => {
+  for (const node of nodes) {
+    if (nodeAktif(node) || node.kunci === active) return node.label;
+    if (node.children?.length) {
+      const dalam = cariLabel(node.children, active);
+      if (dalam) return dalam;
+    }
+  }
+  return '';
 };
 
 const buildSidebar = ({ nav, active, session }) => {
@@ -26,12 +73,55 @@ const buildSidebar = ({ nav, active, session }) => {
 
   const links = document.createElement('nav');
   links.className = 'sidebar-nav';
-  nav.forEach((item) => {
+
+  const buatTautan = (node) => {
     const tautan = document.createElement('a');
-    tautan.href = `./${item.href}`;
-    tautan.textContent = item.label;
-    if (active === item.key) tautan.setAttribute('aria-current', 'page');
-    links.append(tautan);
+    tautan.className = 'nav-link';
+    tautan.href = `./${node.href}`;
+    tautan.textContent = node.label;
+    if (nodeAktif(node) || node.kunci === active) tautan.setAttribute('aria-current', 'page');
+    return tautan;
+  };
+
+  const buatGrup = (node) => {
+    const grup = document.createElement('div');
+    grup.className = 'nav-group';
+    const tombol = document.createElement('button');
+    tombol.type = 'button';
+    tombol.className = 'nav-group-toggle';
+    const judul = document.createElement('span');
+    judul.textContent = node.label;
+    const caret = document.createElement('span');
+    caret.className = 'nav-caret';
+    caret.setAttribute('aria-hidden', 'true');
+    caret.textContent = '▾';
+    tombol.append(judul, caret);
+
+    const submenu = document.createElement('div');
+    submenu.className = 'nav-submenu';
+    const aktifDiSini = (node.children || []).some((anak) => adaAnakAktif(anak));
+    submenu.hidden = !aktifDiSini;
+    tombol.setAttribute('aria-expanded', String(aktifDiSini));
+    if (aktifDiSini) grup.classList.add('active');
+
+    (node.children || []).forEach((anak) => {
+      if (anak.children?.length) submenu.append(buatGrup(anak));
+      else submenu.append(buatTautan(anak));
+    });
+
+    tombol.addEventListener('click', () => {
+      const akanBuka = submenu.hidden;
+      submenu.hidden = !akanBuka;
+      tombol.setAttribute('aria-expanded', String(akanBuka));
+    });
+
+    grup.append(tombol, submenu);
+    return grup;
+  };
+
+  nav.forEach((node) => {
+    if (node.children?.length) links.append(buatGrup(node));
+    else links.append(buatTautan(node));
   });
 
   const foot = document.createElement('div');
@@ -64,7 +154,7 @@ export const renderShell = ({ active, session, title, subtitle }) => {
   if (!shell) return;
 
   const nav = navUntuk(session.profile);
-  const current = nav.find((item) => item.key === active);
+  const current = cariLabel(nav, active);
 
   const skip = document.createElement('a');
   skip.className = 'skip-link';
@@ -92,7 +182,7 @@ export const renderShell = ({ active, session, title, subtitle }) => {
   toggle.innerHTML = '<span class="sr-only">Buka navigasi</span><span aria-hidden="true">&#9776;</span>';
   const heading = document.createElement('div');
   heading.className = 'topbar-title';
-  heading.textContent = title || current?.label || 'SiPrima';
+  heading.textContent = title || current || 'SiPrima';
   if (subtitle) heading.append(Object.assign(document.createElement('small'), { textContent: subtitle }));
   const user = document.createElement('div');
   user.className = 'topbar-user';
@@ -114,6 +204,10 @@ export const renderShell = ({ active, session, title, subtitle }) => {
 
   main.append(topbar, container);
   shell.replaceChildren(skip, sidebar, scrim, main);
+
+  tandaiWajib(document);
+  pasangDatepicker(document);
+  pasangPilihanBerkas(document);
 
   const closeNav = () => {
     sidebar.classList.remove('open');

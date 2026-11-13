@@ -53,7 +53,9 @@ export const IZIN = Object.freeze({
   PENGATURAN_BACA: 'pengaturan.baca',
   PENGATURAN_KELOLA: 'pengaturan.kelola',
   AUDIT_BACA: 'audit.baca',
-  NOMOR_VERIFIKASI: 'nomor.verifikasi'
+  NOMOR_VERIFIKASI: 'nomor.verifikasi',
+  SANDI_UBAH: 'sandi.ubah',
+  MENU_KELOLA: 'menu.kelola'
 });
 
 export const IZIN_LABEL = Object.freeze({
@@ -87,7 +89,9 @@ export const IZIN_LABEL = Object.freeze({
   [IZIN.PENGATURAN_BACA]: 'Baca pengaturan',
   [IZIN.PENGATURAN_KELOLA]: 'Kelola pengaturan',
   [IZIN.AUDIT_BACA]: 'Lihat audit log',
-  [IZIN.NOMOR_VERIFIKASI]: 'Verifikasi urutan nomor'
+  [IZIN.NOMOR_VERIFIKASI]: 'Verifikasi urutan nomor',
+  [IZIN.SANDI_UBAH]: 'Ubah kata sandi sendiri',
+  [IZIN.MENU_KELOLA]: 'Kelola menu navigasi'
 });
 
 export const IZIN_PER_PERAN = Object.freeze({
@@ -107,7 +111,8 @@ export const IZIN_PER_PERAN = Object.freeze({
     IZIN.SE_CETAK,
     IZIN.DASHBOARD_BACA,
     IZIN.LAPORAN_BACA,
-    IZIN.MASTER_BACA
+    IZIN.MASTER_BACA,
+    IZIN.SANDI_UBAH
   ]),
   pimpinan: Object.freeze([
     IZIN.SURAT_MASUK_BACA,
@@ -123,7 +128,8 @@ export const IZIN_PER_PERAN = Object.freeze({
     IZIN.MASTER_BACA,
     IZIN.PENGATURAN_BACA,
     IZIN.AUDIT_BACA,
-    IZIN.NOMOR_VERIFIKASI
+    IZIN.NOMOR_VERIFIKASI,
+    IZIN.SANDI_UBAH
   ]),
   bidang: Object.freeze([
     IZIN.SURAT_MASUK_BACA,
@@ -132,7 +138,8 @@ export const IZIN_PER_PERAN = Object.freeze({
     IZIN.SURAT_KELUAR_TULIS,
     IZIN.SURAT_KELUAR_CETAK,
     IZIN.MASTER_BACA,
-    IZIN.PENGATURAN_BACA
+    IZIN.PENGATURAN_BACA,
+    IZIN.SANDI_UBAH
   ])
 });
 
@@ -197,7 +204,9 @@ export const AKSI_AUDIT = Object.freeze({
   UBAH_MASTER_NOMOR: 'ubah master nomor',
   UBAH_MASTER_ASAL_TUJUAN: 'ubah master asal & tujuan',
   UBAH_PERAN: 'ubah hak akses peran',
-  UBAH_PENGATURAN: 'ubah pengaturan'
+  UBAH_PENGATURAN: 'ubah pengaturan',
+  UBAH_MENU: 'ubah menu navigasi',
+  UBAH_SANDI: 'ubah kata sandi'
 });
 
 export const MIME_IZIN = Object.freeze(['application/pdf', 'image/jpeg', 'image/png']);

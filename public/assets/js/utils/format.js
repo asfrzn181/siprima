@@ -1,12 +1,58 @@
 export const pad2 = (nilai) => String(nilai).padStart(2, '0');
 
+export const BULAN_ID = Object.freeze([
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember'
+]);
+
 const keTanggal = (nilai) => {
   if (nilai instanceof Date) return nilai;
   const tanggal = new Date(nilai);
   return Number.isNaN(tanggal.getTime()) ? null : tanggal;
 };
 
-export const formatTanggal = (nilai) => {
+const POLA_ISO = /^\d{4}-\d{2}-\d{2}$/;
+
+// Kembalikan tanggal dalam bentuk ISO (YYYY-MM-DD) dari Date/teks apa pun.
+export const keIsoTanggal = (nilai) => {
+  if (!nilai) return '';
+  const teks = String(nilai).slice(0, 10);
+  if (POLA_ISO.test(teks)) return teks;
+  return inputTanggal(nilai);
+};
+
+// Tampilkan tanggal panjang berbahasa Indonesia, mis. "1 Maret 2026".
+export const formatTanggalPanjang = (nilai) => {
+  const iso = keIsoTanggal(nilai);
+  if (!iso) return '';
+  const [tahun, bulan, hari] = iso.split('-').map(Number);
+  return `${hari} ${BULAN_ID[bulan - 1]} ${tahun}`;
+};
+
+// Ubah kembali teks "1 Maret 2026" menjadi ISO (YYYY-MM-DD). Kosong bila gagal.
+export const parseTanggalPanjang = (teks) => {
+  const cocok = String(teks || '')
+    .trim()
+    .match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+  if (!cocok) return '';
+  const bulan = BULAN_ID.findIndex((nama) => nama.toLowerCase() === cocok[2].toLowerCase()) + 1;
+  if (!bulan) return '';
+  return `${cocok[3]}-${pad2(bulan)}-${pad2(cocok[1])}`;
+};
+
+export const formatTanggal = (nilai) => formatTanggalPanjang(nilai) || '—';
+
+export const formatTanggalPendek = (nilai) => {
   const tanggal = keTanggal(nilai);
   if (!tanggal) return '—';
   return new Intl.DateTimeFormat('id-ID', {

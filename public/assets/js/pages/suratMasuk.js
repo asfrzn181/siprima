@@ -174,7 +174,7 @@ const setReadOnly = (bacaSaja) => {
   });
   saveButton.hidden = bacaSaja;
   dispositionButton.hidden = bacaSaja || !canDisposisi;
-  document.querySelector('#file-label').hidden = bacaSaja || !canCreate;
+  document.querySelector('#berkas-opsi').hidden = bacaSaja || !canCreate;
 };
 
 const bukaForm = (item = null, bacaSaja = false) => {
@@ -192,7 +192,7 @@ const bukaForm = (item = null, bacaSaja = false) => {
 
   const tujuan = item?.disposisi?.kepada || item?.aksesBidang || [];
   form.elements.id.value = item?.id || '';
-  form.dataset.fileUrl = item?.fileUrl || '';
+  form.elements.scanUrl.value = item?.fileUrl || '';
   form.elements.tglTerima.value = inputTanggal(item?.tglTerima || new Date());
   form.elements.tglSurat.value = inputTanggal(item?.tglSurat || new Date());
   form.elements.noSurat.value = item?.noSurat || '';
@@ -236,7 +236,7 @@ const payloadForm = () => ({
   aksesBidang: [...document.querySelectorAll('input[name="aksesBidang"]:checked')].map(
     (input) => input.value
   ),
-  fileUrl: form.dataset.fileUrl || ''
+  fileUrl: form.elements.scanUrl.value.trim()
 });
 
 createAutocomplete({

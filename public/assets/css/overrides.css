@@ -297,6 +297,159 @@ fieldset {
   font-size: 13px;
 }
 
+/* ------------------------------------------------------------- nav menu tree */
+
+.nav-group { display: grid; gap: 2px; }
+
+.nav-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 40px;
+  padding: 8px var(--sp-3);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+.nav-group-toggle:hover { background: var(--surface-alt); color: var(--ink); }
+.nav-group.active > .nav-group-toggle { color: var(--accent-hover); }
+.nav-caret { font-size: 11px; transition: transform .15s ease; }
+.nav-group-toggle[aria-expanded="false"] .nav-caret { transform: rotate(-90deg); }
+
+.nav-submenu { display: grid; gap: 2px; margin: 0 0 var(--sp-1); padding-left: var(--sp-3); }
+.nav-submenu[hidden] { display: none; }
+.nav-submenu .sidebar-nav a,
+.nav-submenu a { min-height: 36px; font-size: 13.5px; font-weight: 500; }
+
+/* ----------------------------------------------------------------- wr-mark */
+
+.req {
+  margin-left: 3px;
+  color: var(--danger, #b3261e);
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------- datepicker */
+
+.datepicker { position: relative; display: block; }
+.datepicker-field {
+  width: 100%;
+  padding-right: 34px;
+  background: var(--surface);
+}
+
+.datepicker-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 30px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+}
+.datepicker-toggle:hover { color: var(--accent-hover); }
+
+.datepicker-pop {
+  position: fixed;
+  z-index: 80;
+  width: 280px;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 16px 36px #1a20282e;
+}
+.datepicker-pop[hidden] { display: none; }
+
+.datepicker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.datepicker-caption { font-weight: 650; font-size: 14px; }
+.datepicker-nav {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1;
+}
+.datepicker-nav:hover { background: var(--surface-alt); }
+
+.datepicker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.datepicker-dow {
+  padding: 4px 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+.datepicker-kosong { min-height: 32px; }
+.datepicker-day {
+  min-height: 32px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.datepicker-day:hover { background: var(--surface-alt); }
+.datepicker-day.today { border-color: var(--accent-line); }
+.datepicker-day.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 650;
+}
+
+/* ------------------------------------------------------- segmented pilihan */
+
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin: var(--sp-1) 0 var(--sp-2);
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+}
+.segmented label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.segmented label:has(input:checked) {
+  background: var(--surface);
+  color: var(--accent-hover);
+  box-shadow: 0 1px 2px #1a202814;
+}
+.segmented input { width: auto; }
+.segmented-panel[hidden] { display: none; }
+
 /* --------------------------------------------------------------- responsive */
 
 @media (max-width: 700px) {

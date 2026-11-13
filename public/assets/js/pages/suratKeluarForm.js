@@ -103,7 +103,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     });
     simpan.hidden = bacaSaja || !bolehBuat || !milikSendiri;
     generate.hidden = Boolean(item) || !bolehBuat;
-    document.querySelector('#file-label').hidden = !bolehBuat;
+    document.querySelector('#berkas-opsi').hidden = !bolehBuat;
     tombolBatal.hidden = !item || !bolehBatal;
     tombolKoreksi.hidden = !item || !bolehKoreksi;
     tombolUlang.hidden = !item || !bolehUlang;

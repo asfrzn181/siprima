@@ -94,20 +94,53 @@ export const logout = async () => {
 
 export const sesi = () => api.get('/auth/session');
 
-const NAV = [
-  { href: 'dashboard.html', label: 'Dashboard', key: 'dashboard', izin: 'dashboard.baca' },
-  { href: 'surat-masuk.html', label: 'Surat masuk', key: 'masuk', izin: 'surat_masuk.baca' },
-  { href: 'surat-keluar.html', label: 'Surat keluar', key: 'keluar', izin: 'surat_keluar.baca' },
-  { href: 'sk.html', label: 'SK', key: 'sk', izin: 'sk.lihat' },
-  { href: 'se.html', label: 'SE', key: 'se', izin: 'se.lihat' },
-  { href: 'laporan.html', label: 'Laporan', key: 'laporan', izin: 'laporan.baca' },
-  { href: 'admin.html', label: 'Admin', key: 'admin', izin: 'users.kelola' }
+const NAV_FALLBACK = [
+  { kunci: 'dashboard', label: 'Dashboard', href: 'dashboard.html', izin: 'dashboard.baca' },
+  {
+    kunci: 'agenda',
+    label: 'Agenda Surat',
+    href: '',
+    izin: null,
+    children: [
+      { kunci: 'masuk', label: 'Surat Masuk', href: 'surat-masuk.html', izin: 'surat_masuk.baca' },
+      { kunci: 'keluar', label: 'Surat Keluar', href: 'surat-keluar.html', izin: 'surat_keluar.baca' },
+      { kunci: 'sk', label: 'Surat Keputusan', href: 'sk.html', izin: 'sk.lihat' },
+      { kunci: 'se', label: 'Surat Edaran', href: 'se.html', izin: 'se.lihat' }
+    ]
+  },
+  {
+    kunci: 'laporan',
+    label: 'Laporan',
+    href: '',
+    izin: null,
+    children: [
+      { kunci: 'laporan-masuk', label: 'Surat Masuk', href: 'laporan.html?jenis=masuk', izin: 'laporan.baca' },
+      { kunci: 'laporan-keluar', label: 'Surat Keluar', href: 'laporan.html?jenis=keluar', izin: 'laporan.baca' }
+    ]
+  },
+  {
+    kunci: 'setting',
+    label: 'Setting',
+    href: '',
+    izin: null,
+    children: [
+      { kunci: 'ubah-sandi', label: 'Ganti Password', href: 'ubah-sandi.html', izin: 'sandi.ubah' }
+    ]
+  }
 ];
 
 export const punyaIzin = (profil, izin) => (profil?.izin || []).includes(izin);
 
-export const navUntuk = (profil) =>
-  NAV.filter((item) => !item.izin || punyaIzin(profil, item.izin));
+const saringPohon = (profil, nodes) =>
+  nodes
+    .filter((node) => !node.izin || punyaIzin(profil, node.izin))
+    .map((node) => ({ ...node, children: node.children ? saringPohon(profil, node.children) : [] }))
+    .filter((node) => node.href || (node.children && node.children.length));
+
+export const navUntuk = (profil) => {
+  if (Array.isArray(profil?.menu) && profil.menu.length) return profil.menu;
+  return saringPohon(profil, NAV_FALLBACK);
+};
 
 export const wajibMasuk = async () => {
   try {

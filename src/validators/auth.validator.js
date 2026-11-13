@@ -20,3 +20,8 @@ export const skemaResetSandi = z.object({
   token: z.string().trim().min(32, 'Token tidak valid.').max(200),
   password: z.string().min(8, 'Kata sandi minimal 8 karakter.').max(200)
 });
+
+export const skemaUbahSandi = z.object({
+  sandiLama: z.string().min(1, 'Kata sandi lama wajib diisi.').max(200),
+  sandiBaru: z.string().min(8, 'Kata sandi baru minimal 8 karakter.').max(200)
+});

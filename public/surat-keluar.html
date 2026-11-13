@@ -70,14 +70,15 @@
     </section>
 
     <section id="form-panel" class="panel" hidden>
-      <div class="panel-heading">
-        <div>
-          <h2 id="form-title">Tambah surat keluar</h2>
-          <p id="form-note" class="muted"></p>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="form-title">
+        <div class="panel-heading">
+          <div>
+            <h2 id="form-title">Tambah surat keluar</h2>
+            <p id="form-note" class="muted"></p>
+          </div>
+          <button id="close" class="button secondary" type="button">Tutup</button>
         </div>
-        <button id="close" class="button secondary" type="button">Tutup</button>
-      </div>
-      <form id="form" class="form-grid">
+        <form id="form" class="form-grid">
         <input name="id" type="hidden">
         <input name="noSurat" type="hidden">
         <input name="reservationId" type="hidden">
@@ -107,13 +108,23 @@
           <div id="access-options" class="check-grid"></div>
           <small class="muted">Bidang pembuat selalu ditambahkan otomatis.</small>
         </fieldset>
-        <label class="wide">Link dokumen scan
-          <small class="muted">Tempel URL Google Drive atau dokumen lain yang dapat diakses pengguna.</small>
-          <input name="scanUrl" type="url" maxlength="1000" placeholder="https://drive.google.com/...">
-        </label>
-        <label id="file-label" class="wide">Scan final (PDF/JPG/PNG, maksimal 5 MB)
-          <input name="scan" type="file" accept="application/pdf,image/jpeg,image/png">
-        </label>
+        <div id="berkas-opsi" class="wide" data-berkas>
+          <span class="segmented" role="radiogroup" aria-label="Sumber berkas scan">
+            <label><input type="radio" name="sumberBerkas" value="upload" checked> Unggah berkas</label>
+            <label><input type="radio" name="sumberBerkas" value="drive"> Tautan Google Drive</label>
+          </span>
+          <div id="file-label" data-berkas-panel="upload" class="segmented-panel">
+            <label>Scan final — opsional (PDF/JPG/PNG, maksimal 5 MB)
+              <input name="scan" type="file" accept="application/pdf,image/jpeg,image/png">
+            </label>
+          </div>
+          <div data-berkas-panel="drive" class="segmented-panel" hidden>
+            <label>Link dokumen scan — opsional
+              <small class="muted">Tempel URL Google Drive atau dokumen lain yang dapat diakses pengguna.</small>
+              <input name="scanUrl" type="url" maxlength="1000" placeholder="https://drive.google.com/...">
+            </label>
+          </div>
+        </div>
         <label class="wide delivery-state">Status pengiriman
           <span class="check-option delivery-check"><input name="dikirimKeLuar" type="checkbox"><span>Surat sudah dikirim ke pihak luar</span></span>
         </label>
@@ -127,6 +138,7 @@
         </div>
         <p id="error" class="form-error wide" hidden></p>
       </form>
+      </div>
     </section>
   </main>
   <script type="module" src="assets/js/pages/suratKeluar.js"></script>

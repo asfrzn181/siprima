@@ -24,7 +24,8 @@ test('endpoint API tanpa sesi mengembalikan 401 dengan bentuk JSON seragam', asy
     '/api/se',
     '/api/users',
     '/api/roles',
-    '/api/master/asal-tujuan'
+    '/api/master/asal-tujuan',
+    '/api/menus'
   ]) {
     const respons = await request(app).get(jalur);
     assert.equal(respons.status, 401, jalur);

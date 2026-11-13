@@ -6,7 +6,8 @@ import {
   mintaResetPassword,
   refresh as refreshService,
   register as registerService,
-  sesiSaatIni
+  sesiSaatIni,
+  ubahSandiSendiri
 } from '../services/auth.service.js';
 import { kirimSukses } from '../utils/response.js';
 
@@ -38,7 +39,8 @@ export const logout = async (req, res) => {
   return kirimSukses(res, { message: 'Berhasil keluar.', data: null });
 };
 
-export const sesi = (req, res) => kirimSukses(res, { message: 'Sesi aktif.', data: sesiSaatIni(req) });
+export const sesi = async (req, res) =>
+  kirimSukses(res, { message: 'Sesi aktif.', data: await sesiSaatIni(req) });
 
 export const csrf = (_req, res) =>
   kirimSukses(res, { message: 'Token CSRF.', data: { token: res.locals.csrfToken } });
@@ -69,4 +71,10 @@ export const reset = async (req, res) =>
   kirimSukses(res, {
     message: 'Kata sandi berhasil diperbarui.',
     data: await konfirmasiResetPassword(req.body.token, req.body.password)
+  });
+
+export const ubahSandi = async (req, res) =>
+  kirimSukses(res, {
+    message: 'Kata sandi berhasil diperbarui.',
+    data: await ubahSandiSendiri(req.profile, req.body)
   });

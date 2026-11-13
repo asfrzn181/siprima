@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SiPrima — Ganti Password</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/overrides.css">
+  <link rel="stylesheet" href="assets/css/forms.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="page-container">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">Setting</p>
+        <h1>Ganti Password</h1>
+        <p class="muted">Perbarui kata sandi akun Anda sendiri.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <form id="sandi-form" class="form-grid" novalidate>
+        <label class="wide">Kata sandi saat ini
+          <input name="sandiLama" type="password" autocomplete="current-password" required>
+        </label>
+        <label class="wide">Kata sandi baru
+          <input name="sandiBaru" type="password" autocomplete="new-password" minlength="8" required>
+          <span class="field-hint">Minimal 8 karakter.</span>
+        </label>
+        <label class="wide">Ulangi kata sandi baru
+          <input name="sandiUlang" type="password" autocomplete="new-password" required>
+        </label>
+        <div class="form-actions wide">
+          <button id="sandi-save" class="button primary" type="submit">Simpan kata sandi</button>
+        </div>
+        <p id="sandi-error" class="form-error wide" role="alert" hidden></p>
+      </form>
+    </section>
+  </main>
+  <script type="module" src="assets/js/pages/ubahSandi.js"></script>
+</body>
+</html>

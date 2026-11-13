@@ -32,6 +32,18 @@ erDiagram
   cron_jobs ||--o{ cron_runs : "job_name (logis)"
   cron_api_keys ||--o{ cron_runs : "pelaku (logis)"
 
+  menus ||--o{ menus : "parent_id"
+
+  menus {
+    bigint id PK
+    string kunci UK
+    string label
+    bigint parent_id FK
+    string href
+    string izin
+    int urutan
+    bool aktif
+  }
   master_asal_tujuan {
     bigint id PK
     string kode UK
@@ -58,6 +70,7 @@ erDiagram
 - **Map statis → kolom**: `dibuatOleh`, `disposisi`, `created_by`, `voided_by` menjadi kolom `*_id` + snapshot `*_nama`/`*_role`.
 - **Master pendukung**: `master_asal_tujuan` menyimpan saran `kode` + `nama` untuk autocomplete `asal`/`tujuan` surat masuk. Nilai pada `surat_masuk` tetap teks bebas (tanpa FK) agar input tidak bergantung pada master.
 - **Surat khusus (SK/SE)**: satu tabel `surat_khusus` dengan `jenis ENUM('SK','SE')`; kolom yang ditampilkan berbeda per jenis di frontend, tetapi struktur penyimpanan sama.
+- **Menu dinamis**: tabel `menus` menyimpan pohon navigasi (induk/anak lewat `parent_id` self-FK `ON DELETE CASCADE`); `izin` memetakan menu ke satu izin `permissions.name`. Frontend hanya menampilkan menu yang izinnya dimiliki pengguna.
 - **Format nomor**: kolom `master_nomor.format` dihapus (migrasi `003_fitur_surat.sql`); format nomor diturunkan dari `golongan` di aplikasi (`defaultFormatGolongan`).
 - **JSON**: `letter_audit_log.before_json/after_json`, `audit_log.sebelum/sesudah`, `cron_jobs.config`, `cron_api_keys.allowed_jobs`, `cron_runs.result` — strukturnya fleksibel dan tidak di-query.
 - **FK actions**: `CASCADE` untuk anak yang tidak bermakna tanpa induk (relasi akses, tindak lanjut, audit surat), `SET NULL` untuk referensi opsional (user, bidang, jenis nomor, letter number), `RESTRICT` untuk role yang masih dipakai.
