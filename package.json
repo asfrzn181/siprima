@@ -1,0 +1,32 @@
+{
+  "name": "siprima",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Agenda surat masuk dan surat keluar dengan Express.js + Firebase Admin SDK",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "lint": "eslint src public/assets/js tests scripts",
+    "format": "prettier --write \"{src,public/assets/js,tests,scripts}/**/*.js\" \"*.{js,cjs,json,md}\"",
+    "test": "node --test \"tests/*.test.js\""
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "firebase-admin": "^13.0.2",
+    "helmet": "^8.0.0",
+    "multer": "^2.0.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "prettier": "^3.4.2",
+    "supertest": "^7.0.0"
+  }
+}
