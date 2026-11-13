@@ -112,6 +112,22 @@ export const simpanMasterAsalTujuan = async (id, data, aktor) => {
   if (bentrok && String(bentrok.id) !== String(id || '')) {
     throw new AppError(409, 'KODE_ASAL_TUJUAN_DIPAKAI', 'Kode asal & tujuan sudah dipakai.');
   }
+
+  // Generate kode automatically if creating a new entry and kode is not provided
+  if (!id && !data.kode) {
+    const lastKodeResult = await query('SELECT kode FROM master_asal_tujuan ORDER BY CAST(SUBSTRING(kode, 8) AS UNSIGNED) DESC LIMIT 1');
+    let newKode = 'TUJUAN-001'; // Default if no existing codes
+    if (lastKodeResult && lastKodeResult.length > 0) {
+      const lastKode = lastKodeResult[0].kode;
+      const match = lastKode.match(/TUJUAN-(\d+)/);
+      if (match && match[1]) {
+        const seq = parseInt(match[1], 10) + 1;
+        newKode = `TUJUAN-${String(seq).padStart(3, '0')}`;
+      }
+    }
+    data.kode = newKode;
+  }
+
   const hasil = await simpanAsalTujuan(id ? Number(id) : null, data);
   await catatAudit({
     uid: aktor.uid,
