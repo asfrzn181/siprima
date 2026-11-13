@@ -1,45 +1,355 @@
 {
   "indexes": [
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "dibuatPada", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "dibuatPada", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "dibuatPada", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "dibuatPada", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "dibuatPada", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "dibuatPada", "order": "DESCENDING" }] },
-    { "collectionGroup": "masterBidang", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "aktif", "order": "ASCENDING" }, { "fieldPath": "nama", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "noSurat", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "hal", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "asal", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "tglTerima", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "tglTerima", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "tglTerima", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "tglTerima", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "tglTerima", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "tglTerima", "order": "DESCENDING" }] },
-    { "collectionGroup": "masterNomor", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "aktif", "order": "ASCENDING" }, { "fieldPath": "nama", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratKeluar", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "tglSurat", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratKeluar", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "tglSurat", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratKeluar", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "tglSurat", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratKeluar", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "tglSurat", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratKeluar", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "tglSurat", "order": "DESCENDING" }] },
-    { "collectionGroup": "suratKeluar", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "noSurat", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratKeluar", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "noSurat", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "noSurat", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "hal", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "asal", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "noSurat", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "hal", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "asal", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "noSurat", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "hal", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "asal", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "noSurat", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "hal", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratMasuk", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "asal", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratKeluar", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "noSurat", "order": "ASCENDING" }] },
-    { "collectionGroup": "suratKeluar", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "sifat", "order": "ASCENDING" }, { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" }, { "fieldPath": "noSurat", "order": "ASCENDING" }] },
-    { "collectionGroup": "letter_numbers", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "reservation_expires_at", "order": "ASCENDING" }] },
-    { "collectionGroup": "letter_numbers", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "tahun", "order": "ASCENDING" }, { "fieldPath": "scope_key", "order": "ASCENDING" }, { "fieldPath": "seq", "order": "ASCENDING" }, { "fieldPath": "seq_suffix", "order": "ASCENDING" }] }
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "dibuatPada", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "dibuatPada", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "dibuatPada", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "dibuatPada", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "dibuatPada", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "dibuatPada", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "masterBidang",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "aktif", "order": "ASCENDING" },
+        { "fieldPath": "nama", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "noSurat", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "hal", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "asal", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "tglTerima", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "tglTerima", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "tglTerima", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "tglTerima", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "tglTerima", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "tglTerima", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "masterNomor",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "aktif", "order": "ASCENDING" },
+        { "fieldPath": "nama", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratKeluar",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "tglSurat", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratKeluar",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "tglSurat", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratKeluar",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "tglSurat", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratKeluar",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "tglSurat", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratKeluar",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "tglSurat", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratKeluar",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "noSurat", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratKeluar",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "noSurat", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "noSurat", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "hal", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "asal", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "noSurat", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "hal", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "asal", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "noSurat", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "hal", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "asal", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "noSurat", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "hal", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratMasuk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "asal", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratKeluar",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "noSurat", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "suratKeluar",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "sifat", "order": "ASCENDING" },
+        { "fieldPath": "aksesBidang", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "noSurat", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "letter_numbers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "reservation_expires_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "letter_numbers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tahun", "order": "ASCENDING" },
+        { "fieldPath": "scope_key", "order": "ASCENDING" },
+        { "fieldPath": "seq", "order": "ASCENDING" },
+        { "fieldPath": "seq_suffix", "order": "ASCENDING" }
+      ]
+    }
   ],
   "fieldOverrides": []
 }
