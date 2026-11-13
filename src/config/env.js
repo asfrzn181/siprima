@@ -53,6 +53,9 @@ const skema = z.object({
   BACKUP_DIR: z.string().min(1).default(path.join(akarProyek, 'storage', 'backup')),
   MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(20).default(5),
 
+  APP_LOGO_URL: z.string().default(''),
+  APP_NAME: z.string().default('SiPrima'),
+
   LOG_DIR: z.string().min(1).default(path.join(akarProyek, 'logs')),
   LOG_FILE: z.string().min(1).default('siprima-error.log'),
 
