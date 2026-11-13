@@ -1,7 +1,7 @@
 import { kirimError } from '../utils/response.js';
 
 export const notFound = (req, res) => {
-  if (req.originalUrl.startsWith('/api/')) {
+  if (req.path.startsWith('/api/')) {
     return kirimError(res, {
       status: 404,
       message: 'Endpoint tidak ditemukan.',

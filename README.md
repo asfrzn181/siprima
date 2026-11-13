@@ -90,6 +90,7 @@ Semua konfigurasi runtime dibaca di `src/config/env.js`; koneksi database juga m
 | `DB_SSL`                | `true` bila server MySQL mewajibkan TLS                 |
 | `NODE_ENV`              | `production` di server                                  |
 | `APP_BASE_URL`          | URL publik aplikasi                                     |
+| `BASE_PATH`             | prefix subfolder, mis. `/siprima`; kosong = domain root |
 | `SESSION_MAX_AGE_HOURS` | masa berlaku sesi (default 8 jam)                       |
 | `BCRYPT_ROUNDS`         | biaya bcrypt (default 12)                               |
 | `CORS_ORIGINS`          | origin dipisah koma; kosong = same-origin saja          |
@@ -156,6 +157,7 @@ Logger.log(respons.getContentText());
    - Application URL: domain/subdomain aplikasi
    - Application startup file: `passenger.cjs`
    - Node version: 20 atau lebih baru
+   - Jika **Application URL** memakai subfolder (mis. `domain/siprima`), set `BASE_PATH=/siprima` di Environment Variables. Tanpa ini halaman akan 404.
 3. **Environment variables**: salin seluruh isi `.env` ke panel Environment Variables cPanel. Jangan mengunggah `.env` ke folder publik.
 4. **Install dependency**:
    ```bash
@@ -251,6 +253,8 @@ TEST_BIDANG_EMAIL=... TEST_BIDANG_PASSWORD=... npm test
 | Unggahan gagal 413                                                   | Ukuran melebihi `MAX_UPLOAD_MB`, atau limit `post_max_size`/`upload_max_filesize` PHP/cPanel.                         |
 | Scan tidak bisa diunduh                                              | `UPLOAD_DIR` berbeda setelah restart, atau `fileId` tidak ada dan `fileUrl` kosong.                                   |
 | `ERR_MODULE_NOT_FOUND: Cannot find package 'express'` saat `npm run dev`/start | `node_modules` belum terpasang atau tidak lengkap. Aktifkan dulu virtualenv dari halaman **Setup Node.js App** (baris `source /home/USER/nodevenv/.../bin/activate`), lalu `cd` ke Application Root dan jalankan `npm ci`. Cek dengan `ls node_modules/express/package.json`. Jangan menjalankan `npm run dev` di server produksi. |
+| URL `/siprima/` menampilkan "Halaman tidak ditemukan." | Aplikasi dipasang di subfolder tetapi `BASE_PATH` belum diisi. Set `BASE_PATH=/siprima` di Environment Variables lalu **Restart**. |
+| Cookie sesi tidak tersimpan / login balik ke halaman login | Akses lewat HTTP padahal `NODE_ENV=production` (cookie `Secure` hanya dikirim via HTTPS). Aktifkan **Force HTTPS Redirect** di cPanel dan buka `https://...`. |
 | "Can't acquire lock for app: public_html/siprima"                    | Ada proses lain yang masih memegang lock: `npm install`/restart sebelumnya belum selesai, atau `node src/server.js` / `npm run dev` dijalankan di Terminal dan dibiarkan hidup. Hentikan proses itu, rename file `.lock`, lalu **Restart**. Jangan pakai **Run NPM Script → start** untuk aplikasi web. |
 | Setelah **Run NPM Install** muncul "check availability … content type before operation text/html … after text/html; charset=utf-8" | Ini **peringatan, bukan kegagalan**. cPanel membandingkan respons sebelum aplikasi hidup (halaman default LiteSpeed `text/html`) dengan sesudahnya (Express `text/html; charset=utf-8`). Modul sudah terpasang; klik **Restart** lalu buka URL aplikasi. |
 | Passenger restart loop                                               | Cek `stderr.log` cPanel, jalankan `node src/server.js` manual untuk melihat error env.                                |

@@ -13,9 +13,19 @@ const boolean = (bawaan) =>
     .optional()
     .transform((nilai) => (nilai === undefined || nilai === '' ? bawaan : ['true', '1'].includes(nilai)));
 
+// Base path bila aplikasi dipasang di subfolder, mis. Application URL cPanel
+// `domain/siprima` -> BASE_PATH=/siprima. Kosong berarti domain root.
+const jalurDasar = (nilai) => {
+  const teks = String(nilai || '').trim();
+  if (!teks || teks === '/') return '';
+  const denganGaris = teks.startsWith('/') ? teks : `/${teks}`;
+  return denganGaris.replace(/\/+$/, '');
+};
+
 const skema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   APP_BASE_URL: z.string().url().default('http://localhost:3000'),
+  BASE_PATH: z.string().default('').transform(jalurDasar),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   TRUST_PROXY: z.coerce.number().int().min(0).max(10).default(1),
 

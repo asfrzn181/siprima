@@ -1,5 +1,12 @@
 const state = { csrf: '' };
 
+// Aplikasi bisa berada di subfolder (mis. /siprima/). Turunkan prefix dari
+// URL halaman agar fetch API tetap benar tanpa konfigurasi tambahan.
+const jalurDasar = (() => {
+  const jalur = new URL('.', document.baseURI).pathname;
+  return jalur === '/' ? '' : jalur.replace(/\/+$/, '');
+})();
+
 export class ApiError extends Error {
   constructor(pesan, { status = 500, errors = [] } = {}) {
     super(pesan);
@@ -24,7 +31,7 @@ const bacaJson = async (respons) => {
 
 export const pastikanCsrf = async () => {
   if (state.csrf) return state.csrf;
-  const respons = await fetch('/api/auth/csrf', { credentials: 'same-origin' });
+  const respons = await fetch(`${jalurDasar}/api/auth/csrf`, { credentials: 'same-origin' });
   const hasil = await bacaJson(respons);
   state.csrf = hasil?.data?.token || '';
   return state.csrf;
@@ -42,7 +49,7 @@ export const request = async (jalur, { method = 'GET', body = null, formData = n
     headers['X-CSRF-Token'] = state.csrf;
   }
 
-  const respons = await fetch(`/api${jalur}`, {
+  const respons = await fetch(`${jalurDasar}/api${jalur}`, {
     method,
     credentials: 'same-origin',
     headers,

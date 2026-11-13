@@ -14,6 +14,18 @@ export const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', env.TRUST_PROXY > 0 ? env.TRUST_PROXY : false);
 
+// Aplikasi bisa dipasang di subfolder (cPanel Application URL `domain/siprima`).
+// Passenger belum tentu menghapus prefix tersebut, jadi kita normalisasi sendiri.
+if (env.BASE_PATH) {
+  app.use((req, res, next) => {
+    if (req.url === env.BASE_PATH) return res.redirect(301, `${env.BASE_PATH}/`);
+    if (req.url.startsWith(`${env.BASE_PATH}/`)) {
+      req.url = req.url.slice(env.BASE_PATH.length);
+    }
+    next();
+  });
+}
+
 app.use(
   helmet({
     contentSecurityPolicy: {
