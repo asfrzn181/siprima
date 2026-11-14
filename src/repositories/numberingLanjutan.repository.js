@@ -109,19 +109,20 @@ export const gunakanUlangNomor = async ({ letterNumberId, payload, aktor }) =>
 
     const tanggal = keTanggal(payload.tglSurat);
     const tanggalTerbit = before.letter_date ? new Date(before.letter_date) : null;
-    const tanggalBatal = before.voided_at ? new Date(before.voided_at) : null;
-    if (!tanggal || !tanggalTerbit || !tanggalBatal) {
-      throw new AppError(400, 'TANGGAL_TIDAK_VALID', 'Tanggal penerbitan atau pembatalan tidak valid.');
+    if (!tanggal || !tanggalTerbit) {
+      throw new AppError(400, 'TANGGAL_TIDAK_VALID', 'Tanggal surat tidak valid.');
     }
+    // Pembanding adalah Tanggal Surat yang diinput, bukan tanggal sistem atau
+    // tanggal pembatalan. Surat backdate tetap boleh memakai nomor pada
+    // tanggal surat tersebut.
     const terbit = bagianJakarta(tanggalTerbit);
-    const batal = bagianJakarta(tanggalBatal);
     const baru = bagianJakarta(tanggal);
     const samaHari = (a, b) => a.year === b.year && a.month === b.month && a.day === b.day;
-    if (!samaHari(terbit, batal) || !samaHari(terbit, baru)) {
+    if (!samaHari(terbit, baru)) {
       throw new AppError(
         400,
         'TANGGAL_TIDAK_SAMA',
-        'Nomor hanya dapat dipakai ulang pada hari yang sama dengan tanggal terbit dan pembatalannya.'
+        'Nomor hanya dapat dipakai ulang pada Tanggal Surat yang sama dengan nomor tersebut.'
       );
     }
 

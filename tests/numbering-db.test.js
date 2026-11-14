@@ -11,7 +11,7 @@ const aktor = { uid: 1, nama: 'Uji Penomoran', profile: { role: 'admin' } };
 
 const muatKonteks = async () => {
   const { query } = await import('../src/config/db.js');
-  const [nomor] = await query(
+  const nomor = await query(
     "SELECT id, kode, golongan FROM master_nomor WHERE aktif = 1 ORDER BY (golongan = 'LAINNYA') DESC, id ASC LIMIT 2"
   );
   const [bidang] = await query('SELECT kode FROM master_bidang WHERE aktif = 1 ORDER BY id ASC LIMIT 1');
@@ -27,9 +27,7 @@ test('penomoran per menu: pola, pemakaian ulang, dan pembatalan', { skip: lewati
   );
 
   const { nomor, bidang } = await muatKonteks();
-  if (!nomor.length || !bidang.length) {
-    return; // seed belum tersedia
-  }
+  assert.ok(nomor.length && bidang, 'seed master nomor dan bidang tersedia');
   const { bagianJakarta } = await import('../src/utils/tanggal.js');
   const [utama, cadangan] = nomor;
   const kodeBidang = bidang.kode;
@@ -133,44 +131,43 @@ test('penomoran per menu: pola, pemakaian ulang, dan pembatalan', { skip: lewati
   }
 });
 
-test('surat keluar: pratinjau read-only dan nomor final dari server', { skip: lewati }, async () => {
+test('surat keluar: ketersediaan mengikuti Tanggal Surat, bukan tanggal sistem', { skip: lewati }, async () => {
   const { query } = await import('../src/config/db.js');
   const { buatSuratKeluarBernomor, tersediaNomor } = await import(
     '../src/repositories/numbering.repository.js'
   );
   const { voidNomor } = await import('../src/repositories/numberingLanjutan.repository.js');
-  const { bagianJakarta } = await import('../src/utils/tanggal.js');
+  const { buatSuratKhusus, batalkanSuratKhusus } = await import(
+    '../src/repositories/suratKhusus.repository.js'
+  );
 
   const { nomor, bidang } = await muatKonteks();
-  if (!nomor.length || !bidang.length) return;
+  assert.ok(nomor.length && bidang, 'seed master nomor dan bidang tersedia');
 
-  const tanggal = new Date();
-  const tahun = bagianJakarta(tanggal).year;
+  const jenisId = nomor[0].id;
   const kodeBidang = bidang.kode;
-  const dibuat = { nomor: [], keluar: [] };
+  const tahun = 2099;
+  const d14 = '2099-11-14';
+  const d15 = '2099-11-15';
+  const d20 = '2099-11-20';
+  const d01 = '2099-01-01';
+  const d02 = '2099-01-02';
+  const dibuat = { nomor: [], keluar: [], khusus: [] };
   const [kepala] = await query('SELECT last_hash FROM letter_audit_heads WHERE id = 1');
   const hashAwal = kepala ? String(kepala.last_hash || '') : '';
 
-  const hitung = async () => {
-    const [row] = await query(
-      'SELECT COUNT(*) AS jumlah FROM letter_numbers WHERE menu = ? AND tahun = ?',
-      ['SURAT_KELUAR', tahun]
-    );
-    return Number(row.jumlah);
-  };
-
-  const terbitkan = (overrides = {}) =>
+  const terbitkan = (tanggal, overrides = {}) =>
     buatSuratKeluarBernomor({
-      jenisId: nomor[0].id,
+      jenisId,
       bidangKode: kodeBidang,
       tanggal,
       payload: {
-        jenisId: String(nomor[0].id),
+        jenisId: String(jenisId),
         tglSurat: tanggal,
         bidangPembuat: kodeBidang,
-        tujuan: 'Uji alur',
-        hal: 'Uji alur',
-        isiRingkas: 'Uji alur',
+        tujuan: 'Uji tanggal',
+        hal: 'Uji tanggal',
+        isiRingkas: 'Uji tanggal',
         sifat: 'biasa',
         tandaTangan: 'BASAH',
         aksesBidang: [],
@@ -179,55 +176,140 @@ test('surat keluar: pratinjau read-only dan nomor final dari server', { skip: le
       aktor
     });
 
+  const pratinjau = (tanggal) =>
+    tersediaNomor({ menu: 'SURAT_KELUAR', jenisId, bidangKode: kodeBidang, tanggal });
+
+  const catat = (surat) => {
+    dibuat.keluar.push(surat.id);
+    dibuat.nomor.push(surat.letterNumberId);
+    return surat;
+  };
+
+  const seqDari = (surat) => Number(String(surat.noSurat).split('/')[1]);
+
   try {
-    const awal = await tersediaNomor({
-      menu: 'SURAT_KELUAR',
-      jenisId: nomor[0].id,
-      bidangKode: kodeBidang,
-      tanggal
-    });
-    const seqAwal = awal.kecilTersedia;
+    // Skenario 1-3: lima nomor terbit pada 14 Nov 2099, nomor 1 dan 3 dibatalkan.
+    const lima = [];
+    for (let i = 0; i < 5; i += 1) lima.push(catat(await terbitkan(d14)));
+    assert.deepEqual(lima.map(seqDari), [1, 2, 3, 4, 5]);
+    await voidNomor({ letterNumberId: lima[0].letterNumberId, reason: 'Uji batal 1', aktor });
+    await voidNomor({ letterNumberId: lima[2].letterNumberId, reason: 'Uji batal 3', aktor });
 
     // Pratinjau berulang tidak boleh membuat baris nomor.
-    const sebelum = await hitung();
-    await tersediaNomor({
-      menu: 'SURAT_KELUAR',
-      jenisId: nomor[0].id,
-      bidangKode: kodeBidang,
-      tanggal
-    });
-    await tersediaNomor({
-      menu: 'SURAT_KELUAR',
-      jenisId: nomor[0].id,
-      bidangKode: kodeBidang,
-      tanggal
-    });
-    assert.equal(await hitung(), sebelum, 'pratinjau tidak boleh menyimpan nomor');
+    const [hitungAwal] = await query(
+      'SELECT COUNT(*) AS jumlah FROM letter_numbers WHERE menu = ? AND tahun = ?',
+      ['SURAT_KELUAR', tahun]
+    );
+    await pratinjau(d14);
+    await pratinjau(d14);
+    const [hitungAkhir] = await query(
+      'SELECT COUNT(*) AS jumlah FROM letter_numbers WHERE menu = ? AND tahun = ?',
+      ['SURAT_KELUAR', tahun]
+    );
+    assert.equal(Number(hitungAkhir.jumlah), Number(hitungAwal.jumlah), 'pratinjau tidak boleh menyimpan nomor');
 
-    const s1 = await terbitkan();
-    dibuat.keluar.push(s1.id);
-    dibuat.nomor.push(s1.letterNumberId);
-    assert.equal(s1.noSurat, `${nomor[0].kode}/${seqAwal}/BKPSDMD/${kodeBidang}/${tahun}`);
+    // Skenario 1: Tanggal Surat 14 Nov -> 1, 3, lalu 6.
+    const p14 = await pratinjau(d14);
+    assert.deepEqual(p14.items.map((item) => item.seq), [1, 3]);
+    assert.equal(p14.kecilTersedia, 1);
+    assert.equal(p14.berikutnya, 6);
 
-    // Pengguna kedua yang menyimpan setelahnya mendapat nomor berikutnya.
-    const s2 = await terbitkan();
-    dibuat.keluar.push(s2.id);
-    dibuat.nomor.push(s2.letterNumberId);
-    assert.equal(s2.noSurat, `${nomor[0].kode}/${seqAwal + 1}/BKPSDMD/${kodeBidang}/${tahun}`);
+    // Skenario 2: Tanggal Surat 15 Nov -> 1 dan 3 tidak tersedia, lanjut 6.
+    const p15 = await pratinjau(d15);
+    assert.deepEqual(p15.items.map((item) => item.seq), []);
+    assert.equal(p15.kecilTersedia, 6);
 
-    // Batal pada hari yang sama: nomor terkecil kembali tersedia untuk pratinjau.
-    await voidNomor({ letterNumberId: s1.letterNumberId, reason: 'Uji batal', aktor });
-    const setelahBatal = await tersediaNomor({
-      menu: 'SURAT_KELUAR',
-      jenisId: nomor[0].id,
-      bidangKode: kodeBidang,
-      tanggal
-    });
-    assert.equal(setelahBatal.kecilTersedia, seqAwal);
-    assert.equal(setelahBatal.items[0].seq, seqAwal);
+    // Skenario 3: tanggal sistem (hari ini) tidak dipakai; 14 Nov tetap tersedia.
+    const p14Lagi = await pratinjau(d14);
+    assert.deepEqual(p14Lagi.items.map((item) => item.seq), [1, 3]);
+
+    // Skenario 6: mengubah Tanggal Surat menghitung ulang pratinjau.
+    assert.notDeepEqual(
+      p14.items.map((item) => item.seq),
+      p15.items.map((item) => item.seq)
+    );
+
+    // Skenario 7: dua penyimpanan bersamaan pada tanggal yang sama.
+    const [k1, k2] = await Promise.all([terbitkan(d15), terbitkan(d15)]);
+    catat(k1);
+    catat(k2);
+    assert.notEqual(k1.noSurat, k2.noSurat);
+    assert.deepEqual([seqDari(k1), seqDari(k2)].sort((a, b) => a - b), [6, 7]);
+
+    // Skenario 4-5: nomor bolong pada 1 Jan 2099 hanya tersedia untuk 1 Jan.
+    const tiga = [];
+    for (let i = 0; i < 3; i += 1) tiga.push(catat(await terbitkan(d01)));
+    assert.deepEqual(tiga.map(seqDari), [8, 9, 10]);
+    const tengah = tiga[1];
+    await query('DELETE FROM surat_keluar_akses_bidang WHERE surat_keluar_id = ?', [tengah.id]);
+    await query('DELETE FROM surat_keluar WHERE id = ?', [tengah.id]);
+    await query('DELETE FROM letter_audit_log WHERE letter_id = ?', [tengah.letterNumberId]);
+    await query('DELETE FROM letter_idempotency WHERE letter_id = ?', [tengah.letterNumberId]);
+    await query('DELETE FROM letter_numbers WHERE id = ?', [tengah.letterNumberId]);
+
+    const p01 = await pratinjau(d01);
+    assert.deepEqual(p01.items.map((item) => item.seq), [9]);
+    const p02 = await pratinjau(d02);
+    assert.deepEqual(p02.items.map((item) => item.seq), []);
+    assert.equal(p02.kecilTersedia, 11);
+
+    // Skenario 8: SK nomor 3 batal tetap tersedia pada tanggal lain di tahun yang sama.
+    const sk = [];
+    for (let i = 0; i < 3; i += 1) {
+      const surat = await buatSuratKhusus(
+        'SK',
+        { jenisId, tentang: `Uji SK ${i + 1}`, tanggal: d14, keterangan: '' },
+        aktor
+      );
+      dibuat.khusus.push(surat.id);
+      dibuat.nomor.push(surat.letterNumberId);
+      sk.push(surat);
+    }
+    assert.match(sk[2].nomor, /\/3\/BKPSDMD\/2099$/);
+    await batalkanSuratKhusus('SK', sk[2].id, 'Uji batal SK 3', aktor);
+    const skUlang = await buatSuratKhusus(
+      'SK',
+      { jenisId, tentang: 'Uji SK ulang', tanggal: d20, keterangan: '' },
+      aktor
+    );
+    dibuat.khusus.push(skUlang.id);
+    dibuat.nomor.push(skUlang.letterNumberId);
+    assert.equal(skUlang.nomor, sk[2].nomor);
+
+    // Skenario 9: SE memakai urutan tahun dari Tanggal SE yang diinput.
+    const se1 = await buatSuratKhusus(
+      'SE',
+      { tentang: 'Uji SE 2099', tanggal: '2099-12-05', keterangan: '' },
+      aktor
+    );
+    dibuat.khusus.push(se1.id);
+    dibuat.nomor.push(se1.letterNumberId);
+    assert.equal(se1.nomor, '1 TAHUN 2099');
+    await batalkanSuratKhusus('SE', se1.id, 'Uji batal SE', aktor);
+    const se2 = await buatSuratKhusus(
+      'SE',
+      { tentang: 'Uji SE ulang', tanggal: '2099-12-06', keterangan: '' },
+      aktor
+    );
+    dibuat.khusus.push(se2.id);
+    dibuat.nomor.push(se2.letterNumberId);
+    assert.equal(se2.nomor, se1.nomor);
+    const se3 = await buatSuratKhusus(
+      'SE',
+      { tentang: 'Uji SE 2100', tanggal: '2100-01-05', keterangan: '' },
+      aktor
+    );
+    dibuat.khusus.push(se3.id);
+    dibuat.nomor.push(se3.letterNumberId);
+    assert.equal(se3.nomor, '1 TAHUN 2100');
   } finally {
+    const idsKhusus = [...new Set(dibuat.khusus.filter(Boolean))];
     const idsKeluar = [...new Set(dibuat.keluar.filter(Boolean))];
     const idsNomor = [...new Set(dibuat.nomor.filter(Boolean))];
+    if (idsKhusus.length) {
+      const tanda = idsKhusus.map(() => '?').join(',');
+      await query(`DELETE FROM surat_khusus WHERE id IN (${tanda})`, idsKhusus);
+    }
     if (idsKeluar.length) {
       const tanda = idsKeluar.map(() => '?').join(',');
       await query(`DELETE FROM surat_keluar_akses_bidang WHERE surat_keluar_id IN (${tanda})`, idsKeluar);
@@ -239,6 +321,7 @@ test('surat keluar: pratinjau read-only dan nomor final dari server', { skip: le
       await query(`DELETE FROM letter_idempotency WHERE letter_id IN (${tanda})`, idsNomor);
       await query(`DELETE FROM letter_numbers WHERE id IN (${tanda})`, idsNomor);
     }
+    await query('DELETE FROM letter_counters WHERE tahun IN (?, ?)', [tahun, 2100]);
     await query('UPDATE letter_audit_heads SET last_hash = ? WHERE id = 1', [hashAwal]);
   }
 });

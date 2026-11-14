@@ -76,9 +76,12 @@ export const renderNomor = (format, values) =>
 export const golonganValid = (nilai) => GOLONGAN.includes(normalizeGolongan(nilai));
 
 // Aturan pemakaian ulang nomor batal:
-// - Surat Keluar: pembatalan dan pemakaian ulang harus di hari yang sama
-//   dengan tanggal nomor diterbitkan.
-// - SK/SE: boleh kapan saja selama masih tahun yang sama.
+// - Surat Keluar: hanya jika Tanggal Surat yang diinput pengguna sama dengan
+//   tanggal surat pada nomor tersebut. Tanggal sistem (created_at/hari ini)
+//   tidak dipakai, sehingga surat backdate tetap bisa memakai nomor pada
+//   tanggal tersebut.
+// - SK/SE: boleh kapan saja selama masih tahun yang sama; tahun acuan diambil
+//   dari Tanggal SK / Tanggal SE yang diinput.
 export const bolehPakaiUlangNomor = ({
   menu,
   status,
@@ -86,21 +89,14 @@ export const bolehPakaiUlangNomor = ({
   letterDate,
   tahunNomor,
   tahunAcuan,
-  hariIni = new Date()
+  tanggalAcuan
 }) => {
   if (status !== 'VOID' || !voidedAt || !letterDate) return false;
   if (menu !== MENU_NOMOR.SURAT_KELUAR) {
     return Number(tahunNomor) === Number(tahunAcuan);
   }
-  const batal = bagianJakarta(voidedAt);
+  if (!tanggalAcuan) return false;
   const terbit = bagianJakarta(letterDate);
-  const hari = bagianJakarta(hariIni);
-  return (
-    batal.year === terbit.year &&
-    batal.month === terbit.month &&
-    batal.day === terbit.day &&
-    hari.year === terbit.year &&
-    hari.month === terbit.month &&
-    hari.day === terbit.day
-  );
+  const acuan = bagianJakarta(tanggalAcuan);
+  return terbit.year === acuan.year && terbit.month === acuan.month && terbit.day === acuan.day;
 };

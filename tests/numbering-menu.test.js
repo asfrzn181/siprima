@@ -50,18 +50,26 @@ test('mengganti jenis hanya mengubah kode klasifikasi', () => {
   assert.equal(pertama.split('/')[1], kedua.split('/')[1]);
 });
 
-test('surat keluar boleh pakai ulang hanya pada hari yang sama', () => {
+test('surat keluar memakai Tanggal Surat, bukan tanggal sistem', () => {
   const terbit = new Date('2026-03-10T10:00:00+07:00');
   const dasar = {
     menu: MENU_NOMOR.SURAT_KELUAR,
     status: 'VOID',
-    voidedAt: terbit,
+    voidedAt: new Date('2026-03-20T10:00:00+07:00'),
     letterDate: terbit,
     tahunNomor: 2026,
     tahunAcuan: 2026
   };
-  assert.equal(bolehPakaiUlangNomor({ ...dasar, hariIni: new Date('2026-03-10T15:00:00+07:00') }), true);
-  assert.equal(bolehPakaiUlangNomor({ ...dasar, hariIni: new Date('2026-03-11T08:00:00+07:00') }), false);
+  // Hari ini bisa berbeda (mis. 20 Nov); yang menentukan adalah Tanggal Surat.
+  assert.equal(bolehPakaiUlangNomor({ ...dasar, tanggalAcuan: terbit }), true);
+  assert.equal(
+    bolehPakaiUlangNomor({ ...dasar, tanggalAcuan: new Date('2026-03-11T08:00:00+07:00') }),
+    false
+  );
+  assert.equal(
+    bolehPakaiUlangNomor({ ...dasar, tanggalAcuan: new Date('2026-01-01T08:00:00+07:00') }),
+    false
+  );
 });
 
 test('SK dan SE boleh pakai ulang kapan saja dalam tahun yang sama', () => {
@@ -70,11 +78,16 @@ test('SK dan SE boleh pakai ulang kapan saja dalam tahun yang sama', () => {
     voidedAt: new Date('2026-03-10T10:00:00+07:00'),
     letterDate: new Date('2026-03-10T10:00:00+07:00'),
     tahunNomor: 2026,
-    tahunAcuan: 2026,
-    hariIni: new Date('2026-06-01T10:00:00+07:00')
+    tahunAcuan: 2026
   };
-  assert.equal(bolehPakaiUlangNomor({ ...dasar, menu: MENU_NOMOR.SK }), true);
-  assert.equal(bolehPakaiUlangNomor({ ...dasar, menu: MENU_NOMOR.SE }), true);
+  assert.equal(
+    bolehPakaiUlangNomor({ ...dasar, menu: MENU_NOMOR.SK, tanggalAcuan: new Date('2026-12-05T10:00:00+07:00') }),
+    true
+  );
+  assert.equal(
+    bolehPakaiUlangNomor({ ...dasar, menu: MENU_NOMOR.SE, tanggalAcuan: new Date('2026-12-05T10:00:00+07:00') }),
+    true
+  );
   assert.equal(
     bolehPakaiUlangNomor({ ...dasar, menu: MENU_NOMOR.SK, tahunAcuan: 2027 }),
     false
@@ -87,7 +100,8 @@ test('nomor aktif atau belum dibatalkan tidak masuk daftar tersedia', () => {
     voidedAt: new Date('2026-03-10T10:00:00+07:00'),
     letterDate: new Date('2026-03-10T10:00:00+07:00'),
     tahunNomor: 2026,
-    tahunAcuan: 2026
+    tahunAcuan: 2026,
+    tanggalAcuan: new Date('2026-03-10T10:00:00+07:00')
   };
   assert.equal(bolehPakaiUlangNomor({ ...dasar, status: 'ISSUED' }), false);
   assert.equal(bolehPakaiUlangNomor({ ...dasar, status: 'RESERVED' }), false);

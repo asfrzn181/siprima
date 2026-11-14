@@ -144,7 +144,7 @@ export const bangunNomor = ({ menu, master, bidangKode, seq, date }) => {
   };
 };
 
-export const bolehPakaiUlang = (menu, row, hariIni, tahun) =>
+export const bolehPakaiUlang = (menu, row, tahun, tanggalAcuan) =>
   bolehPakaiUlangNomor({
     menu,
     status: row.status,
@@ -152,10 +152,26 @@ export const bolehPakaiUlang = (menu, row, hariIni, tahun) =>
     letterDate: row.letter_date,
     tahunNomor: row.tahun,
     tahunAcuan: tahun,
-    hariIni
+    tanggalAcuan
   });
 
-const kumpulkanTersedia = async ({ menu, tahun, koneksi = null }) => {
+const angkaTanggal = (nilai) => {
+  const bagian = bagianJakarta(nilai);
+  return bagian.year * 10000 + bagian.month * 100 + bagian.day;
+};
+
+// Nomor bolong tidak punya tanggal sendiri. Slot tanggalnya dibatasi oleh
+// nomor sebelum dan sesudahnya, sehingga hanya tersedia untuk Tanggal Surat
+// yang berada di antara kedua tanggal tersebut.
+const tanggalDalamSlot = (tanggalAcuan, sebelum, sesudah) => {
+  if (!tanggalAcuan) return false;
+  const acuan = angkaTanggal(tanggalAcuan);
+  if (sebelum && acuan < angkaTanggal(sebelum.letter_date)) return false;
+  if (sesudah && acuan > angkaTanggal(sesudah.letter_date)) return false;
+  return true;
+};
+
+const kumpulkanTersedia = async ({ menu, tahun, tanggalAcuan, koneksi = null }) => {
   const sql = `SELECT id, seq, status, letter_date, voided_at, tahun
                FROM letter_numbers WHERE menu = ? AND tahun = ?
                ORDER BY seq ASC`;
@@ -164,15 +180,37 @@ const kumpulkanTersedia = async ({ menu, tahun, koneksi = null }) => {
     : await query(sql, [menu, tahun]);
   const peta = new Map(rows.map((row) => [Number(row.seq), row]));
   const maks = rows.reduce((hasil, row) => Math.max(hasil, Number(row.seq)), 0);
-  const hariIni = bagianJakarta(new Date());
+  const menuFinal = normalisasiMenu(menu);
   const tersedia = [];
+
   for (let seq = 1; seq <= maks; seq += 1) {
     const row = peta.get(seq);
     if (!row) {
-      tersedia.push({ seq, sumber: 'BOLONG', row: null });
+      if (menuFinal !== MENU_NOMOR.SURAT_KELUAR) {
+        // SK/SE: nomor bolong selalu tersedia dalam tahun yang sama.
+        tersedia.push({ seq, sumber: 'BOLONG', row: null });
+        continue;
+      }
+      let sebelum = null;
+      for (let i = seq - 1; i >= 1; i -= 1) {
+        if (peta.has(i)) {
+          sebelum = peta.get(i);
+          break;
+        }
+      }
+      let sesudah = null;
+      for (let i = seq + 1; i <= maks; i += 1) {
+        if (peta.has(i)) {
+          sesudah = peta.get(i);
+          break;
+        }
+      }
+      if (tanggalDalamSlot(tanggalAcuan, sebelum, sesudah)) {
+        tersedia.push({ seq, sumber: 'BOLONG', row: null });
+      }
       continue;
     }
-    if (bolehPakaiUlang(menu, row, hariIni, tahun)) {
+    if (bolehPakaiUlang(menuFinal, row, tahun, tanggalAcuan)) {
       tersedia.push({ seq, sumber: 'BATAL', row });
     }
   }
@@ -311,7 +349,8 @@ export const alokasikanDalamTransaksi = async (
   const { tersedia, maks } = await kumpulkanTersedia({
     koneksi,
     menu: menuFinal,
-    tahun: bagian.year
+    tahun: bagian.year,
+    tanggalAcuan: tanggal
   });
   const pilihan = pilihSeq(tersedia, maks);
   const nomor = bangunNomor({
@@ -508,7 +547,8 @@ export const tersediaNomor = async ({
   const bagian = bagianJakarta(tanggalSurat);
   const { tersedia, maks } = await kumpulkanTersedia({
     menu: konteks.menu,
-    tahun: bagian.year
+    tahun: bagian.year,
+    tanggalAcuan: tanggalSurat
   });
   const items = tersedia.map((item) => ({
     seq: item.seq,
