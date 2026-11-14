@@ -3,6 +3,17 @@ import { login } from '../api/client.js';
 const form = document.querySelector('#login-form');
 const pesan = document.querySelector('#login-error');
 const tombol = form.querySelector('button[type="submit"]');
+const passwordInput = form.elements.password;
+const passwordToggle = document.querySelector('.password-toggle');
+
+if (passwordToggle) {
+  passwordToggle.addEventListener('click', () => {
+    const tampil = passwordInput.type === 'password';
+    passwordInput.type = tampil ? 'text' : 'password';
+    passwordToggle.setAttribute('aria-label', tampil ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
+    passwordToggle.textContent = tampil ? '🙈' : '👁';
+  });
+}
 
 const tampilkanError = (teks) => {
   pesan.textContent = teks;

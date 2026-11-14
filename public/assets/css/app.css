@@ -142,10 +142,28 @@ input[type="checkbox"], input[type="radio"] {
   accent-color: var(--accent);
 }
 
-input:focus, select:focus, textarea:focus {
-  border-color: var(--accent);
-  outline: 2px solid var(--accent-focus);
-  outline-offset: 0;
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field input {
+  padding-right: 42px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px;
 }
 
 input:disabled, select:disabled, textarea:disabled {
@@ -397,16 +415,21 @@ button { font: inherit; cursor: pointer; }
   text-decoration: none;
 }
 
-.sidebar-brand span.mark {
-  display: grid;
-  place-items: center;
+.sidebar-brand .mark {
+  display: block;
   width: 28px;
   height: 28px;
   border-radius: var(--radius);
-  background: var(--accent);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
+  object-fit: contain;
+  background: #fff;
+}
+
+.sidebar-brand .brand-text {
+  font-family: 'Agbalumo', cursive;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--accent);
+  -webkit-text-stroke: 1px var(--accent-hover);
 }
 
 .sidebar-nav { display: grid; gap: 2px; }
