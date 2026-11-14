@@ -180,7 +180,11 @@ document.querySelector('#export').addEventListener('click', async () => {
   }
 });
 
-await formPanel.muatMaster();
+try {
+  await formPanel.muatMaster();
+} catch {
+  // Master nomor opsional untuk tampilan; kegagalan tidak boleh menghentikan tabel.
+}
 await muat();
 
 if (punyaIzin(sesi.profile, 'nomor.verifikasi')) {

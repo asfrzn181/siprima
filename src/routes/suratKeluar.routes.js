@@ -52,7 +52,7 @@ suratKeluarRouter.put(
 suratKeluarRouter.post(
   '/:id/batal',
   verifikasiCsrf,
-  izinkan(PERAN.ADMIN, PERAN.PIMPINAN),
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.PIMPINAN),
   wajibIzin(IZIN.SURAT_KELUAR_BATAL),
   validasi(skemaBatal),
   controller.batal

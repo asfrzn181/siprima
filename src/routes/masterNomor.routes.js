@@ -13,10 +13,10 @@ export const masterNomorRouter = Router();
 masterNomorRouter.use(wajibLogin);
 masterNomorRouter.use(izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.BIDANG));
 
-masterNomorRouter.get('/', wajibIzin(IZIN.MASTER_BACA), controller.daftarSemuaNomor);
-masterNomorRouter.get('/halaman', wajibIzin(IZIN.MASTER_KELOLA), controller.daftarNomor);
+masterNomorRouter.get('/', controller.daftarSemuaNomor);
+masterNomorRouter.get('/halaman', izinkan(PERAN.ADMIN), wajibIzin(IZIN.MASTER_KELOLA), controller.daftarNomor);
 masterNomorRouter.get('/cari', validasi(skemaKataKunci, 'query'), controller.cariNomor);
-masterNomorRouter.get('/:id', wajibIzin(IZIN.MASTER_BACA), controller.ambilNomor);
+masterNomorRouter.get('/:id', controller.ambilNomor);
 
 masterNomorRouter.post(
   '/',

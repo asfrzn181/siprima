@@ -24,7 +24,7 @@ test('peran dasar dikenali dengan benar', () => {
   assert.equal(adalahPengelola(profil(PERAN.PIMPINAN)), true);
   assert.equal(adalahPengelola(profil(PERAN.BIDANG)), false);
   assert.equal(adalahBidang(profil(PERAN.BIDANG, 'SEK')), true);
-  assert.equal(bolehUbahSuratMasuk(profil(PERAN.PIMPINAN)), true);
+  assert.equal(bolehUbahSuratMasuk(profil(PERAN.PIMPINAN)), false);
   assert.equal(bolehUbahSuratMasuk(profil(PERAN.BIDANG)), false);
   assert.equal(bolehBuatSuratKeluar(profil(PERAN.BIDANG)), true);
   assert.equal(bolehBuatSuratKeluar(profil(PERAN.PIMPINAN)), false);

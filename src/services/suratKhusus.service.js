@@ -29,7 +29,8 @@ const paginationUntuk = ({ page, limit, total }) => {
 
 const bidangFilter = (profil, filter = {}) => {
   const lingkup = lingkupData(profil);
-  if (!lingkup.semua) return lingkup.bidang || '__TANPA_BIDANG__';
+  // SK dan SE bersifat global: semua bidang yang berhak dapat melihatnya.
+  if (!lingkup.semua) return '';
   return filter.bidang && filter.bidang !== 'semua' ? filter.bidang : '';
 };
 
