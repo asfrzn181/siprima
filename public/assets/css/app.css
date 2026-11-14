@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Agbalumo&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&display=swap');
+
 ﻿/* ==========================================================================
    SIPRIMA - design system
    Satu warna aksen, sisanya netral. Skala jarak 4px. Kontras cukup.
@@ -6,33 +9,41 @@
 :root {
   color-scheme: light;
 
-  /* Aksen tunggal (warna instansi) */
-  --accent: #0B5CAD;
-  --accent-hover: #0C3F7A;
-  --accent-soft: #DCEEFD;
-  --accent-line: #3CA0F0;
-  --accent-focus: #3CA0F0;
-
-  /* Aksen khusus */
-  --accent-mark: #E8750F;
+  /* Token resmi SiPRIMA */
+  --primary: #0B5CAD;
+  --primary-dark: #0C3F7A;
+  --primary-light: #3CA0F0;
+  --primary-tint: #DCEEFD;
+  --accent: #E8750F;
   --warning: #F2B300;
-  --warning-soft: #fff6d9;
+  --success: #2E7D4F;
+  --danger: #C62828;
+  --bg: #F5F8FC;
+  --surface: #FFFFFF;
+  --border: #D6DFEA;
+  --text: #14213A;
+  --text-muted: #586579;
+
+  /* Alias kompatibilitas */
+  --accent-hover: var(--primary-dark);
+  --accent-soft: var(--primary-tint);
+  --accent-line: var(--primary-light);
+  --accent-focus: var(--primary-light);
+  --accent-mark: var(--accent);
 
   /* Netral */
-  --ink: #14213A;
+  --ink: var(--text);
   --ink-soft: #3d4753;
-  --muted: #586579;
-  --line: #D6DFEA;
+  --muted: var(--text-muted);
+  --line: var(--border);
   --line-strong: #b8c0cb;
-  --surface: #ffffff;
   --surface-alt: #f6f7f9;
-  --page: #F5F8FC;
+  --page: var(--bg);
 
-  /* Status - hanya untuk status, dipakai bersama teks */
-  --danger: #C62828;
+  /* Status */
   --danger-soft: #fceceb;
-  --success: #2E7D4F;
   --success-soft: #e8f5ee;
+  --warning-soft: #fff6d9;
 
   /* Skala 4px */
   --sp-1: 4px;
@@ -41,22 +52,13 @@
   --sp-4: 16px;
   --sp-5: 20px;
   --sp-6: 24px;
-  --sp-8: 32px;
-  --sp-10: 40px;
-  --sp-12: 48px;
-  --sp-16: 64px;
-
+  --sp-7: 32px;
+  --sp-8: 40px;
   --radius: 6px;
   --radius-lg: 8px;
-  --sidebar-width: 224px;
-  --topbar-height: 56px;
-
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--ink);
-  background: var(--page);
+  --sidebar-width: 240px;
 }
+
 
 *,
 *::before,
@@ -75,7 +77,7 @@ h1 { margin: 0 0 var(--sp-2); font-size: 22px; font-weight: 650; }
 h2 { margin: 0 0 var(--sp-3); font-size: 17px; font-weight: 650; }
 h3 { margin: 0 0 var(--sp-2); font-size: 15px; font-weight: 650; }
 p { margin: 0 0 var(--sp-3); }
-a { color: var(--accent); }
+a { color: var(--primary); }
 
 .muted { color: var(--muted); }
 .small-text { font-size: 13px; }
@@ -98,7 +100,7 @@ a { color: var(--accent); }
   top: -100px;
   z-index: 100;
   padding: var(--sp-2) var(--sp-3);
-  background: var(--accent);
+  background: var(--primary);
   color: #fff;
   border-radius: var(--radius);
   font-weight: 600;
@@ -107,7 +109,7 @@ a { color: var(--accent); }
 .skip-link:focus { top: var(--sp-2); }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
@@ -139,7 +141,7 @@ input[type="checkbox"], input[type="radio"] {
   height: 16px;
   min-height: 0;
   margin: 0;
-  accent-color: var(--accent);
+  accent-color: var(--primary);
 }
 
 .password-field {
@@ -200,17 +202,17 @@ button { font: inherit; cursor: pointer; }
 
 .button:disabled { opacity: .55; cursor: not-allowed; }
 
-.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.button.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.button.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.button.primary:hover:not(:disabled) { background: var(--primary-dark); border-color: var(--primary-dark); }
 
-.button.accent { background: var(--accent); border-color: var(--accent); color: #fff; }
-.button.accent:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.button.accent { background: var(--primary); border-color: var(--primary); color: #fff; }
+.button.accent:hover:not(:disabled) { background: var(--primary-dark); border-color: var(--primary-dark); }
 
 .button.secondary { background: var(--surface); border-color: var(--line-strong); color: var(--ink); }
-.button.secondary:hover:not(:disabled) { background: var(--surface-alt); border-color: var(--accent-line); }
+.button.secondary:hover:not(:disabled) { background: var(--surface-alt); border-color: var(--primary-light); }
 
-.button.ghost { background: transparent; border-color: transparent; color: var(--accent); }
-.button.ghost:hover:not(:disabled) { background: var(--accent-soft); }
+.button.ghost { background: transparent; border-color: transparent; color: var(--primary); }
+.button.ghost:hover:not(:disabled) { background: var(--primary-tint); }
 
 .button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
 .button.danger:hover:not(:disabled) { background: #8a1d16; border-color: #8a1d16; }
@@ -239,7 +241,7 @@ button { font: inherit; cursor: pointer; }
   justify-content: space-between;
   gap: var(--sp-6);
   padding: var(--sp-8);
-  background: var(--accent-hover);
+  background: var(--primary-dark);
   color: #fff;
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.08' stroke-width='1'%3E%3Ccircle cx='60' cy='60' r='42'/%3E%3Ccircle cx='60' cy='60' r='24'/%3E%3Cpath d='M0 60h120M60 0v120'/%3E%3C/g%3E%3C/svg%3E");
@@ -247,22 +249,11 @@ button { font: inherit; cursor: pointer; }
   background-size: 120px 120px;
 }
 
-.auth-brand .brand-logo {
-  width: 90px;
-  height: auto;
-  margin-bottom: var(--sp-4);
-  border-radius: var(--radius);
-  background: #fff;
-  padding: var(--sp-2);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.auth-brand .brand-title {
+.auth-brand .brand-wordmark {
   width: 100%;
-  max-width: 360px;
+  max-width: 260px;
   height: auto;
-  margin: 0 0 var(--sp-4);
-  overflow: visible;
+  margin: 0 0 var(--sp-5);
 }
 
 .auth-brand .eyebrow {
@@ -334,7 +325,7 @@ button { font: inherit; cursor: pointer; }
   width: 48px;
   height: 3px;
   margin: var(--sp-2) 0 var(--sp-4);
-  background: var(--accent-mark);
+  background: var(--primary);
   border-radius: 999px;
 }
 
@@ -368,7 +359,7 @@ button { font: inherit; cursor: pointer; }
   place-items: center;
   margin-bottom: var(--sp-4);
   border-radius: var(--radius);
-  background: var(--accent);
+  background: var(--primary);
   color: #fff;
   font-size: 16px;
   font-weight: 700;
@@ -417,19 +408,17 @@ button { font: inherit; cursor: pointer; }
 
 .sidebar-brand .mark {
   display: block;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius);
+  width: 140px;
+  height: auto;
   object-fit: contain;
-  background: #fff;
 }
 
 .sidebar-brand .brand-text {
-  font-family: 'Agbalumo', cursive;
+  font-family: 'Nunito Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 18px;
   font-weight: 400;
-  color: var(--accent);
-  -webkit-text-stroke: 1px var(--accent-hover);
+  color: var(--primary);
+  -webkit-text-stroke: 1px var(--primary-dark);
 }
 
 .sidebar-nav { display: grid; gap: 2px; }
@@ -450,10 +439,10 @@ button { font: inherit; cursor: pointer; }
 .sidebar-nav a:hover { background: var(--surface-alt); color: var(--ink); }
 
 .sidebar-nav a[aria-current="page"] {
-  background: var(--accent-soft);
-  color: var(--accent-hover);
+  background: var(--primary-tint);
+  color: var(--primary-dark);
   font-weight: 650;
-  box-shadow: inset 3px 0 0 var(--accent-mark);
+  box-shadow: inset 3px 0 0 var(--primary);
 }
 
 .sidebar-foot { margin-top: auto; padding-top: var(--sp-3); border-top: 1px solid var(--line); font-size: 13px; }
@@ -673,7 +662,7 @@ th {
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover { background: var(--surface-alt); }
 tbody tr[data-href] { cursor: pointer; }
-tbody tr.selected { background: var(--accent-soft); }
+tbody tr.selected { background: var(--primary-tint); }
 
 td .cell-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
 
@@ -863,7 +852,7 @@ td .cell-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--mu
   text-align: center;
   cursor: pointer;
 }
-.dropzone:hover, .dropzone.dragging { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-hover); }
+.dropzone:hover, .dropzone.dragging { border-color: var(--primary); background: var(--primary-tint); color: var(--primary-dark); }
 .dropzone strong { font-size: 13.5px; color: var(--ink); }
 
 .file-preview { display: flex; align-items: center; gap: var(--sp-3); margin-top: var(--sp-2); font-size: 13px; }

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="72" viewBox="0 0 260 72" role="img" aria-label="SiPRIMA">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F2B300" />
+      <stop offset="100%" stop-color="#E8750F" />
+    </linearGradient>
+  </defs>
+  <text x="0" y="56" font-family="Agbalumo, cursive" font-size="56" fill="#4DA6F0" stroke="url(#g)" stroke-width="2" paint-order="stroke fill">SiPRIMA</text>
+</svg>
