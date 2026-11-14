@@ -21,7 +21,6 @@ masterAsalTujuanRouter.get(
 );
 masterAsalTujuanRouter.get(
   '/cari',
-  wajibIzin(IZIN.MASTER_BACA),
   validasi(skemaKataKunci, 'query'),
   controller.cariAsalTujuan
 );
