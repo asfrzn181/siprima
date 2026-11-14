@@ -7,28 +7,32 @@
   color-scheme: light;
 
   /* Aksen tunggal (warna instansi) */
-  --accent: #1d4e89;
-  --accent-hover: #163d6b;
-  --accent-soft: #eef3fa;
-  --accent-line: #c3d4e8;
+  --accent: #0B5CAD;
+  --accent-hover: #0C3F7A;
+  --accent-soft: #DCEEFD;
+  --accent-line: #3CA0F0;
+  --accent-focus: #3CA0F0;
+
+  /* Aksen khusus */
+  --accent-mark: #E8750F;
+  --warning: #F2B300;
+  --warning-soft: #fff6d9;
 
   /* Netral */
-  --ink: #1a2028;
+  --ink: #14213A;
   --ink-soft: #3d4753;
-  --muted: #616b78;
-  --line: #d6dbe2;
+  --muted: #586579;
+  --line: #D6DFEA;
   --line-strong: #b8c0cb;
   --surface: #ffffff;
   --surface-alt: #f6f7f9;
-  --page: #f2f4f7;
+  --page: #F5F8FC;
 
   /* Status - hanya untuk status, dipakai bersama teks */
-  --danger: #a3231b;
+  --danger: #C62828;
   --danger-soft: #fceceb;
-  --success: #17603a;
+  --success: #2E7D4F;
   --success-soft: #e8f5ee;
-  --warning: #7a4a00;
-  --warning-soft: #fdf3e3;
 
   /* Skala 4px */
   --sp-1: 4px;
@@ -140,7 +144,7 @@ input[type="checkbox"], input[type="radio"] {
 
 input:focus, select:focus, textarea:focus {
   border-color: var(--accent);
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-focus);
   outline-offset: 0;
 }
 
@@ -301,7 +305,7 @@ button { font: inherit; cursor: pointer; }
   background: var(--accent-soft);
   color: var(--accent-hover);
   font-weight: 650;
-  box-shadow: inset 3px 0 0 var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent-mark);
 }
 
 .sidebar-foot { margin-top: auto; padding-top: var(--sp-3); border-top: 1px solid var(--line); font-size: 13px; }
