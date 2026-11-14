@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SiPrima — Panduan Pengguna</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/overrides.css">
+  <link rel="stylesheet" href="assets/css/panduan.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="page-container">
+    <section class="page-heading guide-heading">
+      <div>
+        <p class="eyebrow">Bantuan</p>
+        <h1>Panduan Pengguna</h1>
+        <p class="muted">Manual book SiPrima: alur kerja, aturan penomoran, dan referensi setiap menu.</p>
+      </div>
+      <div class="toolbar">
+        <button id="guide-print" class="button secondary" type="button">Cetak / Simpan PDF</button>
+      </div>
+    </section>
+
+    <section class="panel guide-tools" aria-label="Pencarian panduan">
+      <label class="guide-search">
+        <span class="sr-only">Cari topik panduan</span>
+        <input id="guide-search" type="search" placeholder="Cari topik, misalnya: nomor batal, disposisi, SK, ekspor…" autocomplete="off">
+      </label>
+      <p id="guide-search-note" class="muted small-text" aria-live="polite"></p>
+    </section>
+
+    <div class="guide-layout">
+      <aside class="guide-toc panel" aria-label="Daftar isi panduan">
+        <h2>Daftar isi</h2>
+        <ol id="guide-toc"></ol>
+      </aside>
+
+      <article id="guide-content" class="guide-content">
+        <section class="guide-section panel" id="pengenalan">
+          <h2><span class="guide-number">1.</span> Pengenalan SiPrima</h2>
+          <p>
+            SiPrima adalah aplikasi internal untuk mengelola agenda surat masuk, surat keluar,
+            Surat Keputusan (SK), Surat Edaran (SE), laporan, dan penomoran surat otomatis.
+            Semua data tersimpan terpusat sehingga setiap bidang melihat informasi yang sama
+            sesuai hak aksesnya.
+          </p>
+          <h3>Fitur utama</h3>
+          <ul>
+            <li>Agenda surat masuk dengan nomor agenda otomatis, disposisi, dan berkas scan.</li>
+            <li>Surat keluar dengan nomor resmi yang ditentukan server saat Simpan.</li>
+            <li>SK dan SE dengan urutan nomor terpisah dan pembatalan yang dapat dipakai ulang.</li>
+            <li>Surat rahasia yang hanya terlihat oleh bidang yang berhak.</li>
+            <li>Laporan per rentang tanggal dan ekspor ke Excel.</li>
+            <li>Audit log untuk melacak perubahan data dan nomor.</li>
+          </ul>
+
+          <h3>Peran pengguna</h3>
+          <table class="guide-table">
+            <thead>
+              <tr><th>Peran</th><th>Fokus akses</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Admin</td><td>Seluruh menu, master data, pengguna, peran, pengaturan, audit, dan verifikasi nomor.</td></tr>
+              <tr><td>Operator/Staf</td><td>Surat masuk, surat keluar, SK, SE, laporan, dan master baca.</td></tr>
+              <tr><td>Pimpinan/Viewer</td><td>Melihat dan mencetak surat, laporan, audit, serta verifikasi nomor.</td></tr>
+              <tr><td>Bidang</td><td>Surat keluar milik bidangnya dan surat masuk yang didisposisikan kepadanya.</td></tr>
+            </tbody>
+          </table>
+          <div class="guide-callout">
+            <p><strong>Catatan:</strong> menu yang tampil di sidebar mengikuti izin peran Anda. Bila menu yang dibutuhkan tidak terlihat, hubungi admin untuk menyesuaikan hak akses.</p>
+          </div>
+        </section>
+
+        <section class="guide-section panel" id="masuk">
+          <h2><span class="guide-number">2.</span> Masuk, Keluar, dan Keamanan Akun</h2>
+          <h3>Masuk ke aplikasi</h3>
+          <ol class="guide-steps">
+            <li>Buka alamat SiPrima yang diberikan admin.</li>
+            <li>Masukkan <strong>email</strong> dan <strong>kata sandi</strong> akun Anda.</li>
+            <li>Klik <strong>Masuk</strong>. Anda akan diarahkan ke Dashboard (atau Surat Keluar untuk peran bidang).</li>
+          </ol>
+          <h3>Keluar</h3>
+          <p>Gunakan tombol <strong>Keluar</strong> di bagian bawah sidebar. Selalu keluar setelah memakai komputer bersama.</p>
+          <h3>Ganti kata sandi</h3>
+          <ol class="guide-steps">
+            <li>Buka menu <strong>Setting → Ganti Password</strong>.</li>
+            <li>Isi kata sandi saat ini, kata sandi baru (minimal 8 karakter), dan ulangi kata sandi baru.</li>
+            <li>Klik <strong>Simpan kata sandi</strong>.</li>
+          </ol>
+          <div class="guide-callout warning">
+            <p><strong>Penting:</strong> jangan membagikan akun. Setiap aktivitas tercatat di audit log memakai akun yang sedang masuk.</p>
+          </div>
+        </section>
+
+        <section class="guide-section panel" id="dashboard">
+          <h2><span class="guide-number">3.</span> Dashboard</h2>
+          <p>Dashboard menampilkan ringkasan cepat kondisi persuratan:</p>
+          <ul>
+            <li><strong>Surat masuk hari ini</strong> dan jumlah bulan berjalan.</li>
+            <li><strong>Surat keluar hari ini</strong> dan jumlah bulan berjalan.</li>
+            <li><strong>Belum diproses</strong>, yaitu surat masuk berstatus Baru.</li>
+            <li>Daftar 10 surat masuk dan 10 surat keluar terbaru.</li>
+          </ul>
+          <p>Klik <strong>Muat ulang</strong> untuk memperbarui angka tanpa memuat ulang halaman. Tautan <strong>Buka daftar</strong> menuju halaman terkait.</p>
+        </section>
+
+        <section class="guide-section panel" id="surat-masuk">
+          <h2><span class="guide-number">4.</span> Surat Masuk</h2>
+          <h3>Mencatat surat masuk</h3>
+          <ol class="guide-steps">
+            <li>Buka menu <strong>Agenda Surat → Surat Masuk</strong>, lalu klik <strong>+ Surat masuk</strong>.</li>
+            <li>Isi <strong>Tanggal terima</strong> dan <strong>Tanggal surat</strong>.</li>
+            <li>Ketik kode klasifikasi pada <strong>Nomor surat</strong>; saran muncul dari master nomor.</li>
+            <li>Isi <strong>Asal (pengirim)</strong> dan <strong>Tujuan</strong>. Saran diambil dari master asal &amp; tujuan.</li>
+            <li>Pilih <strong>Sifat</strong> (Biasa/Rahasia), lalu isi <strong>Perihal</strong> dan <strong>Isi ringkas</strong>.</li>
+            <li>Lampirkan scan bila ada, lalu klik <strong>Simpan</strong>.</li>
+          </ol>
+          <p>Nomor agenda dibuat otomatis oleh sistem saat surat disimpan.</p>
+
+          <h3>Berkas scan</h3>
+          <p>Anda dapat memilih salah satu sumber berkas:</p>
+          <ul>
+            <li><strong>Unggah berkas</strong> — PDF, JPG, atau PNG, maksimal 5 MB.</li>
+            <li><strong>Tautan Google Drive</strong> — tempel URL dokumen yang dapat diakses pengguna.</li>
+          </ul>
+
+          <h3>Surat rahasia</h3>
+          <p>
+            Bila Sifat dipilih <strong>Rahasia</strong>, tentukan bidang yang boleh melihat surat tersebut.
+            Surat rahasia tidak akan muncul bagi bidang yang tidak dipilih.
+          </p>
+
+          <h3>Disposisi</h3>
+          <ol class="guide-steps">
+            <li>Buka detail surat, lalu pada bagian <strong>Disposisi bidang</strong> pilih satu atau lebih bidang tujuan.</li>
+            <li>Pilih <strong>Diputuskan oleh</strong> (Kadis, Sekretaris, atau Lainnya).</li>
+            <li>Isi <strong>Catatan disposisi</strong> bila perlu.</li>
+            <li>Klik <strong>Simpan dan disposisikan</strong>.</li>
+          </ol>
+          <p>Status surat berubah mengikuti alur: <strong>Baru → Didisposisikan → Selesai</strong>.</p>
+
+          <h3>Mencari dan memfilter</h3>
+          <p>
+            Gunakan kolom pencarian untuk nomor surat, perihal, atau asal. Buka panel <strong>Filter</strong>
+            untuk menyaring berdasarkan sifat, status, bidang, dan rentang tanggal terima.
+          </p>
+
+          <h3>Detail, ubah, dan ekspor</h3>
+          <ul>
+            <li>Klik <strong>Detail</strong> pada baris surat untuk melihat atau mengubah data sesuai izin.</li>
+            <li>Tombol <strong>Salin</strong> menyalin nomor surat ke clipboard.</li>
+            <li>Klik <strong>Ekspor Excel</strong> untuk mengunduh daftar sesuai filter aktif.</li>
+          </ul>
+        </section>
+
+        <section class="guide-section panel" id="surat-keluar">
+          <h2><span class="guide-number">5.</span> Surat Keluar</h2>
+          <h3>Alur membuat surat keluar</h3>
+          <ol class="guide-steps">
+            <li>Buka menu <strong>Agenda Surat → Surat Keluar</strong>, lalu klik <strong>+ Surat keluar</strong>.</li>
+            <li>Pilih <strong>Jenis nomor</strong> dengan mengetik kode klasifikasi (misalnya <code>800</code>).</li>
+            <li>Isi <strong>Tanggal surat</strong> dan pilih <strong>Bidang pembuat</strong>.</li>
+            <li>Isi <strong>Tujuan</strong>, <strong>Sifat</strong>, dan <strong>Metode tanda tangan</strong> (TTE atau BASAH).</li>
+            <li>Isi <strong>Hal</strong> dan <strong>Isi ringkas</strong>.</li>
+            <li>Periksa <strong>Nomor surat (pratinjau)</strong>, lalu klik <strong>Simpan dan terbitkan nomor</strong>.</li>
+          </ol>
+
+          <h3>Pratinjau nomor</h3>
+          <p>
+            Pratinjau dihitung ulang otomatis setiap kali <strong>Jenis nomor</strong>, <strong>Tanggal surat</strong>,
+            atau <strong>Bidang pembuat</strong> berubah. Pratinjau bersifat <strong>read-only</strong> dan tidak
+            menyimpan nomor. Nomor final tetap ditentukan server saat Simpan.
+          </p>
+          <div class="guide-callout">
+            <p><strong>Bila nomor berubah saat Simpan:</strong> ini normal. Bisa terjadi jika pengguna lain lebih dulu menyimpan nomor yang sama. Server memilih nomor tersedia berikutnya untuk tanggal yang sama dan menampilkan nomor final di notifikasi.</p>
+          </div>
+
+          <h3>Mengubah surat</h3>
+          <p>Buka <strong>Detail</strong> lalu ubah data yang diizinkan. Nomor resmi tidak berubah saat penyuntingan.</p>
+
+          <h3>Membatalkan surat</h3>
+          <ol class="guide-steps">
+            <li>Buka detail surat, lalu klik <strong>Batalkan surat</strong>.</li>
+            <li>Isi <strong>Keterangan pembatalan</strong> (wajib).</li>
+            <li>Konfirmasi. Data tidak dihapus; status berubah menjadi <strong>Dibatalkan</strong> dan nomor menjadi <strong>VOID</strong>.</li>
+          </ol>
+
+          <h3>Surat rahasia</h3>
+          <p>Untuk sifat <strong>Rahasia</strong>, pilih bidang tambahan yang boleh melihat. Bidang pembuat selalu ditambahkan otomatis.</p>
+
+          <h3>Daftar dan ekspor</h3>
+          <p>Gunakan pencarian, filter sifat/status/bidang, dan tombol <strong>Ekspor Excel</strong> untuk mengunduh daftar sesuai filter.</p>
+        </section>
+
+        <section class="guide-section panel" id="sk-se">
+          <h2><span class="guide-number">6.</span> Surat Keputusan (SK) dan Surat Edaran (SE)</h2>
+          <h3>Membuat SK</h3>
+          <ol class="guide-steps">
+            <li>Buka menu <strong>Agenda Surat → Surat Keputusan</strong>, lalu klik <strong>+ SK</strong>.</li>
+            <li>Isi <strong>Surat Keputusan Tentang</strong>.</li>
+            <li>Pilih <strong>Jenis nomor (klasifikasi)</strong> dan isi <strong>Tanggal SK</strong>.</li>
+            <li>Nomor SK muncul otomatis. Isi <strong>Keterangan</strong> bila perlu, lalu klik <strong>Simpan</strong>.</li>
+          </ol>
+
+          <h3>Membuat SE</h3>
+          <ol class="guide-steps">
+            <li>Buka menu <strong>Agenda Surat → Surat Edaran</strong>, lalu klik <strong>+ SE</strong>.</li>
+            <li>Isi <strong>Tentang</strong> dan <strong>Tanggal SE</strong>.</li>
+            <li>Nomor SE dibuat otomatis dengan format <code>URUT TAHUN YYYY</code> (tanpa kode klasifikasi).</li>
+            <li>Isi <strong>Keterangan</strong> bila perlu, lalu klik <strong>Simpan</strong>.</li>
+          </ol>
+
+          <h3>Membatalkan SK/SE</h3>
+          <p>
+            Buka detail lalu klik <strong>Batalkan SK</strong> atau <strong>Batalkan SE</strong> dan isi alasannya.
+            Nomor yang batal tetap dapat dipakai lagi kapan saja pada <strong>tahun yang sama</strong>,
+            tanpa harus sama tanggalnya.
+          </p>
+          <div class="guide-callout success">
+            <p><strong>Contoh:</strong> SK nomor 3 tahun 2026 dibatalkan. Saat membuat SK baru dengan Tanggal SK kapan pun di tahun 2026, nomor 3 akan dipakai kembali lebih dulu.</p>
+          </div>
+        </section>
+
+        <section class="guide-section panel" id="penomoran">
+          <h2><span class="guide-number">7.</span> Aturan Penomoran</h2>
+          <p>
+            Nomor surat dibuat otomatis oleh server. Tahun pada nomor dan reset urutan mengikuti
+            <strong>tanggal dokumen yang Anda input</strong>, bukan tanggal sistem dan bukan tanggal data dibuat.
+          </p>
+
+          <h3>Format nomor</h3>
+          <table class="guide-table">
+            <thead>
+              <tr><th>Menu</th><th>Format</th><th>Contoh</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Surat Keluar</td><td><code>KODE/URUT/BKPSDMD/BIDANG/TAHUN</code></td><td><code>800/4/BKPSDMD/III/2026</code></td></tr>
+              <tr><td>SK</td><td><code>KODE/URUT/BKPSDMD/TAHUN</code></td><td><code>800/12/BKPSDMD/2026</code></td></tr>
+              <tr><td>SE</td><td><code>URUT TAHUN YYYY</code></td><td><code>7 TAHUN 2026</code></td></tr>
+            </tbody>
+          </table>
+
+          <h3>Surat Keluar: nomor batal dan nomor bolong</h3>
+          <ul>
+            <li>Nomor <strong>batal (VOID)</strong> hanya tersedia bila <strong>Tanggal Surat</strong> yang Anda input sama dengan tanggal surat pada nomor tersebut.</li>
+            <li>Nomor <strong>bolong</strong> (belum pernah terbit) tidak punya tanggal sendiri. Slot tanggalnya dibatasi oleh nomor sebelum dan sesudahnya, dan hanya tersedia bila Tanggal Surat berada di antara kedua tanggal itu.</li>
+            <li>Surat dengan tanggal mundur (backdate) tetap dapat memakai nomor batal/bolong pada tanggal tersebut.</li>
+          </ul>
+          <table class="guide-table">
+            <thead>
+              <tr><th>Situasi</th><th>Tanggal Surat yang diinput</th><th>Nomor tersedia</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Nomor 1–5 terbit 14 Nov 2026; nomor 1 dan 3 dibatalkan</td><td>14 Nov 2026</td><td>1, 3, lalu 6</td></tr>
+              <tr><td>Situasi yang sama</td><td>15 Nov 2026</td><td>1 dan 3 tidak tersedia; lanjut 6</td></tr>
+              <tr><td>Hari ini 20 Nov, surat bertanggal 14 Nov</td><td>14 Nov 2026</td><td>1 dan 3 tetap tersedia</td></tr>
+              <tr><td>Ada nomor bolong pada 1 Jan 2026</td><td>1 Jan 2026</td><td>Nomor bolong tersedia</td></tr>
+              <tr><td>Nomor bolong yang sama</td><td>2 Jan 2026</td><td>Tidak tersedia</td></tr>
+            </tbody>
+          </table>
+
+          <h3>SK dan SE</h3>
+          <p>
+            Nomor batal SK/SE boleh dipakai kapan saja selama masih <strong>tahun yang sama</strong>.
+            Tahun ditentukan dari <strong>Tanggal SK</strong> atau <strong>Tanggal SE</strong> yang diinput.
+            Contoh: Tanggal SK 5 Desember 2025 memakai urutan tahun 2025 dan nomor batal tahun 2025.
+          </p>
+
+          <h3>Pratinjau dan nomor final</h3>
+          <ul>
+            <li>Pratinjau hanya informasi dan tidak mengunci nomor.</li>
+            <li>Saat Simpan, server memvalidasi ulang di dalam transaksi berkunci.</li>
+            <li>Jika nomor sudah terpakai, server memilih nomor tersedia berikutnya untuk tanggal yang sama dan memberi notifikasi nomor final.</li>
+            <li>Tanggal pembuatan data (<code>created_at</code>) hanya untuk audit, tidak memengaruhi ketersediaan nomor.</li>
+          </ul>
+          <div class="guide-callout warning">
+            <p><strong>Jangan mengandalkan pratinjau sebagai nomor final.</strong> Selalu periksa notifikasi setelah Simpan dan gunakan nomor yang ditampilkan server.</p>
+          </div>
+        </section>
+
+        <section class="guide-section panel" id="laporan">
+          <h2><span class="guide-number">8.</span> Laporan</h2>
+          <ol class="guide-steps">
+            <li>Buka menu <strong>Laporan</strong> lalu pilih <strong>Surat Masuk</strong> atau <strong>Surat Keluar</strong>.</li>
+            <li>Isi <strong>Tanggal mulai</strong> dan <strong>Tanggal sampai</strong>.</li>
+            <li>Pilih <strong>Status</strong> dan <strong>Sifat</strong>; untuk pengguna tertentu pilih juga <strong>Bidang</strong>.</li>
+            <li>Klik <strong>Tampilkan</strong>.</li>
+          </ol>
+          <p>
+            Ringkasan menampilkan total surat, jumlah aktif/baru, dan jumlah dibatalkan/selesai dalam rentang tanggal.
+            Klik <strong>Ekspor Excel</strong> untuk mengunduh hasil laporan.
+          </p>
+        </section>
+
+        <section class="guide-section panel" id="master">
+          <h2><span class="guide-number">9.</span> Master Data (Admin)</h2>
+          <p>Menu <strong>Master Data</strong> tersedia bagi peran yang memiliki izin kelola master.</p>
+
+          <h3>Bidang</h3>
+          <p>Kelola kode dan nama bidang. Kode bidang dipakai untuk akses surat rahasia dan disposisi. Atur juga cakupan akses data bidang (semua data atau data sendiri).</p>
+
+          <h3>Asal &amp; Tujuan</h3>
+          <p>Daftar instansi pengirim/tujuan yang muncul sebagai saran pada surat masuk. Mendukung impor CSV.</p>
+
+          <h3>Nomor Surat</h3>
+          <p>
+            Kelola kode klasifikasi dan nama jenis nomor. Format nomor dibuat otomatis per golongan.
+            Impor CSV memakai header <code>KODE,NAMA KLASIFIKASI</code>.
+          </p>
+
+          <h3>Menu Navigasi</h3>
+          <p>
+            Atur menu induk/anak, tautan, izin, urutan, dan status aktif. Menu hanya tampil bagi pengguna
+            yang memiliki izin yang dipersyaratkan.
+          </p>
+        </section>
+
+        <section class="guide-section panel" id="administrasi">
+          <h2><span class="guide-number">10.</span> Pengaturan dan Administrasi</h2>
+          <h3>Pengguna</h3>
+          <p>Tambah atau ubah akun, tetapkan peran dan bidang, serta aktifkan/nonaktifkan akun.</p>
+
+          <h3>Peran &amp; Hak Akses</h3>
+          <p>Centang izin per menu dan tindakan untuk setiap peran. Perubahan berlaku pada sesi berikutnya pengguna.</p>
+
+          <h3>Pengaturan Umum</h3>
+          <ul>
+            <li>Nama aplikasi, logo, dan nama dinas.</li>
+            <li>URL Web App Apps Script bila digunakan.</li>
+            <li>Lingkup counter nomor: satu urutan per tahun atau per klasifikasi per tahun.</li>
+            <li>Masa reservasi nomor (menit).</li>
+          </ul>
+
+          <h3>Audit Log</h3>
+          <p>Menampilkan waktu, pengguna, aksi, koleksi, dan ID dokumen untuk aktivitas penting seperti disposisi, tindak lanjut, dan perubahan surat keluar.</p>
+
+          <h3>Pembersih Nomor Ganda</h3>
+          <p>
+            Pilih tahun (dan scope bila perlu), lalu klik <strong>Periksa Duplikasi</strong> untuk mendeteksi
+            duplikasi atau inkonsistensi nomor. Gunakan hasilnya untuk menindaklanjuti data yang bermasalah.
+          </p>
+        </section>
+
+        <section class="guide-section panel" id="faq">
+          <h2><span class="guide-number">11.</span> Pertanyaan Umum dan Penanganan Masalah</h2>
+
+          <h3>Pratinjau nomor kosong atau tidak muncul</h3>
+          <ul>
+            <li>Pastikan <strong>Jenis nomor</strong> sudah dipilih dari autocomplete.</li>
+            <li>Pastikan <strong>Tanggal surat</strong> sudah diisi.</li>
+            <li>Pastikan <strong>Bidang pembuat</strong> aktif di master bidang.</li>
+          </ul>
+
+          <h3>Nomor berubah saat saya menyimpan</h3>
+          <p>Itu perilaku yang benar. Nomor final ditentukan server. Baca notifikasi yang menampilkan nomor final.</p>
+
+          <h3>Saya tidak bisa melihat surat rahasia</h3>
+          <p>Surat rahasia hanya terlihat oleh bidang yang dipilih. Minta admin menambahkan bidang Anda ke akses surat tersebut.</p>
+
+          <h3>Nomor batal tidak muncul sebagai pilihan</h3>
+          <ul>
+            <li><strong>Surat Keluar:</strong> pastikan Tanggal Surat sama dengan tanggal surat pada nomor batal tersebut.</li>
+            <li><strong>SK/SE:</strong> pastikan Tanggal SK/SE masih di tahun yang sama dengan nomor batal.</li>
+          </ul>
+
+          <h3>Lupa kata sandi</h3>
+          <p>Hubungi admin. Admin dapat mengatur ulang kata sandi melalui menu <strong>Pengguna</strong>.</p>
+
+          <h3>Ekspor Excel gagal</h3>
+          <ul>
+            <li>Pastikan ada data yang sesuai filter.</li>
+            <li>Pastikan peran Anda memiliki izin cetak/ekspor.</li>
+            <li>Coba muat ulang halaman lalu ekspor kembali.</li>
+          </ul>
+
+          <h3>Menu yang saya butuhkan tidak terlihat</h3>
+          <p>Menu mengikuti izin peran. Hubungi admin untuk menyesuaikan <strong>Peran &amp; Hak Akses</strong>.</p>
+        </section>
+
+        <section class="guide-section panel" id="checklist">
+          <h2><span class="guide-number">12.</span> Checklist Singkat Operator</h2>
+          <h3>Surat masuk</h3>
+          <ul>
+            <li>Tanggal terima dan tanggal surat sudah benar.</li>
+            <li>Nomor surat, asal, dan perihal sudah diisi.</li>
+            <li>Berkas scan terlampir bila diperlukan.</li>
+            <li>Bidang akses dipilih untuk surat rahasia.</li>
+            <li>Disposisi dikirim ke bidang yang tepat.</li>
+          </ul>
+          <h3>Surat keluar</h3>
+          <ul>
+            <li>Jenis nomor dan tanggal surat sudah benar.</li>
+            <li>Bidang pembuat, tujuan, dan sifat sudah sesuai.</li>
+            <li>Pratinjau nomor sudah diperiksa.</li>
+            <li>Nomor final pada notifikasi dicatat/digunakan.</li>
+          </ul>
+          <h3>SK/SE</h3>
+          <ul>
+            <li>Tentang dan tanggal sudah benar.</li>
+            <li>Jenis nomor dipilih untuk SK.</li>
+            <li>Nomor otomatis sudah tercatat.</li>
+          </ul>
+          <div class="guide-callout success">
+            <p><strong>Selesai.</strong> Panduan ini dapat dicetak atau disimpan sebagai PDF melalui tombol di bagian atas halaman.</p>
+          </div>
+        </section>
+      </article>
+    </div>
+
+    <button id="guide-backtop" class="button secondary small guide-backtop" type="button">Kembali ke atas</button>
+  </main>
+  <script type="module" src="assets/js/pages/panduan.js"></script>
+</body>
+</html>

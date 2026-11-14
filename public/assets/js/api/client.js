@@ -126,7 +126,8 @@ const NAV_FALLBACK = [
     children: [
       { kunci: 'ubah-sandi', label: 'Ganti Password', href: 'ubah-sandi.html', izin: 'sandi.ubah' }
     ]
-  }
+  },
+  { kunci: 'panduan', label: 'Panduan Pengguna', href: 'panduan.html', izin: null }
 ];
 
 export const punyaIzin = (profil, izin) => (profil?.izin || []).includes(izin);

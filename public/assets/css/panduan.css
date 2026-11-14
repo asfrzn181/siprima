@@ -1,0 +1,334 @@
+/* ==========================================================================
+   SIPRIMA - Panduan Pengguna (User Guide / Manual Book)
+   ========================================================================== */
+
+.guide-heading {
+  align-items: flex-start;
+}
+
+.guide-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.guide-search {
+  flex: 1 1 320px;
+  display: block;
+}
+
+.guide-search input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.guide-search input:focus {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.guide-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.guide-toc {
+  position: sticky;
+  top: calc(var(--topbar-height) + var(--sp-4));
+  max-height: calc(100vh - var(--topbar-height) - var(--sp-8));
+  overflow: auto;
+  padding: var(--sp-4);
+}
+
+.guide-toc h2 {
+  margin: 0 0 var(--sp-3);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.guide-toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+}
+
+.guide-toc a {
+  display: block;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.guide-toc a:hover {
+  background: var(--surface-alt);
+  color: var(--ink);
+}
+
+.guide-toc a[aria-current="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.guide-toc .toc-sub {
+  padding-left: 18px;
+  font-size: 12px;
+}
+
+.guide-content {
+  display: grid;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.guide-section {
+  scroll-margin-top: calc(var(--topbar-height) + var(--sp-4));
+}
+
+.guide-section > h2 {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.guide-section > h2 .guide-number {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.guide-section h3 {
+  margin-top: var(--sp-5);
+  margin-bottom: var(--sp-2);
+}
+
+.guide-section h4 {
+  margin: var(--sp-4) 0 var(--sp-1);
+  font-size: 14px;
+}
+
+.guide-section p,
+.guide-section li {
+  color: var(--ink-soft);
+}
+
+.guide-section ul,
+.guide-section ol {
+  margin: 0 0 var(--sp-3);
+  padding-left: 22px;
+}
+
+.guide-section li + li {
+  margin-top: 4px;
+}
+
+.guide-section code {
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface-alt);
+  font-size: 0.9em;
+}
+
+.guide-steps {
+  counter-reset: langkah;
+  list-style: none;
+  padding-left: 0;
+}
+
+.guide-steps > li {
+  position: relative;
+  padding-left: 34px;
+  margin-bottom: var(--sp-2);
+}
+
+.guide-steps > li::before {
+  counter-increment: langkah;
+  content: counter(langkah);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.guide-callout {
+  margin: var(--sp-3) 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+
+.guide-callout p:last-child {
+  margin-bottom: 0;
+}
+
+.guide-callout strong {
+  color: var(--ink);
+}
+
+.guide-callout.warning {
+  border-left-color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.guide-callout.success {
+  border-left-color: var(--success);
+  background: var(--success-soft);
+}
+
+.guide-callout.danger {
+  border-left-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--sp-2) 0 var(--sp-4);
+  font-size: 13px;
+}
+
+.guide-table th,
+.guide-table td {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.guide-table th {
+  background: var(--surface-alt);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.guide-table tbody tr:nth-child(even) {
+  background: #fbfcfd;
+}
+
+.guide-kbd {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 6px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--surface);
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-align: center;
+}
+
+.guide-empty {
+  padding: var(--sp-6);
+  text-align: center;
+  color: var(--muted);
+}
+
+.guide-section[hidden] {
+  display: none;
+}
+
+.guide-toc li[hidden] {
+  display: none;
+}
+
+.guide-backtop {
+  position: fixed;
+  right: var(--sp-5);
+  bottom: var(--sp-5);
+  z-index: 20;
+  display: none;
+}
+
+.guide-backtop.visible {
+  display: inline-flex;
+}
+
+@media (max-width: 900px) {
+  .guide-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-toc {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media print {
+  .sidebar,
+  .topbar,
+  .scrim,
+  .nav-toggle,
+  .guide-tools,
+  .guide-toc,
+  .guide-backtop,
+  .skip-link {
+    display: none !important;
+  }
+
+  .app-main {
+    margin-left: 0 !important;
+  }
+
+  .page-container {
+    max-width: none;
+    padding: 0;
+  }
+
+  .guide-layout {
+    display: block;
+  }
+
+  .guide-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 0;
+    padding: 0 0 var(--sp-4);
+    box-shadow: none;
+  }
+
+  .guide-section > h2 {
+    break-after: avoid;
+  }
+
+  .guide-callout,
+  .guide-table {
+    break-inside: avoid;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
