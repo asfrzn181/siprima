@@ -63,14 +63,13 @@ const buildSidebar = ({ nav, active, session }) => {
   const brand = document.createElement('a');
   brand.className = 'sidebar-brand';
   brand.href = session.profile.role === 'bidang' ? './surat-keluar.html' : './dashboard.html';
-  const mark = document.createElement('img');
+  const mark = document.createElement('span');
   mark.className = 'mark';
-  mark.src = 'assets/images/logo-siprima.png';
-  mark.alt = 'SiPrima';
+  mark.setAttribute('aria-hidden', 'true');
+  mark.textContent = 'SP';
   const brandText = document.createElement('span');
-  brandText.className = 'brand-text';
-  brandText.textContent = 'SiPRIMA';
-  brand.append(mark);
+  brandText.textContent = 'SiPrima';
+  brand.append(mark, brandText);
 
   const links = document.createElement('nav');
   links.className = 'sidebar-nav';

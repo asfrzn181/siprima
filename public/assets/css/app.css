@@ -1,6 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Agbalumo&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&display=swap');
-
 ﻿/* ==========================================================================
    SIPRIMA - design system
    Satu warna aksen, sisanya netral. Skala jarak 4px. Kontras cukup.
@@ -9,41 +6,33 @@
 :root {
   color-scheme: light;
 
-  /* Token resmi SiPRIMA */
-  --primary: #0B5CAD;
-  --primary-dark: #0C3F7A;
-  --primary-light: #3CA0F0;
-  --primary-tint: #DCEEFD;
-  --accent: #E8750F;
-  --warning: #F2B300;
-  --success: #2E7D4F;
-  --danger: #C62828;
-  --bg: #F5F8FC;
-  --surface: #FFFFFF;
-  --border: #D6DFEA;
-  --text: #14213A;
-  --text-muted: #586579;
+  /* Aksen tunggal (warna instansi) */
+  --accent: #0B5CAD;
+  --accent-hover: #0C3F7A;
+  --accent-soft: #DCEEFD;
+  --accent-line: #3CA0F0;
+  --accent-focus: #3CA0F0;
 
-  /* Alias kompatibilitas */
-  --accent-hover: var(--primary-dark);
-  --accent-soft: var(--primary-tint);
-  --accent-line: var(--primary-light);
-  --accent-focus: var(--primary-light);
-  --accent-mark: var(--accent);
+  /* Aksen khusus */
+  --accent-mark: #E8750F;
+  --warning: #F2B300;
+  --warning-soft: #fff6d9;
 
   /* Netral */
-  --ink: var(--text);
+  --ink: #14213A;
   --ink-soft: #3d4753;
-  --muted: var(--text-muted);
-  --line: var(--border);
+  --muted: #586579;
+  --line: #D6DFEA;
   --line-strong: #b8c0cb;
+  --surface: #ffffff;
   --surface-alt: #f6f7f9;
-  --page: var(--bg);
+  --page: #F5F8FC;
 
-  /* Status */
+  /* Status - hanya untuk status, dipakai bersama teks */
+  --danger: #C62828;
   --danger-soft: #fceceb;
+  --success: #2E7D4F;
   --success-soft: #e8f5ee;
-  --warning-soft: #fff6d9;
 
   /* Skala 4px */
   --sp-1: 4px;
@@ -52,13 +41,22 @@
   --sp-4: 16px;
   --sp-5: 20px;
   --sp-6: 24px;
-  --sp-7: 32px;
-  --sp-8: 40px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+
   --radius: 6px;
   --radius-lg: 8px;
-  --sidebar-width: 240px;
-}
+  --sidebar-width: 224px;
+  --topbar-height: 56px;
 
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--page);
+}
 
 *,
 *::before,
@@ -77,7 +75,7 @@ h1 { margin: 0 0 var(--sp-2); font-size: 22px; font-weight: 650; }
 h2 { margin: 0 0 var(--sp-3); font-size: 17px; font-weight: 650; }
 h3 { margin: 0 0 var(--sp-2); font-size: 15px; font-weight: 650; }
 p { margin: 0 0 var(--sp-3); }
-a { color: var(--primary); }
+a { color: var(--accent); }
 
 .muted { color: var(--muted); }
 .small-text { font-size: 13px; }
@@ -100,7 +98,7 @@ a { color: var(--primary); }
   top: -100px;
   z-index: 100;
   padding: var(--sp-2) var(--sp-3);
-  background: var(--primary);
+  background: var(--accent);
   color: #fff;
   border-radius: var(--radius);
   font-weight: 600;
@@ -109,7 +107,7 @@ a { color: var(--primary); }
 .skip-link:focus { top: var(--sp-2); }
 
 :focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -141,31 +139,13 @@ input[type="checkbox"], input[type="radio"] {
   height: 16px;
   min-height: 0;
   margin: 0;
-  accent-color: var(--primary);
+  accent-color: var(--accent);
 }
 
-.password-field {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.password-field input {
-  padding-right: 42px;
-}
-
-.password-toggle {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-  padding: 4px;
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent-focus);
+  outline-offset: 0;
 }
 
 input:disabled, select:disabled, textarea:disabled {
@@ -202,17 +182,17 @@ button { font: inherit; cursor: pointer; }
 
 .button:disabled { opacity: .55; cursor: not-allowed; }
 
-.button.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
-.button.primary:hover:not(:disabled) { background: var(--primary-dark); border-color: var(--primary-dark); }
+.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.button.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
 
-.button.accent { background: var(--primary); border-color: var(--primary); color: #fff; }
-.button.accent:hover:not(:disabled) { background: var(--primary-dark); border-color: var(--primary-dark); }
+.button.accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+.button.accent:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
 
 .button.secondary { background: var(--surface); border-color: var(--line-strong); color: var(--ink); }
-.button.secondary:hover:not(:disabled) { background: var(--surface-alt); border-color: var(--primary-light); }
+.button.secondary:hover:not(:disabled) { background: var(--surface-alt); border-color: var(--accent-line); }
 
-.button.ghost { background: transparent; border-color: transparent; color: var(--primary); }
-.button.ghost:hover:not(:disabled) { background: var(--primary-tint); }
+.button.ghost { background: transparent; border-color: transparent; color: var(--accent); }
+.button.ghost:hover:not(:disabled) { background: var(--accent-soft); }
 
 .button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
 .button.danger:hover:not(:disabled) { background: #8a1d16; border-color: #8a1d16; }
@@ -241,7 +221,7 @@ button { font: inherit; cursor: pointer; }
   justify-content: space-between;
   gap: var(--sp-6);
   padding: var(--sp-8);
-  background: var(--primary-dark);
+  background: var(--accent-hover);
   color: #fff;
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.08' stroke-width='1'%3E%3Ccircle cx='60' cy='60' r='42'/%3E%3Ccircle cx='60' cy='60' r='24'/%3E%3Cpath d='M0 60h120M60 0v120'/%3E%3C/g%3E%3C/svg%3E");
@@ -249,29 +229,16 @@ button { font: inherit; cursor: pointer; }
   background-size: 120px 120px;
 }
 
-.auth-brand .brand-wordmark {
-  width: 100%;
-  max-width: 260px;
-  height: auto;
-  margin: 0 0 var(--sp-5);
-}
-
-.auth-brand .eyebrow {
-  margin: 0 0 var(--sp-1);
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 12px;
+.auth-brand .brand-mark {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 0;
+  background: #fff;
+  color: var(--accent-hover);
+  font-size: 28px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  box-shadow: none;
 }
-
-.auth-brand .letter-s { color: #3CA0F0; }
-.auth-brand .letter-i { color: #DCEEFD; }
-.auth-brand .letter-p { color: #F2B300; }
-.auth-brand .letter-r { color: #E8750F; }
-.auth-brand .letter-i2 { color: #FFFFFF; }
-.auth-brand .letter-m { color: #3CA0F0; }
-.auth-brand .letter-a { color: #DCEEFD; }
 
 .auth-brand h1 {
   margin: 0;
@@ -325,7 +292,7 @@ button { font: inherit; cursor: pointer; }
   width: 48px;
   height: 3px;
   margin: var(--sp-2) 0 var(--sp-4);
-  background: var(--primary);
+  background: var(--accent-mark);
   border-radius: 999px;
 }
 
@@ -359,7 +326,7 @@ button { font: inherit; cursor: pointer; }
   place-items: center;
   margin-bottom: var(--sp-4);
   border-radius: var(--radius);
-  background: var(--primary);
+  background: var(--accent);
   color: #fff;
   font-size: 16px;
   font-weight: 700;
@@ -406,20 +373,16 @@ button { font: inherit; cursor: pointer; }
   text-decoration: none;
 }
 
-.sidebar-brand .mark {
-  display: block;
+.sidebar-brand span.mark {
+  display: grid;
+  place-items: center;
   width: 28px;
   height: 28px;
-  object-fit: contain;
   border-radius: var(--radius);
-}
-
-.sidebar-brand .brand-text {
-  font-family: 'Nunito Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  font-size: 18px;
-  font-weight: 400;
-  color: var(--primary);
-  -webkit-text-stroke: 1px var(--primary-dark);
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .sidebar-nav { display: grid; gap: 2px; }
@@ -440,10 +403,10 @@ button { font: inherit; cursor: pointer; }
 .sidebar-nav a:hover { background: var(--surface-alt); color: var(--ink); }
 
 .sidebar-nav a[aria-current="page"] {
-  background: var(--primary-tint);
-  color: var(--primary-dark);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
   font-weight: 650;
-  box-shadow: inset 3px 0 0 var(--primary);
+  box-shadow: inset 3px 0 0 var(--accent-mark);
 }
 
 .sidebar-foot { margin-top: auto; padding-top: var(--sp-3); border-top: 1px solid var(--line); font-size: 13px; }
@@ -663,7 +626,7 @@ th {
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover { background: var(--surface-alt); }
 tbody tr[data-href] { cursor: pointer; }
-tbody tr.selected { background: var(--primary-tint); }
+tbody tr.selected { background: var(--accent-soft); }
 
 td .cell-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
 
@@ -853,7 +816,7 @@ td .cell-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--mu
   text-align: center;
   cursor: pointer;
 }
-.dropzone:hover, .dropzone.dragging { border-color: var(--primary); background: var(--primary-tint); color: var(--primary-dark); }
+.dropzone:hover, .dropzone.dragging { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-hover); }
 .dropzone strong { font-size: 13.5px; color: var(--ink); }
 
 .file-preview { display: flex; align-items: center; gap: var(--sp-3); margin-top: var(--sp-2); font-size: 13px; }
@@ -926,8 +889,30 @@ td .cell-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--mu
   .toast { right: var(--sp-2); left: var(--sp-2); bottom: var(--sp-2); max-width: none; }
 }
 
-.brand-logo { width: 90px; height: auto; margin-bottom: var(--sp-3); border-radius: var(--radius); }
-.brand-title { margin: 0 0 var(--sp-2); font-family: 'Nunito Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 32px; font-weight: 700; letter-spacing: 0.02em; color: var(--primary); }
-.password-field { position: relative; display: flex; align-items: center; }
-.password-field input { padding-right: 42px; }
-.password-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; padding: 4px; }
+/* Brand logo dan judul SiPRIMA */
+.brand-logo {
+  width: 88px;
+  height: auto;
+  display: block;
+  margin-bottom: var(--sp-4);
+  background: #fff;
+  border-radius: var(--radius);
+  padding: var(--sp-2);
+}
+
+.brand-title {
+  margin: 0;
+  font-family: 'Noto Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.brand-title .c1 { color: #0B5CAD; }
+.brand-title .c2 { color: #3CA0F0; }
+.brand-title .c3 { color: #0C3F7A; }
+.brand-title .c4 { color: #E8750F; }
+.brand-title .c5 { color: #F2B300; }
+.brand-title .c6 { color: #2E7D4F; }
+.brand-title .c7 { color: #14213A; }

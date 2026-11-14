@@ -6,29 +6,36 @@
   <title>SiPrima — Masuk</title>
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/overrides.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@500;700;800&display=swap">
 </head>
 <body class="auth-page">
-  <main class="auth-card" aria-labelledby="judul-login">
-    <img class="brand-logo" src="assets/images/logo-siprima.png" alt="Logo SiPrima">
-    <div class="brand-mark">S</div>
-    <p class="eyebrow">Sekretariat Dinas</p>
-    <h1 id="judul-login" class="brand-title">SiPRIMA</h1>
-    <p class="muted">Aplikasi agenda surat masuk dan surat keluar.</p>
-    <form id="login-form" class="stack" novalidate>
-      <label for="email">Email</label>
-      <input id="email" name="email" type="email" autocomplete="username" required>
-      <label for="password">Kata sandi</label>
-      <div class="password-field">
-        <input id="password" name="password" type="password" autocomplete="current-password" required>
-        <button type="button" class="password-toggle" aria-label="Tampilkan kata sandi" data-visible="false">👁</button>
+  <main class="auth-shell">
+    <section class="auth-brand">
+      <img src="assets/img/logo.png" alt="Logo BKPSDMD" class="brand-logo">
+      <div>
+        <p class="eyebrow">Sekretariat Dinas</p>
+        <h1 class="brand-title" aria-label="SiPrima">
+          <span class="c1">S</span><span class="c2">i</span><span class="c3">P</span><span class="c4">r</span><span class="c5">i</span><span class="c6">m</span><span class="c7">a</span>
+        </h1>
+        <p class="brand-tagline">Aplikasi agenda surat masuk dan surat keluar.</p>
       </div>
-      <button class="button primary" type="submit">Masuk</button>
-      <p id="login-error" class="form-error" role="alert" hidden></p>
-    </form>
-    <p class="fine-print">Akses hanya untuk akun internal yang terdaftar.</p>
+      <p class="brand-footer">Profesional Responsif Integritas Melayani Akuntabel</p>
+    </section>
+    <section class="auth-form">
+      <div class="auth-form-inner">
+        <h2 id="judul-login">Masuk</h2>
+        <span class="accent-line" aria-hidden="true"></span>
+        <p class="muted">Akses hanya untuk akun internal yang terdaftar.</p>
+        <form id="login-form" class="stack" novalidate>
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="username" required>
+          <label for="password">Kata sandi</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+          <button class="button primary" type="submit">Masuk</button>
+          <p id="login-error" class="form-error" role="alert" hidden></p>
+        </form>
+      </div>
+    </section>
   </main>
   <script type="module" src="assets/js/pages/login.js"></script>
 </body>
