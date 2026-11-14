@@ -11,7 +11,7 @@ export const masterBidangRouter = Router();
 
 masterBidangRouter.use(wajibLogin);
 
-masterBidangRouter.get('/', wajibIzin(IZIN.MASTER_BACA), controller.daftarBidang);
+masterBidangRouter.get('/', controller.daftarBidang);
 masterBidangRouter.get(
   '/halaman',
   izinkan(PERAN.ADMIN),
