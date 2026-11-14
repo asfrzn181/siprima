@@ -229,16 +229,34 @@ button { font: inherit; cursor: pointer; }
   background-size: 120px 120px;
 }
 
-.auth-brand .brand-mark {
-  width: 56px;
-  height: 56px;
-  margin-bottom: 0;
+.auth-brand .brand-logo {
+  width: 120px;
+  height: auto;
+  margin-bottom: var(--sp-4);
+  border-radius: var(--radius);
   background: #fff;
-  color: var(--accent-hover);
-  font-size: 28px;
-  font-weight: 700;
-  box-shadow: none;
+  padding: var(--sp-2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
+
+.auth-brand .brand-title {
+  margin: 0;
+  font-family: 'Agbalumo', cursive;
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-weight: 400;
+}
+
+.auth-brand .brand-title span { display: inline-block; }
+
+.auth-brand .letter-s { color: #3CA0F0; }
+.auth-brand .letter-i { color: #DCEEFD; }
+.auth-brand .letter-p { color: #F2B300; }
+.auth-brand .letter-r { color: #E8750F; }
+.auth-brand .letter-i2 { color: #FFFFFF; }
+.auth-brand .letter-m { color: #3CA0F0; }
+.auth-brand .letter-a { color: #DCEEFD; }
 
 .auth-brand h1 {
   margin: 0;
