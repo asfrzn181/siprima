@@ -14,7 +14,6 @@ import {
   adalahAdmin,
   adalahBidang,
   adalahOperator,
-  adalahPengelola,
   bolehAksesDaftarBidang,
   bolehBacaSurat,
   bolehBuatSuratMasuk,
@@ -190,7 +189,7 @@ export const ubahMasuk = async (id, payload, profil) => {
 };
 
 export const disposisiMasuk = async (id, payload, profil) => {
-  if (!adalahPengelola(profil)) throw galatAkses();
+  if (!adalahAdmin(profil) && !adalahOperator(profil)) throw galatAkses();
   const lama = await cariSuratMasuk(id);
   if (!lama) throw galatTidakDitemukan('Surat masuk tidak ditemukan.');
   const tindakLanjut = { ...(lama.tindakLanjut || {}) };

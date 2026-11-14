@@ -93,7 +93,8 @@ export const cariSuratKhusus = async (jenis, id) => {
 
 export const buatSuratKhusus = async (jenis, data, aktor = {}) => {
   const menu = pastikanJenis(jenis);
-  const konteks = await siapkanKonteks({ menu, jenisId: data.jenisId, bidangKode: null });
+  const bidangKode = aktor?.profile?.role === 'bidang' ? aktor.profile.bidang || null : null;
+  const konteks = await siapkanKonteks({ menu, jenisId: data.jenisId, bidangKode });
   const tanggal = tanggalMurni(data.tanggal);
   if (!tanggal) throw new AppError(400, 'TANGGAL_TIDAK_VALID', `Tanggal ${menu} tidak valid.`);
   await pastikanCounter(tahunTanggal(tanggal), menu);
@@ -102,7 +103,7 @@ export const buatSuratKhusus = async (jenis, data, aktor = {}) => {
     const alokasi = await alokasikanDalamTransaksi(koneksi, {
       menu,
       master: konteks.master,
-      bidangKode: null,
+      bidangKode,
       tanggal,
       aktor,
       metadata: { perihal: data.tentang || '' },

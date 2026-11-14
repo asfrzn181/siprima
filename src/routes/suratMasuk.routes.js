@@ -52,7 +52,7 @@ suratMasukRouter.put(
 suratMasukRouter.post(
   '/:id/disposisi',
   verifikasiCsrf,
-  izinkan(PERAN.ADMIN, PERAN.PIMPINAN),
+  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.PIMPINAN),
   wajibIzin(IZIN.SURAT_MASUK_DISPOSISI),
   validasi(skemaDisposisi),
   controller.disposisi

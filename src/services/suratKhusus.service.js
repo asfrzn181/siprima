@@ -12,7 +12,7 @@ import {
 import { daftarTersedia } from './numbering.service.js';
 import { bacaPagination } from '../utils/pagination.js';
 import { AppError, galatTidakDitemukan } from '../utils/AppError.js';
-import { bolehAksesBidang, lingkupData } from '../utils/akses.js';
+import { adalahBidang, bolehAksesBidang, lingkupData } from '../utils/akses.js';
 import { serialisasi } from '../utils/serialisasi.js';
 
 const AKSI = {
@@ -72,7 +72,7 @@ export const nomorTersedia = (jenis, filter = {}, profil) =>
   );
 
 export const tambah = async (jenis, payload, profil) => {
-  const hasil = await buatSuratKhusus(jenis, payload, { uid: profil.uid, nama: profil.nama });
+  const hasil = await buatSuratKhusus(jenis, payload, { uid: profil.uid, nama: profil.nama, profile: profil });
   await catatAudit({
     uid: profil.uid,
     nama: profil.nama,
@@ -88,7 +88,7 @@ export const ubah = async (jenis, id, payload, profil) => {
   const lama = await cariSuratKhusus(jenis, id);
   if (!lama) throw galatTidakDitemukan(`Surat ${jenis} tidak ditemukan.`);
   const bidang = await bidangSuratKhusus(lama.letterNumberId);
-  if (profil && !bolehAksesBidang(profil, bidang) && bidang) {
+  if (adalahBidang(profil) && (!bidang || bidang !== profil.bidang)) {
     throw galatTidakDitemukan(`Surat ${jenis} tidak ditemukan.`);
   }
   if (lama.status === 'Dibatalkan') {
@@ -111,7 +111,7 @@ export const hapus = async (jenis, id, alasan, profil) => {
   const lama = await cariSuratKhusus(jenis, id);
   if (!lama) throw galatTidakDitemukan(`Surat ${jenis} tidak ditemukan.`);
   const bidang = await bidangSuratKhusus(lama.letterNumberId);
-  if (profil && !bolehAksesBidang(profil, bidang) && bidang) {
+  if (adalahBidang(profil) && (!bidang || bidang !== profil.bidang)) {
     throw galatTidakDitemukan(`Surat ${jenis} tidak ditemukan.`);
   }
   const hasil = await batalkanSuratKhusus(jenis, id, alasan, { uid: profil.uid, nama: profil.nama });
