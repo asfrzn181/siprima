@@ -56,11 +56,19 @@ const whereMode = (profil, mode, filter = {}) => {
   return daftar;
 };
 
+const waktu = (nilai) => {
+  if (nilai instanceof Date) return nilai.getTime();
+  const hasil = Date.parse(nilai);
+  return Number.isNaN(hasil) ? 0 : hasil;
+};
+
 const urutkan = (items) =>
   items.sort((a, b) => {
-    const nilaiA = a.tglSurat?.toDate?.() ?? new Date(a.tglSurat || 0);
-    const nilaiB = b.tglSurat?.toDate?.() ?? new Date(b.tglSurat || 0);
-    return nilaiB.getTime() - nilaiA.getTime();
+    // Tanggal dokumen berupa string YYYY-MM-DD; perbandingan leksikografis
+    // setara dengan urutan kronologis dan bebas zona waktu.
+    const tanggal = String(b.tglSurat || '').localeCompare(String(a.tglSurat || ''));
+    if (tanggal) return tanggal;
+    return waktu(b.dibuatPada) - waktu(a.dibuatPada);
   });
 
 const cariPrefix = async (profil, filter) => {

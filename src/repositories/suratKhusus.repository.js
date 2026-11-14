@@ -1,7 +1,7 @@
 import { one, query, withTransaction } from '../config/db.js';
 import { STATUS_NOMOR } from '../constants/index.js';
 import { AppError } from '../utils/AppError.js';
-import { keTanggal, bagianJakarta } from '../utils/tanggal.js';
+import { tanggalMurni, tahunTanggal } from '../utils/tanggal.js';
 import {
   alokasikanDalamTransaksi,
   bangunNomor,
@@ -94,9 +94,9 @@ export const cariSuratKhusus = async (jenis, id) => {
 export const buatSuratKhusus = async (jenis, data, aktor = {}) => {
   const menu = pastikanJenis(jenis);
   const konteks = await siapkanKonteks({ menu, jenisId: data.jenisId, bidangKode: null });
-  const tanggal = keTanggal(data.tanggal);
+  const tanggal = tanggalMurni(data.tanggal);
   if (!tanggal) throw new AppError(400, 'TANGGAL_TIDAK_VALID', `Tanggal ${menu} tidak valid.`);
-  await pastikanCounter(bagianJakarta(tanggal).year, menu);
+  await pastikanCounter(tahunTanggal(tanggal), menu);
 
   const id = await withTransaction(async (koneksi) => {
     const alokasi = await alokasikanDalamTransaksi(koneksi, {
@@ -143,8 +143,11 @@ export const ubahSuratKhusus = async (jenis, id, data) => {
   const konteks = gantiJenis
     ? await siapkanKonteks({ menu, jenisId: data.jenisId, bidangKode: null })
     : null;
-  const tanggal = data.tanggal ? keTanggal(data.tanggal) : null;
-  if (tanggal && lama.tanggal && bagianJakarta(tanggal).year !== bagianJakarta(lama.tanggal).year) {
+  const tanggal = data.tanggal ? tanggalMurni(data.tanggal) : null;
+  if (data.tanggal && !tanggal) {
+    throw new AppError(400, 'TANGGAL_TIDAK_VALID', `Tanggal ${menu} tidak valid.`);
+  }
+  if (tanggal && lama.tanggal && tahunTanggal(tanggal) !== tahunTanggal(lama.tanggal)) {
     throw new AppError(
       409,
       'TAHUN_TIDAK_DAPAT_DIUBAH',
@@ -189,7 +192,7 @@ export const ubahSuratKhusus = async (jenis, id, data) => {
         WHERE id = ? AND jenis = ?`,
       [
         data.tentang,
-        tanggal || data.tanggal,
+        tanggal || lama.tanggal,
         String(data.keterangan || ''),
         data.jenisId ? Number(data.jenisId) : null,
         Number(id),

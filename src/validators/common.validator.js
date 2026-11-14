@@ -1,16 +1,32 @@
 import { z } from 'zod';
 import { PAGINATION } from '../constants/index.js';
-import { keTanggal } from '../utils/tanggal.js';
+import { tanggalMurni } from '../utils/tanggal.js';
+
+const pesanTanggal = { code: z.ZodIssueCode.custom, message: 'Tanggal tidak valid (format YYYY-MM-DD).' };
 
 export const tanggalWajib = z
-  .union([z.string().min(1), z.date()])
-  .transform((nilai) => keTanggal(nilai))
-  .refine((nilai) => nilai instanceof Date, 'Tanggal tidak valid.');
+  .union([z.string().min(1, 'Tanggal wajib diisi.'), z.date()])
+  .transform((nilai, ctx) => {
+    const hasil = tanggalMurni(nilai);
+    if (!hasil) {
+      ctx.addIssue(pesanTanggal);
+      return z.NEVER;
+    }
+    return hasil;
+  });
 
 export const tanggalOpsional = z
   .union([z.string(), z.date(), z.null()])
   .optional()
-  .transform((nilai) => (nilai ? keTanggal(nilai) : null));
+  .transform((nilai, ctx) => {
+    if (nilai === null || nilai === undefined || nilai === '') return null;
+    const hasil = tanggalMurni(nilai);
+    if (!hasil) {
+      ctx.addIssue(pesanTanggal);
+      return z.NEVER;
+    }
+    return hasil;
+  });
 
 export const skemaPagination = z.object({
   page: z.coerce.number().int().min(1).default(1),

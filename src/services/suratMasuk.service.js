@@ -58,9 +58,18 @@ const whereMode = (profil, mode, filter = {}) => {
 
 const urutkan = (items, field) =>
   items.sort((a, b) => {
-    const nilaiA = a[field]?.toDate?.() ?? new Date(a[field] || 0);
-    const nilaiB = b[field]?.toDate?.() ?? new Date(b[field] || 0);
-    return nilaiB.getTime() - nilaiA.getTime();
+    const nilaiA = a[field];
+    const nilaiB = b[field];
+    // Tanggal dokumen berupa string YYYY-MM-DD; timestamp tetap Date.
+    if (typeof nilaiA === 'string' && typeof nilaiB === 'string') {
+      return nilaiB.localeCompare(nilaiA);
+    }
+    const waktu = (nilai) => {
+      if (nilai instanceof Date) return nilai.getTime();
+      const hasil = Date.parse(nilai);
+      return Number.isNaN(hasil) ? 0 : hasil;
+    };
+    return waktu(nilaiB) - waktu(nilaiA);
   });
 
 const cariPrefix = async (profil, filter) => {

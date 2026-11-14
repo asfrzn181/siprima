@@ -28,11 +28,11 @@ test('penomoran per menu: pola, pemakaian ulang, dan pembatalan', { skip: lewati
 
   const { nomor, bidang } = await muatKonteks();
   assert.ok(nomor.length && bidang, 'seed master nomor dan bidang tersedia');
-  const { bagianJakarta } = await import('../src/utils/tanggal.js');
+  const { tanggalHariIniJakarta, tahunTanggal } = await import('../src/utils/tanggal.js');
   const [utama, cadangan] = nomor;
   const kodeBidang = bidang.kode;
-  const tanggal = new Date();
-  const tahun = bagianJakarta(tanggal).year;
+  const tanggal = tanggalHariIniJakarta();
+  const tahun = tahunTanggal(tanggal);
   const dibuat = { nomor: [], khusus: [] };
   const [kepala] = await query('SELECT last_hash FROM letter_audit_heads WHERE id = 1');
   const hashAwal = kepala ? String(kepala.last_hash || '') : '';
@@ -150,8 +150,9 @@ test('surat keluar: ketersediaan mengikuti Tanggal Surat, bukan tanggal sistem',
   const d14 = '2099-11-14';
   const d15 = '2099-11-15';
   const d20 = '2099-11-20';
-  const d01 = '2099-01-01';
-  const d02 = '2099-01-02';
+  // Tanggal setelah d15 agar nomor baru (maks + 1) tetap kronologis.
+  const d01 = '2099-12-01';
+  const d02 = '2099-12-02';
   const dibuat = { nomor: [], keluar: [], khusus: [] };
   const [kepala] = await query('SELECT last_hash FROM letter_audit_heads WHERE id = 1');
   const hashAwal = kepala ? String(kepala.last_hash || '') : '';
@@ -236,7 +237,7 @@ test('surat keluar: ketersediaan mengikuti Tanggal Surat, bukan tanggal sistem',
     assert.notEqual(k1.noSurat, k2.noSurat);
     assert.deepEqual([seqDari(k1), seqDari(k2)].sort((a, b) => a - b), [6, 7]);
 
-    // Skenario 4-5: nomor bolong pada 1 Jan 2099 hanya tersedia untuk 1 Jan.
+    // Skenario 4-5: nomor bolong pada 1 Des 2099 hanya tersedia untuk 1 Des.
     const tiga = [];
     for (let i = 0; i < 3; i += 1) tiga.push(catat(await terbitkan(d01)));
     assert.deepEqual(tiga.map(seqDari), [8, 9, 10]);

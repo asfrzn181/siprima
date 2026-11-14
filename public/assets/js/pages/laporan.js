@@ -173,7 +173,7 @@ form.addEventListener('submit', async (event) => {
   jenis = data.jenis;
   filterAktif = {
     tglMulai: tanggalIso(data.tglMulai),
-    tglSelesai: tanggalIso(data.tglSelesai, true),
+    tglSelesai: tanggalIso(data.tglSelesai),
     status: data.status || 'semua',
     sifat: data.sifat || 'semua',
     bidang: data.bidang || 'semua'

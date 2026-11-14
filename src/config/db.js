@@ -16,7 +16,9 @@ export const connectionConfig = {
   database: process.env.DB_NAME || 'siprima',
   charset: 'utf8mb4',
   timezone: 'Z',
-  dateStrings: false,
+  // Kolom DATE dikembalikan sebagai string 'YYYY-MM-DD' agar tanggal dokumen
+  // tidak bergeser karena konversi zona waktu. DATETIME/TIMESTAMP tetap Date.
+  dateStrings: ['DATE'],
   supportBigNumbers: true,
   bigNumberStrings: false,
   decimalNumbers: true

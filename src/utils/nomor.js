@@ -1,5 +1,5 @@
 import { DEFAULT_GOLONGAN, GOLONGAN } from '../constants/index.js';
-import { bagianJakarta } from './tanggal.js';
+import { tanggalDalamRentang, tanggalMurni, tahunTanggal } from './tanggal.js';
 
 const BULAN_ROMAWI = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
@@ -76,10 +76,11 @@ export const renderNomor = (format, values) =>
 export const golonganValid = (nilai) => GOLONGAN.includes(normalizeGolongan(nilai));
 
 // Aturan pemakaian ulang nomor batal:
-// - Surat Keluar: hanya jika Tanggal Surat yang diinput pengguna sama dengan
-//   tanggal surat pada nomor tersebut. Tanggal sistem (created_at/hari ini)
-//   tidak dipakai, sehingga surat backdate tetap bisa memakai nomor pada
-//   tanggal tersebut.
+// - Surat Keluar: nomor N hanya boleh dipakai bila Tanggal Surat yang diinput
+//   berada di antara tanggal nomor aktif sebelumnya dan sesudahnya (atau sama
+//   dengan tanggal nomor itu sendiri). Void tidak dihitung sebagai tetangga.
+//   Bila tidak ada batas atas (nomor terakhir), nomor tetap tersedia untuk
+//   tanggal berikutnya. Tanggal sistem (created_at/hari ini) tidak dipakai.
 // - SK/SE: boleh kapan saja selama masih tahun yang sama; tahun acuan diambil
 //   dari Tanggal SK / Tanggal SE yang diinput.
 export const bolehPakaiUlangNomor = ({
@@ -89,14 +90,20 @@ export const bolehPakaiUlangNomor = ({
   letterDate,
   tahunNomor,
   tahunAcuan,
-  tanggalAcuan
+  tanggalAcuan,
+  batasBawah = null,
+  batasAtas = null
 }) => {
   if (status !== 'VOID' || !voidedAt || !letterDate) return false;
+  const tanggalNomor = tanggalMurni(letterDate);
+  if (!tanggalNomor) return false;
+  const tahunDasar = tahunNomor ?? tahunTanggal(tanggalNomor);
   if (menu !== MENU_NOMOR.SURAT_KELUAR) {
-    return Number(tahunNomor) === Number(tahunAcuan);
+    return Number(tahunDasar) === Number(tahunAcuan);
   }
-  if (!tanggalAcuan) return false;
-  const terbit = bagianJakarta(letterDate);
-  const acuan = bagianJakarta(tanggalAcuan);
-  return terbit.year === acuan.year && terbit.month === acuan.month && terbit.day === acuan.day;
+  const acuan = tanggalMurni(tanggalAcuan);
+  if (!acuan) return false;
+  if (Number(tahunDasar) !== tahunTanggal(acuan)) return false;
+  if (acuan === tanggalNomor) return true;
+  return tanggalDalamRentang(acuan, batasBawah, batasAtas);
 };

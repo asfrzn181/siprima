@@ -25,16 +25,20 @@ export const pratinjauNomor = async ({ menu, jenisId, bidangKode, tanggal }) => 
   const daftar = await tersediaNomor({ menu: konteks.menu, jenisId, bidangKode, tanggal });
   const tanggalBagian = daftar.tahun;
   const seqBerikut = daftar.berikutnya;
-  const nomorBerikut = bangunNomor({
-    menu: konteks.menu,
-    master: konteks.master,
-    bidangKode: konteks.bidangKode,
-    seq: seqBerikut,
-    date: tanggal
-  });
-  const terpilih = daftar.items.length ? daftar.items[0] : { seq: seqBerikut, nomor: nomorBerikut.full_number };
+  const nomorBerikut = seqBerikut
+    ? bangunNomor({
+        menu: konteks.menu,
+        master: konteks.master,
+        bidangKode: konteks.bidangKode,
+        seq: seqBerikut,
+        date: tanggal
+      }).full_number
+    : '';
+  const terpilih = daftar.items.length
+    ? daftar.items[0]
+    : { seq: seqBerikut, nomor: nomorBerikut };
   return {
-    noSurat: terpilih.nomor,
+    noSurat: terpilih.nomor || '',
     next: terpilih.seq,
     previous: daftar.items.length ? null : seqBerikut,
     year: tanggalBagian,

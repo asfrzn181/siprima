@@ -23,11 +23,15 @@ const keTanggal = (nilai) => {
 
 const POLA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 
-// Kembalikan tanggal dalam bentuk ISO (YYYY-MM-DD) dari Date/teks apa pun.
+// Kembalikan tanggal dalam bentuk ISO (YYYY-MM-DD). Tanggal dokumen dari
+// server sudah berupa string murni sehingga dipertahankan apa adanya; objek
+// Date hanya dipakai untuk timestamp atau nilai "hari ini".
 export const keIsoTanggal = (nilai) => {
   if (!nilai) return '';
-  const teks = String(nilai).slice(0, 10);
-  if (POLA_ISO.test(teks)) return teks;
+  if (typeof nilai === 'string') {
+    const teks = nilai.trim().slice(0, 10);
+    if (POLA_ISO.test(teks)) return teks;
+  }
   return inputTanggal(nilai);
 };
 
@@ -53,14 +57,10 @@ export const parseTanggalPanjang = (teks) => {
 export const formatTanggal = (nilai) => formatTanggalPanjang(nilai) || '—';
 
 export const formatTanggalPendek = (nilai) => {
-  const tanggal = keTanggal(nilai);
-  if (!tanggal) return '—';
-  return new Intl.DateTimeFormat('id-ID', {
-    timeZone: 'Asia/Jakarta',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  }).format(tanggal);
+  const iso = keIsoTanggal(nilai);
+  if (!iso) return '—';
+  const [tahun, bulan, hari] = iso.split('-');
+  return `${hari}/${bulan}/${tahun}`;
 };
 
 export const formatWaktu = (nilai) => {
@@ -74,6 +74,11 @@ export const formatWaktu = (nilai) => {
 };
 
 export const inputTanggal = (nilai) => {
+  if (nilai === null || nilai === undefined || nilai === '') return '';
+  if (typeof nilai === 'string') {
+    const teks = nilai.trim().slice(0, 10);
+    if (POLA_ISO.test(teks)) return teks;
+  }
   const tanggal = keTanggal(nilai || new Date());
   if (!tanggal) return '';
   const bagian = new Intl.DateTimeFormat('en-CA', {
@@ -87,11 +92,8 @@ export const inputTanggal = (nilai) => {
   return `${bagian.year}-${bagian.month}-${bagian.day}`;
 };
 
-export const tanggalIso = (nilai, akhir = false) => {
-  const teks = String(nilai || '').trim();
-  if (!teks) return '';
-  return `${teks}T${akhir ? '23:59:59' : '00:00:00'}+07:00`;
-};
+// Tanggal dokumen dikirim sebagai YYYY-MM-DD murni, tanpa jam atau offset.
+export const tanggalIso = (nilai) => keIsoTanggal(nilai);
 
 export const formatStatusKind = (status) => {
   if (['Aktif', 'Selesai', 'Sudah'].includes(status)) return 'success';

@@ -9,6 +9,7 @@ import {
   unggahScanMasuk
 } from '../api/suratMasuk.api.js';
 import { createAutocomplete } from '../components/autocomplete.js';
+import { sinkronDatepicker } from '../components/datepicker.js';
 import { attachRowNavigation, badge, copyToClipboard, renderShell, showToast } from '../components/ui.js';
 import { pesanTabel } from '../utils/dom.js';
 import { eksporExcel } from '../utils/excel.js';
@@ -199,6 +200,7 @@ const bukaForm = (item = null, bacaSaja = false) => {
   form.elements.scanUrl.value = item?.fileUrl || '';
   form.elements.tglTerima.value = inputTanggal(item?.tglTerima || new Date());
   form.elements.tglSurat.value = inputTanggal(item?.tglSurat || new Date());
+  sinkronDatepicker(formPanel);
   form.elements.noSurat.value = item?.noSurat || '';
   form.elements.asal.value = item?.asal || '';
   form.elements.tujuan.value = item?.tujuan || '';

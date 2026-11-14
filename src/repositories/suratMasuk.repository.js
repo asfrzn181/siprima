@@ -1,5 +1,5 @@
 import { query, one, withTransaction } from '../config/db.js';
-import { tahunJakarta } from '../utils/tanggal.js';
+import { tanggalMurni, tahunTanggal } from '../utils/tanggal.js';
 import { arahUrut, batasLimit, kolomUrut, terjemahWhere } from './helpers.js';
 
 const PETA_WHERE = {
@@ -166,8 +166,9 @@ const tulisTindakLanjut = async (koneksi, id, peta) => {
 };
 
 export const buatSuratMasuk = async (payload, { uid, nama }) => {
-  const tanggalTerima = payload.tglTerima instanceof Date ? payload.tglTerima : new Date(payload.tglTerima);
-  const tahun = tahunJakarta(tanggalTerima);
+  // Tanggal dokumen tetap string YYYY-MM-DD agar tidak bergeser oleh zona waktu.
+  const tanggalTerima = tanggalMurni(payload.tglTerima);
+  const tahun = tahunTanggal(tanggalTerima);
   const namaCounter = `agendaMasuk_${tahun}`;
 
   const id = await withTransaction(async (koneksi) => {

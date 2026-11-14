@@ -3,7 +3,7 @@ import { daftarSuratMasuk, hitungSuratMasuk } from '../repositories/suratMasuk.r
 import { daftarSuratKeluar, hitungSuratKeluar } from '../repositories/suratKeluar.repository.js';
 import { lingkupData } from '../utils/akses.js';
 import { serialisasi } from '../utils/serialisasi.js';
-import { bagianJakarta, keTanggal } from '../utils/tanggal.js';
+import { tanggalHariIniJakarta } from '../utils/tanggal.js';
 
 const scopeMasuk = (profil) => {
   const lingkup = lingkupData(profil);
@@ -19,22 +19,13 @@ const scopeKeluar = (profil) => {
   return [['bidangPembuat', '==', lingkup.bidang]];
 };
 
-const awalHari = (sekarang) => {
-  const bagian = bagianJakarta(sekarang);
-  return keTanggal(
-    `${bagian.year}-${String(bagian.month).padStart(2, '0')}-${String(bagian.day).padStart(2, '0')}`
-  );
-};
+const awalHari = () => tanggalHariIniJakarta();
 
-const awalBulan = (sekarang) => {
-  const bagian = bagianJakarta(sekarang);
-  return keTanggal(`${bagian.year}-${String(bagian.month).padStart(2, '0')}-01`);
-};
+const awalBulan = () => `${tanggalHariIniJakarta().slice(0, 7)}-01`;
 
 export const ringkasanDashboard = async (profil) => {
-  const sekarang = new Date();
-  const hariIni = awalHari(sekarang);
-  const bulanIni = awalBulan(sekarang);
+  const hariIni = awalHari();
+  const bulanIni = awalBulan();
   const masuk = scopeMasuk(profil);
   const keluar = scopeKeluar(profil);
 

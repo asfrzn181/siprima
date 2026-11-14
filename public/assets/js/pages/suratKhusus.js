@@ -8,6 +8,7 @@ import {
   ubahSuratKhusus
 } from '../api/suratKhusus.api.js';
 import { createAutocomplete } from '../components/autocomplete.js';
+import { sinkronDatepicker } from '../components/datepicker.js';
 import { badge, dialogInput, renderShell, showToast } from '../components/ui.js';
 import { pesanTabel } from '../utils/dom.js';
 import { eksporExcel } from '../utils/excel.js';
@@ -154,6 +155,7 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
     form.elements.id.value = item?.id || '';
     form.elements.tentang.value = item?.tentang || '';
     form.elements.tanggal.value = inputTanggal(item?.tanggal || new Date());
+    sinkronDatepicker(panel);
     form.elements.keterangan.value = item?.keterangan || '';
     form.elements.nomorGenerated.value = item?.nomor || '';
 

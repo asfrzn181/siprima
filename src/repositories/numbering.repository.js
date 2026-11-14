@@ -1,7 +1,12 @@
 ﻿import { one, query, withTransaction, galatSementara } from '../config/db.js';
 import { STATUS_NOMOR } from '../constants/index.js';
 import { AppError } from '../utils/AppError.js';
-import { bagianJakarta, keTanggal } from '../utils/tanggal.js';
+import {
+  bagianTanggal,
+  tanggalDalamRentang,
+  tanggalMurni,
+  tahunTanggal
+} from '../utils/tanggal.js';
 import {
   MENU_NOMOR,
   bolehPakaiUlangNomor,
@@ -116,7 +121,7 @@ export const siapkanKonteks = async ({ menu, jenisId, bidangKode }) => {
 };
 
 export const bangunNomor = ({ menu, master, bidangKode, seq, date }) => {
-  const bagian = bagianJakarta(date);
+  const bagian = bagianTanggal(date) || { year: 0, month: 0, day: 0 };
   const golongan = golonganMenu(menu);
   const kode = master ? String(master.kode || '') : '';
   return {
@@ -144,7 +149,7 @@ export const bangunNomor = ({ menu, master, bidangKode, seq, date }) => {
   };
 };
 
-export const bolehPakaiUlang = (menu, row, tahun, tanggalAcuan) =>
+export const bolehPakaiUlang = (menu, row, tahun, tanggalAcuan, batasBawah = null, batasAtas = null) =>
   bolehPakaiUlangNomor({
     menu,
     status: row.status,
@@ -152,23 +157,32 @@ export const bolehPakaiUlang = (menu, row, tahun, tanggalAcuan) =>
     letterDate: row.letter_date,
     tahunNomor: row.tahun,
     tahunAcuan: tahun,
-    tanggalAcuan
+    tanggalAcuan,
+    batasBawah,
+    batasAtas
   });
 
-const angkaTanggal = (nilai) => {
-  const bagian = bagianJakarta(nilai);
-  return bagian.year * 10000 + bagian.month * 100 + bagian.day;
-};
+const nomorAktif = (row) => row && row.status !== STATUS_NOMOR.VOID && Boolean(row.letter_date);
 
-// Nomor bolong tidak punya tanggal sendiri. Slot tanggalnya dibatasi oleh
-// nomor sebelum dan sesudahnya, sehingga hanya tersedia untuk Tanggal Surat
-// yang berada di antara kedua tanggal tersebut.
-const tanggalDalamSlot = (tanggalAcuan, sebelum, sesudah) => {
-  if (!tanggalAcuan) return false;
-  const acuan = angkaTanggal(tanggalAcuan);
-  if (sebelum && acuan < angkaTanggal(sebelum.letter_date)) return false;
-  if (sesudah && acuan > angkaTanggal(sesudah.letter_date)) return false;
-  return true;
+// Tetangga aktif terdekat: nomor VOID tidak dihitung sebagai pembatas.
+const tetanggaAktif = (peta, maks, seq) => {
+  let sebelum = null;
+  for (let i = seq - 1; i >= 1; i -= 1) {
+    const row = peta.get(i);
+    if (nomorAktif(row)) {
+      sebelum = row;
+      break;
+    }
+  }
+  let sesudah = null;
+  for (let i = seq + 1; i <= maks; i += 1) {
+    const row = peta.get(i);
+    if (nomorAktif(row)) {
+      sesudah = row;
+      break;
+    }
+  }
+  return { sebelum, sesudah };
 };
 
 const kumpulkanTersedia = async ({ menu, tahun, tanggalAcuan, koneksi = null }) => {
@@ -181,45 +195,51 @@ const kumpulkanTersedia = async ({ menu, tahun, tanggalAcuan, koneksi = null }) 
   const peta = new Map(rows.map((row) => [Number(row.seq), row]));
   const maks = rows.reduce((hasil, row) => Math.max(hasil, Number(row.seq)), 0);
   const menuFinal = normalisasiMenu(menu);
+  const acuan = tanggalMurni(tanggalAcuan);
   const tersedia = [];
 
   for (let seq = 1; seq <= maks; seq += 1) {
     const row = peta.get(seq);
+    const { sebelum, sesudah } = tetanggaAktif(peta, maks, seq);
+    const batasBawah = sebelum ? sebelum.letter_date : null;
+    const batasAtas = sesudah ? sesudah.letter_date : null;
+
     if (!row) {
       if (menuFinal !== MENU_NOMOR.SURAT_KELUAR) {
         // SK/SE: nomor bolong selalu tersedia dalam tahun yang sama.
         tersedia.push({ seq, sumber: 'BOLONG', row: null });
         continue;
       }
-      let sebelum = null;
-      for (let i = seq - 1; i >= 1; i -= 1) {
-        if (peta.has(i)) {
-          sebelum = peta.get(i);
-          break;
-        }
-      }
-      let sesudah = null;
-      for (let i = seq + 1; i <= maks; i += 1) {
-        if (peta.has(i)) {
-          sesudah = peta.get(i);
-          break;
-        }
-      }
-      if (tanggalDalamSlot(tanggalAcuan, sebelum, sesudah)) {
+      // Nomor bolong hanya tersedia di antara tanggal tetangga aktifnya.
+      if (tanggalDalamRentang(acuan, batasBawah, batasAtas)) {
         tersedia.push({ seq, sumber: 'BOLONG', row: null });
       }
       continue;
     }
-    if (bolehPakaiUlang(menuFinal, row, tahun, tanggalAcuan)) {
+    if (bolehPakaiUlang(menuFinal, row, tahun, acuan, batasBawah, batasAtas)) {
       tersedia.push({ seq, sumber: 'BATAL', row });
     }
   }
-  return { tersedia, maks, rows };
+
+  // Nomor baru (maks + 1) hanya boleh bila Tanggal Surat tidak mendahului
+  // tanggal nomor aktif dengan urutan tertinggi. Aturan kronologis ini khusus
+  // Surat Keluar; SK/SE bebas memakai nomor baru dalam tahun yang sama.
+  const aktifTerakhir = [...peta.values()]
+    .filter(nomorAktif)
+    .sort((a, b) => Number(b.seq) - Number(a.seq))[0];
+  const batasBaru = aktifTerakhir ? tanggalMurni(aktifTerakhir.letter_date) : null;
+  const bolehBaru =
+    menuFinal !== MENU_NOMOR.SURAT_KELUAR ||
+    !batasBaru ||
+    (acuan !== null && acuan >= batasBaru);
+
+  return { tersedia, maks, rows, bolehBaru, batasBaru };
 };
 
-const pilihSeq = (tersedia, maks) => {
+const pilihSeq = (tersedia, maks, bolehBaru) => {
   if (tersedia.length) return tersedia[0];
-  return { seq: maks + 1, sumber: 'BARU', row: null };
+  if (bolehBaru) return { seq: maks + 1, sumber: 'BARU', row: null };
+  return null;
 };
 
 const ambilNomor = async (id) => {
@@ -276,7 +296,11 @@ export const alokasikanDalamTransaksi = async (
   }
 ) => {
   const menuFinal = normalisasiMenu(menu);
-  const bagian = bagianJakarta(tanggal);
+  const tanggalSurat = tanggalMurni(tanggal);
+  const bagian = bagianTanggal(tanggalSurat);
+  if (!bagian) {
+    throw new AppError(400, 'TANGGAL_TIDAK_VALID', 'Tanggal surat tidak valid.');
+  }
   const idemKey = String(idempotencyKey || '').slice(0, 200);
 
   if (idemKey) {
@@ -346,19 +370,26 @@ export const alokasikanDalamTransaksi = async (
     }
   }
 
-  const { tersedia, maks } = await kumpulkanTersedia({
+  const { tersedia, maks, bolehBaru } = await kumpulkanTersedia({
     koneksi,
     menu: menuFinal,
     tahun: bagian.year,
-    tanggalAcuan: tanggal
+    tanggalAcuan: tanggalSurat
   });
-  const pilihan = pilihSeq(tersedia, maks);
+  const pilihan = pilihSeq(tersedia, maks, bolehBaru);
+  if (!pilihan) {
+    throw new AppError(
+      409,
+      'NOMOR_TIDAK_TERSEDIA',
+      'Tidak ada nomor yang tersedia untuk Tanggal Surat ini karena tanggalnya lebih awal dari nomor terakhir yang terbit.'
+    );
+  }
   const nomor = bangunNomor({
     menu: menuFinal,
     master,
     bidangKode,
     seq: pilihan.seq,
-    date: tanggal
+    date: tanggalSurat
   });
 
   const kedaluwarsa = new Date(Date.now() + Math.max(1, reservationMinutes) * 60000);
@@ -398,7 +429,7 @@ export const alokasikanDalamTransaksi = async (
         nomor.full_number,
         master ? master.id : null,
         status,
-        tanggal,
+        tanggalSurat,
         metadata.perihal || '',
         metadata.tujuan || '',
         aktorData.uid,
@@ -437,7 +468,7 @@ export const alokasikanDalamTransaksi = async (
         nomor.full_number,
         master ? master.id : null,
         status,
-        tanggal,
+        tanggalSurat,
         metadata.perihal || '',
         metadata.tujuan || '',
         aktorData.uid,
@@ -465,7 +496,7 @@ export const alokasikanDalamTransaksi = async (
     ...nomor,
     jenisId: master ? master.id : null,
     status,
-    letter_date: tanggal,
+    letter_date: tanggalSurat,
     perihal: metadata.perihal || '',
     tujuan: metadata.tujuan || '',
     created_by: aktorData,
@@ -510,13 +541,13 @@ export const reservasiNomor = async ({
   reservationIdLama = null
 }) => {
   const konteks = await siapkanKonteks({ menu, jenisId, bidangKode });
-  const tanggalSurat = keTanggal(tanggal);
+  const tanggalSurat = tanggalMurni(tanggal);
   if (!tanggalSurat) throw new AppError(400, 'TANGGAL_TIDAK_VALID', 'Tanggal surat tidak valid.');
   const pengaturan = await ambilPengaturanNomor();
   const idemKey = String(
-    idempotencyKey || `${aktor.uid}_${konteks.menu}_${tanggalSurat.toISOString()}`
+    idempotencyKey || `${aktor.uid}_${konteks.menu}_${tanggalSurat}`
   ).slice(0, 200);
-  await pastikanCounter(bagianJakarta(tanggalSurat).year, konteks.menu);
+  await pastikanCounter(tahunTanggal(tanggalSurat), konteks.menu);
 
   const hasil = await withTransaction((koneksi) =>
     alokasikanDalamTransaksi(koneksi, {
@@ -543,9 +574,10 @@ export const tersediaNomor = async ({
   tanggal
 }) => {
   const konteks = await siapkanKonteks({ menu, jenisId, bidangKode });
-  const tanggalSurat = keTanggal(tanggal) || new Date();
-  const bagian = bagianJakarta(tanggalSurat);
-  const { tersedia, maks } = await kumpulkanTersedia({
+  const tanggalSurat = tanggalMurni(tanggal);
+  if (!tanggalSurat) throw new AppError(400, 'TANGGAL_TIDAK_VALID', 'Tanggal surat tidak valid.');
+  const bagian = bagianTanggal(tanggalSurat);
+  const { tersedia, maks, bolehBaru } = await kumpulkanTersedia({
     menu: konteks.menu,
     tahun: bagian.year,
     tanggalAcuan: tanggalSurat
@@ -561,20 +593,23 @@ export const tersediaNomor = async ({
       date: tanggalSurat
     }).full_number
   }));
-  const nomorBerikutnya = bangunNomor({
-    menu: konteks.menu,
-    master: konteks.master,
-    bidangKode: konteks.bidangKode,
-    seq: maks + 1,
-    date: tanggalSurat
-  }).full_number;
+  const seqBaru = maks + 1;
+  const nomorBerikutnya = bolehBaru
+    ? bangunNomor({
+        menu: konteks.menu,
+        master: konteks.master,
+        bidangKode: konteks.bidangKode,
+        seq: seqBaru,
+        date: tanggalSurat
+      }).full_number
+    : '';
   return {
     menu: konteks.menu,
     tahun: bagian.year,
     items,
-    berikutnya: maks + 1,
+    berikutnya: bolehBaru ? seqBaru : null,
     nomorBerikutnya,
-    kecilTersedia: items.length ? items[0].seq : maks + 1
+    kecilTersedia: items.length ? items[0].seq : bolehBaru ? seqBaru : null
   };
 };
 
@@ -619,9 +654,9 @@ export const terbitkanNomor = async ({ reservationId, payload, aktor }) =>
         'Bidang pembuat berubah sejak nomor dibuat. Generate ulang nomor.'
       );
     }
-    const tahunReservasi = bagianJakarta(before.letter_date).year;
-    const tahunPayload = bagianJakarta(payload.tglSurat).year;
-    if (tahunReservasi !== tahunPayload) {
+    const tahunReservasi = tahunTanggal(before.letter_date);
+    const tahunPayload = tahunTanggal(payload.tglSurat);
+    if (!tahunPayload || tahunReservasi !== tahunPayload) {
       throw new AppError(
         409,
         'RESERVASI_TIDAK_COCOK',
@@ -711,9 +746,9 @@ export const buatSuratKeluarBernomor = async ({ jenisId, bidangKode, tanggal, pa
     jenisId,
     bidangKode
   });
-  const tanggalSurat = keTanggal(tanggal);
+  const tanggalSurat = tanggalMurni(tanggal);
   if (!tanggalSurat) throw new AppError(400, 'TANGGAL_TIDAK_VALID', 'Tanggal surat tidak valid.');
-  await pastikanCounter(bagianJakarta(tanggalSurat).year, konteks.menu);
+  await pastikanCounter(tahunTanggal(tanggalSurat), konteks.menu);
 
   return withTransaction(async (koneksi) => {
     const alokasi = await alokasikanDalamTransaksi(koneksi, {

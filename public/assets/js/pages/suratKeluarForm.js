@@ -7,6 +7,7 @@ import {
   ubahSuratKeluar
 } from '../api/suratKeluar.api.js';
 import { createAutocomplete } from '../components/autocomplete.js';
+import { sinkronDatepicker } from '../components/datepicker.js';
 import { dialogInput, showToast } from '../components/ui.js';
 import { inputTanggal, tanggalIso } from '../utils/format.js';
 
@@ -128,6 +129,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     form.elements.id.value = item?.id || '';
     form.elements.noSurat.value = item?.noSurat || '';
     form.elements.tglSurat.value = inputTanggal(item?.tglSurat || new Date());
+    sinkronDatepicker(panel);
     form.elements.tujuan.value = item?.tujuan || '';
     form.elements.hal.value = item?.hal || '';
     form.elements.isiRingkas.value = item?.isiRingkas || '';

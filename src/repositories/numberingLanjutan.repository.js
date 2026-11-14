@@ -1,8 +1,8 @@
 ﻿import { query, withTransaction } from '../config/db.js';
 import { STATUS_NOMOR } from '../constants/index.js';
 import { AppError } from '../utils/AppError.js';
-import { bagianJakarta, keTanggal } from '../utils/tanggal.js';
-import { normalizeGolongan } from '../utils/nomor.js';
+import { tanggalMurni, tahunTanggal } from '../utils/tanggal.js';
+import { bolehPakaiUlangNomor, normalizeGolongan } from '../utils/nomor.js';
 import { bacaAuditHead, tulisAuditDalamTransaksi } from './numberingAudit.repository.js';
 import { petaNomor } from './numbering.repository.js';
 import { petaKeluar } from './suratKeluar.repository.js';
@@ -107,22 +107,53 @@ export const gunakanUlangNomor = async ({ letterNumberId, payload, aktor }) =>
       throw new AppError(409, 'NOMOR_BUKAN_VOID', 'Hanya nomor VOID yang dapat digunakan kembali.');
     }
 
-    const tanggal = keTanggal(payload.tglSurat);
-    const tanggalTerbit = before.letter_date ? new Date(before.letter_date) : null;
+    const tanggal = tanggalMurni(payload.tglSurat);
+    const tanggalTerbit = tanggalMurni(before.letter_date);
     if (!tanggal || !tanggalTerbit) {
       throw new AppError(400, 'TANGGAL_TIDAK_VALID', 'Tanggal surat tidak valid.');
     }
-    // Pembanding adalah Tanggal Surat yang diinput, bukan tanggal sistem atau
-    // tanggal pembatalan. Surat backdate tetap boleh memakai nomor pada
-    // tanggal surat tersebut.
-    const terbit = bagianJakarta(tanggalTerbit);
-    const baru = bagianJakarta(tanggal);
-    const samaHari = (a, b) => a.year === b.year && a.month === b.month && a.day === b.day;
-    if (!samaHari(terbit, baru)) {
+    const tahunNomor = Number(before.tahun);
+    if (tahunTanggal(tanggal) !== tahunNomor) {
       throw new AppError(
         400,
-        'TANGGAL_TIDAK_SAMA',
-        'Nomor hanya dapat dipakai ulang pada Tanggal Surat yang sama dengan nomor tersebut.'
+        'TAHUN_TIDAK_SAMA',
+        'Nomor hanya dapat dipakai ulang pada tahun yang sama dengan nomor tersebut.'
+      );
+    }
+
+    // Pembanding adalah Tanggal Surat yang diinput, bukan tanggal sistem atau
+    // tanggal pembatalan. Nomor VOID hanya boleh dipakai pada rentang tanggal
+    // yang masih kronologis terhadap tetangga aktifnya.
+    const [bawahRows] = await koneksi.query(
+      `SELECT letter_date FROM letter_numbers
+        WHERE menu = 'SURAT_KELUAR' AND tahun = ? AND status <> 'VOID'
+          AND seq < ? AND letter_date IS NOT NULL
+        ORDER BY seq DESC LIMIT 1`,
+      [tahunNomor, Number(before.seq)]
+    );
+    const [atasRows] = await koneksi.query(
+      `SELECT letter_date FROM letter_numbers
+        WHERE menu = 'SURAT_KELUAR' AND tahun = ? AND status <> 'VOID'
+          AND seq > ? AND letter_date IS NOT NULL
+        ORDER BY seq ASC LIMIT 1`,
+      [tahunNomor, Number(before.seq)]
+    );
+    const boleh = bolehPakaiUlangNomor({
+      menu: 'SURAT_KELUAR',
+      status: before.status,
+      voidedAt: before.voided_at,
+      letterDate: before.letter_date,
+      tahunNomor,
+      tahunAcuan: tahunNomor,
+      tanggalAcuan: tanggal,
+      batasBawah: bawahRows[0]?.letter_date || null,
+      batasAtas: atasRows[0]?.letter_date || null
+    });
+    if (!boleh) {
+      throw new AppError(
+        400,
+        'TANGGAL_TIDAK_SESUAI',
+        'Nomor hanya dapat dipakai pada rentang tanggal yang masih kronologis terhadap nomor sebelum dan sesudahnya.'
       );
     }
 
@@ -158,7 +189,7 @@ export const gunakanUlangNomor = async ({ letterNumberId, payload, aktor }) =>
         WHERE id = ?`,
       [
         before.letter_id,
-        payload.tglSurat,
+        tanggal,
         payload.hal,
         payload.tujuan,
         aktorData.uid,
@@ -183,7 +214,7 @@ export const gunakanUlangNomor = async ({ letterNumberId, payload, aktor }) =>
           before.full_number,
           before.jenis_id,
           normalizeGolongan(before.golongan),
-          payload.tglSurat,
+          tanggal,
           payload.tujuan,
           payload.hal,
           payload.isiRingkas,
@@ -208,7 +239,7 @@ export const gunakanUlangNomor = async ({ letterNumberId, payload, aktor }) =>
           before.full_number,
           before.jenis_id,
           normalizeGolongan(before.golongan),
-          payload.tglSurat,
+          tanggal,
           payload.tujuan,
           payload.hal,
           payload.isiRingkas,
@@ -237,7 +268,7 @@ export const gunakanUlangNomor = async ({ letterNumberId, payload, aktor }) =>
       ...petaNomor(before),
       status: STATUS_NOMOR.ISSUED,
       letter_id: suratId,
-      letter_date: payload.tglSurat,
+      letter_date: tanggal,
       perihal: payload.hal,
       tujuan: payload.tujuan,
       issued_at: new Date(),
@@ -280,7 +311,7 @@ export const perbaruiMetadataNomor = async ({
     if (
       changes.letter_date &&
       before.letter_date &&
-      bagianJakarta(changes.letter_date).year !== bagianJakarta(before.letter_date).year
+      tahunTanggal(changes.letter_date) !== tahunTanggal(before.letter_date)
     ) {
       throw new AppError(
         409,

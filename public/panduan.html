@@ -242,21 +242,32 @@
           </table>
 
           <h3>Surat Keluar: nomor batal dan nomor bolong</h3>
+          <p>
+            Urutan nomor harus tetap naik mengikuti <strong>Tanggal Surat</strong>. Karena itu nomor
+            batal/bolong hanya tersedia pada rentang tanggal yang masih wajar, yaitu di antara
+            tanggal nomor <strong>aktif</strong> sebelum dan sesudahnya. Nomor yang sudah dibatalkan
+            (VOID) tidak dihitung sebagai tetangga aktif.
+          </p>
           <ul>
-            <li>Nomor <strong>batal (VOID)</strong> hanya tersedia bila <strong>Tanggal Surat</strong> yang Anda input sama dengan tanggal surat pada nomor tersebut.</li>
-            <li>Nomor <strong>bolong</strong> (belum pernah terbit) tidak punya tanggal sendiri. Slot tanggalnya dibatasi oleh nomor sebelum dan sesudahnya, dan hanya tersedia bila Tanggal Surat berada di antara kedua tanggal itu.</li>
-            <li>Surat dengan tanggal mundur (backdate) tetap dapat memakai nomor batal/bolong pada tanggal tersebut.</li>
+            <li>Batas bawah = tanggal nomor aktif terdekat sebelum nomor tersebut (bila ada).</li>
+            <li>Batas atas = tanggal nomor aktif terdekat sesudah nomor tersebut (bila ada).</li>
+            <li>Nomor tersedia bila <strong>batas bawah ≤ Tanggal Surat ≤ batas atas</strong>, atau Tanggal Surat sama dengan tanggal nomor itu sendiri.</li>
+            <li>Bila nomor batal adalah nomor terakhir (tidak ada penerus aktif), nomor tetap tersedia untuk tanggal berikutnya.</li>
+            <li>Nomor baru (maksimum + 1) hanya dapat terbit bila Tanggal Surat tidak lebih awal dari tanggal nomor aktif tertinggi.</li>
+            <li>Tanggal sistem (<code>created_at</code>) tidak pernah dipakai sebagai pembanding.</li>
           </ul>
           <table class="guide-table">
             <thead>
               <tr><th>Situasi</th><th>Tanggal Surat yang diinput</th><th>Nomor tersedia</th></tr>
             </thead>
             <tbody>
-              <tr><td>Nomor 1–5 terbit 14 Nov 2026; nomor 1 dan 3 dibatalkan</td><td>14 Nov 2026</td><td>1, 3, lalu 6</td></tr>
-              <tr><td>Situasi yang sama</td><td>15 Nov 2026</td><td>1 dan 3 tidak tersedia; lanjut 6</td></tr>
-              <tr><td>Hari ini 20 Nov, surat bertanggal 14 Nov</td><td>14 Nov 2026</td><td>1 dan 3 tetap tersedia</td></tr>
-              <tr><td>Ada nomor bolong pada 1 Jan 2026</td><td>1 Jan 2026</td><td>Nomor bolong tersedia</td></tr>
-              <tr><td>Nomor bolong yang sama</td><td>2 Jan 2026</td><td>Tidak tersedia</td></tr>
+              <tr><td>Nomor 1, 2, 3 terbit 14 Nov 2026; nomor 1 dibatalkan</td><td>14 Nov 2026</td><td>1</td></tr>
+              <tr><td>Situasi yang sama</td><td>15 Nov 2026</td><td>1 tidak tersedia; lanjut 4</td></tr>
+              <tr><td>Situasi yang sama</td><td>13 Nov 2026 atau lebih awal</td><td>1 tersedia (tidak ada batas bawah)</td></tr>
+              <tr><td>Nomor 1, 2, 3 terbit 14 Nov 2026; nomor 3 dibatalkan</td><td>15 Nov 2026 dan sesudahnya</td><td>3 tersedia sampai ada nomor aktif baru</td></tr>
+              <tr><td>Situasi yang sama</td><td>13 Nov 2026</td><td>3 tidak tersedia karena nomor 2 bertanggal 14 Nov</td></tr>
+              <tr><td>Nomor 1 (10 Nov) dan 3 (14 Nov); nomor 2 bolong</td><td>10–14 Nov 2026</td><td>2 tersedia</td></tr>
+              <tr><td>Nomor bolong yang sama</td><td>9 Nov atau 15 Nov 2026</td><td>Tidak tersedia</td></tr>
             </tbody>
           </table>
 
@@ -360,7 +371,7 @@
 
           <h3>Nomor batal tidak muncul sebagai pilihan</h3>
           <ul>
-            <li><strong>Surat Keluar:</strong> pastikan Tanggal Surat sama dengan tanggal surat pada nomor batal tersebut.</li>
+            <li><strong>Surat Keluar:</strong> pastikan Tanggal Surat masih berada di antara tanggal nomor aktif sebelum dan sesudah nomor batal tersebut. Bila nomor batal adalah nomor terakhir, tanggal setelahnya tetap boleh.</li>
             <li><strong>SK/SE:</strong> pastikan Tanggal SK/SE masih di tahun yang sama dengan nomor batal.</li>
           </ul>
 
