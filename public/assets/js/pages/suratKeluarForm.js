@@ -11,7 +11,7 @@ import {
   unggahScanKeluar
 } from '../api/suratKeluar.api.js';
 import { createAutocomplete } from '../components/autocomplete.js';
-import { showToast } from '../components/ui.js';
+import { dialogInput, showToast } from '../components/ui.js';
 import { inputTanggal, tanggalIso } from '../utils/format.js';
 
 const MIME = ['application/pdf', 'image/jpeg', 'image/png'];
@@ -62,7 +62,6 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
   const bolehKirim = punyaIzin(sesi.profile, 'surat_keluar.kirim');
   const bolehAturAkses = bolehBuat && !bidangSaja;
   const selectJenis = form.elements.jenisId;
-  const selectTersedia = form.elements.seqPilihan;
   const inputCari = form.elements.nomorCari;
   let masters = [];
 
@@ -101,15 +100,12 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     });
     simpan.hidden = bacaSaja || !bolehBuat || !milikSendiri;
     generate.hidden = Boolean(item) || !bolehBuat;
-    selectTersedia.disabled = bacaSaja || Boolean(item);
     document.querySelector('#berkas-opsi').hidden = !bolehBuat;
     tombolBatal.hidden = !item || !bolehBatal;
     form.elements.dikirimKeLuar.disabled = !bolehKirim;
   };
 
   const muatTersedia = async () => {
-    selectTersedia.replaceChildren();
-    selectTersedia.append(new Option('Otomatis — nomor terkecil yang tersedia', ''));
     if (!selectJenis.value || !form.elements.tglSurat.value) return;
     try {
       const hasil = await nomorTersedia({
@@ -118,13 +114,6 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
         bidangKode: bidangTerpilih(),
         tanggal: tanggalIso(form.elements.tglSurat.value)
       });
-      (hasil.items || []).forEach((item) => {
-        const label = `${item.nomor} — ${item.sumber === 'BATAL' ? 'batal, dapat dipakai ulang' : 'nomor bolong'}`;
-        selectTersedia.append(new Option(label, item.seq));
-      });
-      if (!hasil.items?.length && hasil.nomorBerikutnya) {
-        selectTersedia.append(new Option(`${hasil.nomorBerikutnya} — nomor berikutnya`, ''));
-      }
       form.elements.nomorGenerated.value = hasil.items?.length
         ? hasil.items[0].nomor
         : hasil.nomorBerikutnya || '';
@@ -140,7 +129,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     judul.textContent = item ? 'Detail/ubah surat keluar' : 'Tambah surat keluar';
     catatan.textContent = item
       ? 'Data surat dapat diedit. Nomor resmi tidak berubah saat penyuntingan.'
-      : 'Nomor surat dibuat otomatis oleh server. Pilih dari daftar nomor tersedia atau biarkan sistem memakai nomor terkecil.';
+      : 'Nomor surat dibuat otomatis oleh server memakai nomor terkecil yang tersedia.';
     form.elements.id.value = item?.id || '';
     form.elements.noSurat.value = item?.noSurat || '';
     bersihkanReservasi();
@@ -189,7 +178,6 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     return {
       jenisId,
       reservationId: form.elements.reservationId.value,
-      seqPilihan: selectTersedia.value ? Number(selectTersedia.value) : undefined,
       idempotencyKey: form.elements.idempotencyKey.value,
       tglSurat: tanggalIso(form.elements.tglSurat.value),
       bidangPembuat: bidangKode,
@@ -234,13 +222,6 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     });
   });
 
-  selectTersedia.addEventListener('change', () => {
-    const pilihan = [...selectTersedia.options].find((opsi) => opsi.value === selectTersedia.value);
-    if (pilihan && selectTersedia.value) {
-      form.elements.nomorGenerated.value = pilihan.textContent.split(' — ')[0];
-    }
-  });
-
   generate.addEventListener('click', async () => {
     generate.disabled = true;
     pesan.hidden = true;
@@ -253,7 +234,6 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
         jenisId: selectJenis.value,
         bidangKode: bidangTerpilih(),
         tanggal: tanggalIso(form.elements.tglSurat.value),
-        seqPilihan: selectTersedia.value ? Number(selectTersedia.value) : undefined,
         reservationIdLama: form.elements.reservationId.value || undefined,
         idempotencyKey: crypto.randomUUID(),
         perihal: form.elements.hal.value.trim(),
@@ -328,15 +308,22 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
 
   tombolBatal.addEventListener('click', async () => {
     const id = form.elements.id.value;
-    if (!id || !confirm('Batalkan surat ini?')) return;
-    const alasan = prompt('Keterangan pembatalan wajib diisi:');
-    if (!alasan || !alasan.trim()) {
-      tampilPesan('Keterangan pembatalan wajib diisi.');
-      return;
-    }
+    if (!id) return;
+    const nomor = form.elements.noSurat.value || form.elements.nomorGenerated.value;
+    const alasan = await dialogInput({
+      judul: 'Batalkan Nomor',
+      nomor: nomor ? `Nomor: ${nomor}` : '',
+      deskripsi: 'Surat keluar akan ditandai batal. Data tidak dihapus.',
+      label: 'Keterangan pembatalan',
+      placeholder: 'Tuliskan alasan pembatalan nomor…',
+      teksKonfirmasi: 'Batalkan Nomor',
+      teksBatal: 'Kembali',
+      pesanWajib: 'Keterangan pembatalan wajib diisi.'
+    });
+    if (!alasan) return;
     tombolBatal.disabled = true;
     try {
-      await batalkanSuratKeluar(id, alasan.trim());
+      await batalkanSuratKeluar(id, alasan);
       tutup();
       showToast('Surat dibatalkan.');
       await onSaved();

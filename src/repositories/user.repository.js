@@ -1,18 +1,27 @@
 import { one, query } from '../config/db.js';
 
-const petaUser = (row, izin = []) => ({
-  id: row.id,
-  uid: row.id,
-  email: row.email,
-  nama: row.nama,
-  role: row.role,
-  bidang: row.bidang_kode || '',
-  aktif: row.aktif === 1,
-  izin,
-  lastLoginAt: row.last_login_at,
-  dibuatPada: row.created_at,
-  diubahPada: row.updated_at
-});
+const petaUser = (row, izin = []) => {
+  const aksesData =
+    row.role === 'bidang' && row.bidang_kode
+      ? row.bidang_akses_data === 'SEMUA'
+        ? 'SEMUA'
+        : 'SENDIRI'
+      : 'SEMUA';
+  return {
+    id: row.id,
+    uid: row.id,
+    email: row.email,
+    nama: row.nama,
+    role: row.role,
+    bidang: row.bidang_kode || '',
+    aksesData,
+    aktif: row.aktif === 1,
+    izin,
+    lastLoginAt: row.last_login_at,
+    dibuatPada: row.created_at,
+    diubahPada: row.updated_at
+  };
+};
 
 const ambilIzin = async (roleId) => {
   const rows = await query(
@@ -29,7 +38,10 @@ const ambilRoleId = async (nama) => {
   return row ? row.id : null;
 };
 
-const dasarUser = `SELECT u.*, r.name AS role FROM users u JOIN roles r ON r.id = u.role_id`;
+const dasarUser = `SELECT u.*, r.name AS role, b.akses_data AS bidang_akses_data
+  FROM users u
+  JOIN roles r ON r.id = u.role_id
+  LEFT JOIN master_bidang b ON b.kode = u.bidang_kode`;
 
 export const cariUser = async (id) => {
   const row = await one(`${dasarUser} WHERE u.id = ?`, [id]);

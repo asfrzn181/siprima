@@ -9,7 +9,8 @@ const sifat = ['semua', ...Object.values(SIFAT)];
 const dasar = z.object({
   tglMulai: tanggalWajib,
   tglSelesai: tanggalWajib,
-  sifat: z.enum(sifat).default('semua')
+  sifat: z.enum(sifat).default('semua'),
+  bidang: z.string().trim().max(40).default('')
 });
 
 export const skemaLaporanMasuk = dasar.extend({

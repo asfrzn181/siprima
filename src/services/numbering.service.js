@@ -37,8 +37,7 @@ export const daftarTersedia = (payload, profil) =>
     menu: payload.menu || MENU_NOMOR.SURAT_KELUAR,
     jenisId: payload.jenisId,
     bidangKode: bidangPayload(payload, profil),
-    tanggal: payload.tanggal,
-    seqPilihan: payload.seqPilihan
+    tanggal: payload.tanggal
   });
 
 export const reservasi = (payload, profil) =>
@@ -49,7 +48,6 @@ export const reservasi = (payload, profil) =>
     tanggal: payload.tanggal,
     aktor: aktorDari(profil),
     idempotencyKey: payload.idempotencyKey,
-    seqPilihan: payload.seqPilihan,
     reservationIdLama: payload.reservationIdLama,
     metadata: { perihal: payload.perihal || '', tujuan: payload.tujuan || '' }
   });

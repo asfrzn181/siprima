@@ -1,5 +1,6 @@
 import { wajibIzin } from '../api/client.js';
 import { laporan } from '../api/admin.api.js';
+import { daftarBidang } from '../api/master.api.js';
 import { badge, renderShell, showToast } from '../components/ui.js';
 import { pesanTabel } from '../utils/dom.js';
 import { eksporExcel } from '../utils/excel.js';
@@ -174,7 +175,8 @@ form.addEventListener('submit', async (event) => {
     tglMulai: tanggalIso(data.tglMulai),
     tglSelesai: tanggalIso(data.tglSelesai, true),
     status: data.status || 'semua',
-    sifat: data.sifat || 'semua'
+    sifat: data.sifat || 'semua',
+    bidang: data.bidang || 'semua'
   };
   renderThead();
   panel.classList.add('visible');
@@ -249,3 +251,17 @@ if (jenisAwal === 'masuk' || jenisAwal === 'keluar') {
 jenisSelect.value = jenis;
 isiStatus();
 renderThead();
+
+if (sesi.profile.aksesData === 'SEMUA') {
+  const wrap = document.querySelector('#bidang-filter-wrap');
+  const select = form.elements.bidang;
+  try {
+    const bidang = await daftarBidang(false);
+    bidang
+      .filter((item) => item.aktif !== false && item.kode)
+      .forEach((item) => select.append(new Option(`${item.nama} (${item.kode})`, item.kode)));
+    wrap.hidden = false;
+  } catch {
+    wrap.hidden = true;
+  }
+}

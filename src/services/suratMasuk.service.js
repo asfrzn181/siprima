@@ -15,10 +15,12 @@ import {
   adalahBidang,
   adalahOperator,
   adalahPengelola,
+  bolehAksesDaftarBidang,
   bolehBacaSurat,
   bolehBuatSuratMasuk,
   bolehTindakLanjut,
-  bolehUbahSuratMasuk
+  bolehUbahSuratMasuk,
+  lingkupData
 } from '../utils/akses.js';
 import { potongHalaman } from '../utils/pagination.js';
 import { serialisasi } from '../utils/serialisasi.js';
@@ -32,11 +34,22 @@ const modeUntuk = (profil, sifat) => {
 
 const whereMode = (profil, mode, filter = {}) => {
   const daftar = [];
+  const lingkup = lingkupData(profil);
   if (filter.status && filter.status !== 'semua') daftar.push(['status', '==', filter.status]);
   if (mode === SIFAT.BIASA) daftar.push(['sifat', '==', SIFAT.BIASA]);
   if (mode === SIFAT.RAHASIA) {
     daftar.push(['sifat', '==', SIFAT.RAHASIA]);
-    if (adalahBidang(profil)) daftar.push(['aksesBidang', 'array-contains', profil.bidang]);
+    if (adalahBidang(profil) && profil.bidang) {
+      daftar.push(['aksesBidang', 'array-contains', profil.bidang]);
+    }
+  }
+  if (!lingkup.semua) {
+    if (!lingkup.bidang) return [['status', '==', '__TANPA_BIDANG__']];
+    if (mode !== SIFAT.RAHASIA) {
+      daftar.push(['aksesBidang', 'array-contains', lingkup.bidang]);
+    }
+  } else if (filter.bidang && filter.bidang !== 'semua') {
+    daftar.push(['aksesBidang', 'array-contains', filter.bidang]);
   }
   if (filter.tglMulai) daftar.push(['tglTerima', '>=', filter.tglMulai]);
   if (filter.tglSelesai) daftar.push(['tglTerima', '<=', filter.tglSelesai]);
@@ -57,7 +70,7 @@ const cariPrefix = async (profil, filter) => {
   for (const medanCari of medan) {
     for (const mode of modeUntuk(profil, filter.sifat)) {
       const where = [
-        ...whereMode(profil, mode, { status: filter.status }),
+        ...whereMode(profil, mode, { status: filter.status, bidang: filter.bidang }),
         [medanCari, '>=', kunci],
         [medanCari, '<=', `${kunci}\uf8ff`]
       ];
@@ -102,7 +115,11 @@ export const daftarMasuk = async (profil, filter) => {
 
 export const ambilMasuk = async (id, profil) => {
   const surat = await cariSuratMasuk(id);
-  if (!surat || !bolehBacaSurat(profil, surat)) {
+  if (
+    !surat ||
+    !bolehBacaSurat(profil, surat) ||
+    !bolehAksesDaftarBidang(profil, surat.aksesBidang)
+  ) {
     throw galatTidakDitemukan('Surat tidak ditemukan atau Anda tidak berhak membacanya.');
   }
   return serialisasi(surat);
@@ -242,7 +259,11 @@ export const lampirkanScanMasuk = async (id, file, profil) => {
 
 export const berkasMasuk = async (id, profil) => {
   const surat = await cariSuratMasuk(id);
-  if (!surat || !bolehBacaSurat(profil, surat)) {
+  if (
+    !surat ||
+    !bolehBacaSurat(profil, surat) ||
+    !bolehAksesDaftarBidang(profil, surat.aksesBidang)
+  ) {
     throw galatTidakDitemukan('Surat tidak ditemukan atau Anda tidak berhak membacanya.');
   }
   if (!surat.fileId && !surat.fileUrl) throw galatTidakDitemukan('Scan surat belum tersedia.');

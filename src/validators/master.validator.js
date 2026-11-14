@@ -5,6 +5,7 @@ import { normalizeGolongan } from '../utils/nomor.js';
 export const skemaMasterBidang = z.object({
   kode: z.string().trim().min(1, 'Kode wajib diisi.').max(40),
   nama: z.string().trim().min(1, 'Nama wajib diisi.').max(120),
+  aksesData: z.enum(['SEMUA', 'SENDIRI']).default('SENDIRI'),
   aktif: z.boolean().default(true)
 });
 

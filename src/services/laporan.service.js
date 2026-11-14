@@ -8,20 +8,22 @@ const filterDasar = {
   page: 1,
   limit: PAGINATION.MAX_EXPORT,
   tglMulai: null,
-  tglSelesai: null
+  tglSelesai: null,
+  bidang: ''
 };
 
 const filterMasuk = (filter) => ({
   ...filterDasar,
   sifat: filter.sifat || 'semua',
-  status: filter.status && filter.status !== 'semua' ? filter.status : 'semua'
+  status: filter.status && filter.status !== 'semua' ? filter.status : 'semua',
+  bidang: filter.bidang || ''
 });
 
 const filterKeluar = (filter) => ({
   ...filterDasar,
   sifat: filter.sifat || 'semua',
   status: filter.status && filter.status !== 'semua' ? filter.status : 'semua',
-  golongan: 'semua'
+  bidang: filter.bidang || ''
 });
 
 export const laporanSuratMasuk = async (filter, profil) => {

@@ -6,7 +6,7 @@ const query = (filter = {}) =>
     search: filter.search || '',
     sifat: filter.sifat || 'semua',
     status: filter.status || 'semua',
-    golongan: filter.golongan || 'semua',
+    bidang: filter.bidang || '',
     tglMulai: filter.tglMulai ? tanggalQuery(filter.tglMulai) : '',
     tglSelesai: filter.tglSelesai ? tanggalQuery(filter.tglSelesai, true) : '',
     page: filter.page || 1,

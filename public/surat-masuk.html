@@ -30,6 +30,7 @@
         <form id="filter-form" class="filter-grid">
           <label>Sifat<select name="sifat"><option value="semua">Semua</option><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
           <label>Status<select name="status"><option value="semua">Semua</option><option value="Baru">Baru</option><option value="Didisposisikan">Didisposisikan</option><option value="Selesai">Selesai</option></select></label>
+          <label id="bidang-filter-wrap" hidden>Bidang<select name="bidang"><option value="semua">Semua bidang</option></select></label>
           <label>Terima mulai<input name="tglMulai" type="date"></label>
           <label>Terima sampai<input name="tglSelesai" type="date"></label>
           <div class="filter-actions"><button class="button primary" type="submit">Terapkan</button><button id="reset-filter" class="button secondary" type="button">Reset</button></div>
@@ -126,8 +127,6 @@
           <div class="form-actions wide">
             <button id="save-button" class="button primary" type="submit">Simpan</button>
             <button id="disposition-button" class="button secondary" type="submit" data-action="disposition" hidden>Simpan dan disposisikan</button>
-            <button id="download-button" class="button secondary" type="button" hidden>Unduh scan</button>
-            <a id="file-link" class="button secondary" target="_blank" rel="noopener" hidden>Buka link Drive</a>
           </div>
           <p id="form-error" class="form-error wide" role="alert" hidden></p>
         </form>

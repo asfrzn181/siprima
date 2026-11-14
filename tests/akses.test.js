@@ -5,11 +5,14 @@ import {
   adalahAdmin,
   adalahBidang,
   adalahPengelola,
+  bolehAksesBidang,
+  bolehAksesDaftarBidang,
   bolehBacaSurat,
   bolehBuatSuratKeluar,
   bolehTindakLanjut,
   bolehUbahSuratKeluar,
-  bolehUbahSuratMasuk
+  bolehUbahSuratMasuk,
+  lingkupData
 } from '../src/utils/akses.js';
 import { izinkan } from '../src/middlewares/role.js';
 import { kirimError, kirimSukses } from '../src/utils/response.js';
@@ -60,6 +63,21 @@ test('bidang hanya boleh mengubah surat keluar miliknya yang masih aktif', () =>
     false
   );
   assert.equal(bolehUbahSuratKeluar(profil(PERAN.PIMPINAN), surat), false);
+});
+
+test('cakupan data bidang default sendiri dan bisa dibuka untuk semua', () => {
+  const sendiri = { ...profil(PERAN.BIDANG, 'SEK'), aksesData: 'SENDIRI' };
+  const semua = { ...profil(PERAN.BIDANG, 'SEK'), aksesData: 'SEMUA' };
+  assert.deepEqual(lingkupData(sendiri), { semua: false, bidang: 'SEK' });
+  assert.deepEqual(lingkupData(semua), { semua: true, bidang: 'SEK' });
+  assert.equal(lingkupData(profil(PERAN.ADMIN)).semua, true);
+  assert.equal(lingkupData(profil(PERAN.OPERATOR)).semua, true);
+  assert.equal(bolehAksesBidang(sendiri, 'SEK'), true);
+  assert.equal(bolehAksesBidang(sendiri, 'UMUM'), false);
+  assert.equal(bolehAksesBidang(semua, 'UMUM'), true);
+  assert.equal(bolehAksesDaftarBidang(sendiri, ['UMUM', 'SEK']), true);
+  assert.equal(bolehAksesDaftarBidang(sendiri, ['UMUM']), false);
+  assert.equal(bolehAksesDaftarBidang(semua, []), true);
 });
 
 test('middleware izinkan menolak peran yang tidak berhak dengan 403', () => {

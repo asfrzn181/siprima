@@ -1,14 +1,23 @@
-import { PERAN, STATUS_MASUK } from '../constants/index.js';
+import { STATUS_MASUK } from '../constants/index.js';
 import { daftarSuratMasuk, hitungSuratMasuk } from '../repositories/suratMasuk.repository.js';
 import { daftarSuratKeluar, hitungSuratKeluar } from '../repositories/suratKeluar.repository.js';
+import { lingkupData } from '../utils/akses.js';
 import { serialisasi } from '../utils/serialisasi.js';
 import { bagianJakarta, keTanggal } from '../utils/tanggal.js';
 
-const scopeMasuk = (profil) =>
-  profil.role === PERAN.BIDANG ? [['aksesBidang', 'array-contains', profil.bidang]] : [];
+const scopeMasuk = (profil) => {
+  const lingkup = lingkupData(profil);
+  if (lingkup.semua) return [];
+  if (!lingkup.bidang) return [['status', '==', '__TANPA_BIDANG__']];
+  return [['aksesBidang', 'array-contains', lingkup.bidang]];
+};
 
-const scopeKeluar = (profil) =>
-  profil.role === PERAN.BIDANG ? [['bidangPembuat', '==', profil.bidang]] : [];
+const scopeKeluar = (profil) => {
+  const lingkup = lingkupData(profil);
+  if (lingkup.semua) return [];
+  if (!lingkup.bidang) return [['status', '==', '__TANPA_BIDANG__']];
+  return [['bidangPembuat', '==', lingkup.bidang]];
+};
 
 const awalHari = (sekarang) => {
   const bagian = bagianJakarta(sekarang);

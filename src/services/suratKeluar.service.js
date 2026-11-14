@@ -15,9 +15,11 @@ import {
   adalahBidang,
   adalahOperator,
   adalahPengelola,
+  bolehAksesBidang,
   bolehBacaSurat,
   bolehBuatSuratKeluar,
-  bolehUbahSuratKeluar
+  bolehUbahSuratKeluar,
+  lingkupData
 } from '../utils/akses.js';
 import { potongHalaman } from '../utils/pagination.js';
 import { serialisasi } from '../utils/serialisasi.js';
@@ -40,11 +42,20 @@ const modeUntuk = (profil, sifat) => {
 
 const whereMode = (profil, mode, filter = {}) => {
   const daftar = [];
+  const lingkup = lingkupData(profil);
   if (filter.status && filter.status !== 'semua') daftar.push(['status', '==', filter.status]);
   if (mode === SIFAT.BIASA) daftar.push(['sifat', '==', SIFAT.BIASA]);
   if (mode === SIFAT.RAHASIA) {
     daftar.push(['sifat', '==', SIFAT.RAHASIA]);
-    if (adalahBidang(profil)) daftar.push(['aksesBidang', 'array-contains', profil.bidang]);
+    if (adalahBidang(profil) && profil.bidang) {
+      daftar.push(['aksesBidang', 'array-contains', profil.bidang]);
+    }
+  }
+  if (!lingkup.semua) {
+    if (!lingkup.bidang) return [['status', '==', '__TANPA_BIDANG__']];
+    daftar.push(['bidangPembuat', '==', lingkup.bidang]);
+  } else if (filter.bidang && filter.bidang !== 'semua') {
+    daftar.push(['bidangPembuat', '==', filter.bidang]);
   }
   if (filter.tglMulai) daftar.push(['tglSurat', '>=', filter.tglMulai]);
   if (filter.tglSelesai) daftar.push(['tglSurat', '<=', filter.tglSelesai]);
@@ -58,9 +69,6 @@ const urutkan = (items) =>
     return nilaiB.getTime() - nilaiA.getTime();
   });
 
-const saringGolongan = (items, golongan) =>
-  !golongan || golongan === 'semua' ? items : items.filter((item) => item.golongan === golongan);
-
 const cariPrefix = async (profil, filter) => {
   const hasil = [];
   for (const medan of ['noSurat', 'hal', 'tujuan']) {
@@ -69,7 +77,7 @@ const cariPrefix = async (profil, filter) => {
         hasil.push(
           ...(await daftarSuratKeluar({
             where: [
-              ...whereMode(profil, mode, { status: filter.status }),
+              ...whereMode(profil, mode, { status: filter.status, bidang: filter.bidang }),
               [medan, '>=', filter.search],
               [medan, '<=', `${filter.search}\uf8ff`]
             ],
@@ -84,7 +92,7 @@ const cariPrefix = async (profil, filter) => {
     }
   }
   const unik = new Map(hasil.map((item) => [item.id, item]));
-  return saringGolongan(urutkan([...unik.values()]), filter.golongan);
+  return urutkan([...unik.values()]);
 };
 
 export const daftarKeluar = async (profil, filter) => {
@@ -101,7 +109,7 @@ export const daftarKeluar = async (profil, filter) => {
       )
     );
     const unik = new Map(hasil.flat().map((item) => [item.id, item]));
-    semua = saringGolongan(urutkan([...unik.values()]), filter.golongan);
+    semua = urutkan([...unik.values()]);
   }
   const { items, pagination } = potongHalaman(semua, { page: filter.page, limit: filter.limit });
   return { items: items.map((item) => serialisasi(item)), pagination };
@@ -109,7 +117,7 @@ export const daftarKeluar = async (profil, filter) => {
 
 export const ambilKeluar = async (id, profil) => {
   const surat = await cariSuratKeluar(id);
-  if (!surat || !bolehBacaSurat(profil, surat)) {
+  if (!surat || !bolehBacaSurat(profil, surat) || !bolehAksesBidang(profil, surat.bidangPembuat)) {
     throw galatTidakDitemukan('Surat tidak ditemukan atau Anda tidak berhak membacanya.');
   }
   return serialisasi(surat);
@@ -164,7 +172,6 @@ export const tambahKeluar = async (payload, profil) => {
         bidangKode: bidang,
         tanggal: final.tglSurat,
         idempotencyKey: final.idempotencyKey,
-        seqPilihan: final.seqPilihan,
         perihal: final.hal,
         tujuan: final.tujuan
       },
@@ -330,7 +337,11 @@ export const lampirkanScanKeluar = async (id, file, profil) => {
 
 export const berkasKeluar = async (id, profil) => {
   const surat = await cariSuratKeluar(id);
-  if (!surat || !bolehBacaSurat(profil, surat)) {
+  if (
+    !surat ||
+    !bolehBacaSurat(profil, surat) ||
+    !bolehAksesBidang(profil, surat.bidangPembuat)
+  ) {
     throw galatTidakDitemukan('Surat tidak ditemukan atau Anda tidak berhak membacanya.');
   }
   if (!surat.fileId && !surat.fileUrl) throw galatTidakDitemukan('Scan surat belum tersedia.');

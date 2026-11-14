@@ -2,6 +2,7 @@ import { AKSI_AUDIT } from '../constants/index.js';
 import { catatAudit } from '../repositories/audit.repository.js';
 import {
   batalkanSuratKhusus,
+  bidangSuratKhusus,
   buatSuratKhusus,
   cariSuratKhusus,
   daftarSuratKhusus,
@@ -11,6 +12,7 @@ import {
 import { daftarTersedia } from './numbering.service.js';
 import { bacaPagination } from '../utils/pagination.js';
 import { AppError, galatTidakDitemukan } from '../utils/AppError.js';
+import { bolehAksesBidang, lingkupData } from '../utils/akses.js';
 import { serialisasi } from '../utils/serialisasi.js';
 
 const AKSI = {
@@ -25,9 +27,19 @@ const paginationUntuk = ({ page, limit, total }) => {
   return { page, limit, total, totalPages, hasPrev: page > 1, hasNext: page < totalPages };
 };
 
-export const daftar = async (jenis, filter = {}) => {
+const bidangFilter = (profil, filter = {}) => {
+  const lingkup = lingkupData(profil);
+  if (!lingkup.semua) return lingkup.bidang || '__TANPA_BIDANG__';
+  return filter.bidang && filter.bidang !== 'semua' ? filter.bidang : '';
+};
+
+export const daftar = async (jenis, filter = {}, profil) => {
   const { page, limit, offset } = bacaPagination(filter);
-  const kueri = { search: filter.search, status: filter.status || '' };
+  const kueri = {
+    search: filter.search,
+    status: filter.status || '',
+    bidang: bidangFilter(profil, filter)
+  };
   const [items, total] = await Promise.all([
     daftarSuratKhusus(jenis, { ...kueri, limit, offset }),
     hitungSuratKhusus(jenis, kueri)
@@ -38,9 +50,13 @@ export const daftar = async (jenis, filter = {}) => {
   };
 };
 
-export const ambil = async (jenis, id) => {
+export const ambil = async (jenis, id, profil) => {
   const data = await cariSuratKhusus(jenis, id);
   if (!data) throw galatTidakDitemukan(`Surat ${jenis} tidak ditemukan.`);
+  const bidang = await bidangSuratKhusus(data.letterNumberId);
+  if (profil && !bolehAksesBidang(profil, bidang) && bidang) {
+    throw galatTidakDitemukan(`Surat ${jenis} tidak ditemukan.`);
+  }
   return serialisasi(data);
 };
 
@@ -49,8 +65,7 @@ export const nomorTersedia = (jenis, filter = {}, profil) =>
     {
       menu: jenis.toUpperCase(),
       jenisId: filter.jenisId,
-      tanggal: filter.tanggal,
-      seqPilihan: filter.seqPilihan
+      tanggal: filter.tanggal
     },
     profil
   );

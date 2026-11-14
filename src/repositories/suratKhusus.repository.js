@@ -38,7 +38,7 @@ const peta = (row) => ({
   diubahPada: row.diubah_pada
 });
 
-const filterDaftar = (jenis, { search = '', status = '' } = {}) => {
+const filterDaftar = (jenis, { search = '', status = '', bidang = '' } = {}) => {
   const kunci = String(search || '').trim();
   const pola = `%${kunci}%`;
   const params = [pastikanJenis(jenis)];
@@ -51,11 +51,18 @@ const filterDaftar = (jenis, { search = '', status = '' } = {}) => {
     filter += ' AND status = ?';
     params.push(String(status));
   }
+  if (bidang) {
+    filter += ' AND letter_number_id IN (SELECT id FROM letter_numbers WHERE kode_bidang = ?)';
+    params.push(String(bidang));
+  }
   return { filter, params };
 };
 
-export const daftarSuratKhusus = async (jenis, { search = '', status = '', limit = 20, offset = 0 } = {}) => {
-  const { filter, params } = filterDaftar(jenis, { search, status });
+export const daftarSuratKhusus = async (
+  jenis,
+  { search = '', status = '', bidang = '', limit = 20, offset = 0 } = {}
+) => {
+  const { filter, params } = filterDaftar(jenis, { search, status, bidang });
   const rows = await query(
     `SELECT * FROM surat_khusus WHERE ${filter}
       ORDER BY tanggal DESC, id DESC LIMIT ? OFFSET ?`,
@@ -64,10 +71,16 @@ export const daftarSuratKhusus = async (jenis, { search = '', status = '', limit
   return rows.map(peta);
 };
 
-export const hitungSuratKhusus = async (jenis, { search = '', status = '' } = {}) => {
-  const { filter, params } = filterDaftar(jenis, { search, status });
+export const hitungSuratKhusus = async (jenis, { search = '', status = '', bidang = '' } = {}) => {
+  const { filter, params } = filterDaftar(jenis, { search, status, bidang });
   const row = await one(`SELECT COUNT(*) AS jumlah FROM surat_khusus WHERE ${filter}`, params);
   return Number(row?.jumlah || 0);
+};
+
+export const bidangSuratKhusus = async (letterNumberId) => {
+  if (!letterNumberId) return '';
+  const row = await one('SELECT kode_bidang FROM letter_numbers WHERE id = ?', [letterNumberId]);
+  return row?.kode_bidang || '';
 };
 
 export const cariSuratKhusus = async (jenis, id) => {
@@ -92,7 +105,6 @@ export const buatSuratKhusus = async (jenis, data, aktor = {}) => {
       bidangKode: null,
       tanggal,
       aktor,
-      seqPilihan: data.seqPilihan,
       metadata: { perihal: data.tentang || '' },
       status: STATUS_NOMOR.ISSUED
     });

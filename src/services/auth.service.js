@@ -35,6 +35,7 @@ export const profilPublik = (user) => ({
   nama: user.nama,
   role: user.role,
   bidang: user.bidang,
+  aksesData: user.aksesData === 'SEMUA' ? 'SEMUA' : 'SENDIRI',
   aktif: user.aktif,
   izin: user.izin || []
 });

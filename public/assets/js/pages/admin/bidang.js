@@ -16,20 +16,26 @@ const buka = (item = null) => {
   form.elements.kode.value = item?.kode || '';
   form.elements.nama.value = item?.nama || '';
   form.elements.aktif.checked = item?.aktif !== false;
+  const akses = item?.aksesData === 'SEMUA' ? 'SEMUA' : 'SENDIRI';
+  [...form.querySelectorAll('input[name="aksesData"]')].forEach((input) => {
+    input.checked = input.value === akses;
+  });
   bukaModal('bidang-modal');
 };
 
 export const muatBidang = async () => {
-  pesanBaris(body, 5, 'Memuat…');
+  pesanBaris(body, 6, 'Memuat…');
   try {
     const hasil = await halamanBidang(halaman);
     body.replaceChildren();
-    if (!hasil.items.length) pesanBaris(body, 5, 'Belum ada master bidang.');
+    if (!hasil.items.length) pesanBaris(body, 6, 'Belum ada master bidang.');
     const mulai = (halaman - 1) * (hasil.pagination.limit || 20);
     hasil.items.forEach((item, index) => {
       const baris = document.createElement('tr');
       const status = document.createElement('td');
       status.append(badge(item.aktif ? 'Aktif' : 'Nonaktif', item.aktif ? 'success' : 'muted'));
+      const akses = document.createElement('td');
+      akses.textContent = item.aksesData === 'SEMUA' ? 'Semua bidang' : 'Bidang sendiri';
       const aksi = document.createElement('td');
       const edit = document.createElement('button');
       edit.className = 'button small secondary';
@@ -37,7 +43,14 @@ export const muatBidang = async () => {
       edit.textContent = 'Edit';
       edit.addEventListener('click', () => buka(item));
       aksi.append(edit);
-      baris.append(selTeks(String(mulai + index + 1)), selTeks(item.kode), selTeks(item.nama), status, aksi);
+      baris.append(
+        selTeks(String(mulai + index + 1)),
+        selTeks(item.kode),
+        selTeks(item.nama),
+        akses,
+        status,
+        aksi
+      );
       body.append(baris);
     });
     renderPager(pager, hasil.pagination, (halamanBaru) => {
@@ -45,7 +58,7 @@ export const muatBidang = async () => {
       muatBidang();
     });
   } catch (galat) {
-    pesanBaris(body, 5, galat.message || 'Gagal memuat bidang.');
+    pesanBaris(body, 6, galat.message || 'Gagal memuat bidang.');
   }
 };
 
@@ -59,6 +72,7 @@ export const initBidang = async () => {
     const data = {
       kode: form.elements.kode.value.trim(),
       nama: form.elements.nama.value.trim(),
+      aksesData: form.querySelector('input[name="aksesData"]:checked')?.value || 'SENDIRI',
       aktif: form.elements.aktif.checked
     };
     try {

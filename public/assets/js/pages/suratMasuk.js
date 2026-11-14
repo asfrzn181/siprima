@@ -6,8 +6,7 @@ import {
   eksporSuratMasuk,
   tambahSuratMasuk,
   ubahSuratMasuk,
-  unggahScanMasuk,
-  urlBerkasMasuk
+  unggahScanMasuk
 } from '../api/suratMasuk.api.js';
 import { createAutocomplete } from '../components/autocomplete.js';
 import { attachRowNavigation, badge, copyToClipboard, renderShell, showToast } from '../components/ui.js';
@@ -37,12 +36,17 @@ const form = document.querySelector('#surat-form');
 const formError = document.querySelector('#form-error');
 const saveButton = document.querySelector('#save-button');
 const dispositionButton = document.querySelector('#disposition-button');
-const downloadButton = document.querySelector('#download-button');
-const fileLink = document.querySelector('#file-link');
 
 let halaman = 1;
 let totalHalaman = 1;
-let filter = { search: '', sifat: 'semua', status: 'semua', tglMulai: '', tglSelesai: '' };
+let filter = {
+  search: '',
+  sifat: 'semua',
+  status: 'semua',
+  bidang: 'semua',
+  tglMulai: '',
+  tglSelesai: ''
+};
 let items = [];
 let bidang = [];
 let returnToRow = null;
@@ -207,10 +211,6 @@ const bukaForm = (item = null, bacaSaja = false) => {
   opsiBidang(document.querySelector('#disposition-options'), 'tujuanBidang', tujuan);
   document.querySelector('#access-fieldset').hidden = form.elements.sifat.value !== 'rahasia';
   document.querySelector('#disposition-fieldset').hidden = !canEdit;
-  downloadButton.hidden = !item?.fileId;
-  downloadButton.dataset.id = item?.id || '';
-  fileLink.hidden = !item?.fileUrl;
-  fileLink.href = item?.fileUrl || '#';
   setReadOnly(bacaSaja);
   formPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
@@ -316,6 +316,7 @@ document.querySelector('#filter-form').addEventListener('submit', async (event) 
     ...filter,
     sifat: data.sifat,
     status: data.status,
+    bidang: data.bidang || 'semua',
     tglMulai: data.tglMulai,
     tglSelesai: data.tglSelesai
   };
@@ -325,7 +326,14 @@ document.querySelector('#filter-form').addEventListener('submit', async (event) 
 
 document.querySelector('#reset-filter').addEventListener('click', async () => {
   document.querySelector('#filter-form').reset();
-  filter = { search: filter.search, sifat: 'semua', status: 'semua', tglMulai: '', tglSelesai: '' };
+  filter = {
+    search: filter.search,
+    sifat: 'semua',
+    status: 'semua',
+    bidang: 'semua',
+    tglMulai: '',
+    tglSelesai: ''
+  };
   halaman = 1;
   await muat();
 });
@@ -415,14 +423,21 @@ form.addEventListener('submit', async (event) => {
   }
 });
 
-downloadButton.addEventListener('click', () => {
-  const id = downloadButton.dataset.id;
-  if (id) window.open(urlBerkasMasuk(id), '_blank', 'noopener');
-});
-
 try {
   bidang = await daftarBidang(false);
 } catch {
   bidang = [];
+}
+
+const semuaBidang = sesi.profile.aksesData === 'SEMUA';
+const bidangWrap = document.querySelector('#bidang-filter-wrap');
+const bidangSelect = document.querySelector('#filter-form').elements.bidang;
+if (semuaBidang && bidangSelect) {
+  bidang
+    .filter((item) => item.aktif !== false && item.kode)
+    .forEach((item) => bidangSelect.append(new Option(`${item.nama} (${item.kode})`, item.kode)));
+  bidangWrap.hidden = false;
+} else if (bidangWrap) {
+  bidangWrap.hidden = true;
 }
 await muat();

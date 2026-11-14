@@ -22,7 +22,7 @@ const next = document.querySelector('#next');
 
 let halaman = 1;
 let totalHalaman = 1;
-let filter = { search: '', sifat: 'semua', status: 'semua', golongan: 'semua' };
+let filter = { search: '', sifat: 'semua', status: 'semua', bidang: 'semua' };
 let items = [];
 
 let bidang = [];
@@ -30,6 +30,18 @@ try {
   bidang = await daftarBidang(false);
 } catch {
   bidang = [];
+}
+
+const semuaBidang = sesi.profile.aksesData === 'SEMUA';
+const bidangWrap = document.querySelector('#bidang-filter-wrap');
+const bidangSelect = document.querySelector('#filter-form').elements.bidang;
+if (semuaBidang && bidangSelect) {
+  bidang
+    .filter((item) => item.aktif !== false && item.kode)
+    .forEach((item) => bidangSelect.append(new Option(`${item.nama} (${item.kode})`, item.kode)));
+  bidangWrap.hidden = false;
+} else if (bidangWrap) {
+  bidangWrap.hidden = true;
 }
 
 const formPanel = siapkanForm({
@@ -118,14 +130,19 @@ const muat = async () => {
 document.querySelector('#filter-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(event.currentTarget));
-  filter = { search: data.search.trim(), sifat: data.sifat, status: data.status, golongan: data.golongan };
+  filter = {
+    search: data.search.trim(),
+    sifat: data.sifat,
+    status: data.status,
+    bidang: semuaBidang ? data.bidang : 'semua'
+  };
   halaman = 1;
   await muat();
 });
 
 document.querySelector('#reset-filter').addEventListener('click', async () => {
   document.querySelector('#filter-form').reset();
-  filter = { search: '', sifat: 'semua', status: 'semua', golongan: 'semua' };
+  filter = { search: '', sifat: 'semua', status: 'semua', bidang: 'semua' };
   halaman = 1;
   await muat();
 });

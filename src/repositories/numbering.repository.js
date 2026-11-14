@@ -179,23 +179,7 @@ const kumpulkanTersedia = async ({ menu, tahun, koneksi = null }) => {
   return { tersedia, maks, rows };
 };
 
-const pilihSeq = (tersedia, maks, seqPilihan) => {
-  const pilihan =
-    seqPilihan === null || seqPilihan === undefined || seqPilihan === '' ? null : Number(seqPilihan);
-  if (pilihan !== null) {
-    if (!Number.isInteger(pilihan) || pilihan < 1) {
-      throw new AppError(400, 'NOMOR_TIDAK_VALID', 'Nomor urut yang dipilih tidak valid.');
-    }
-    const item = tersedia.find((butir) => butir.seq === pilihan);
-    if (!item) {
-      throw new AppError(
-        409,
-        'NOMOR_TIDAK_TERSEDIA',
-        'Nomor yang dipilih sudah terpakai atau belum tersedia. Muat ulang daftar nomor.'
-      );
-    }
-    return item;
-  }
+const pilihSeq = (tersedia, maks) => {
   if (tersedia.length) return tersedia[0];
   return { seq: maks + 1, sumber: 'BARU', row: null };
 };
@@ -246,7 +230,6 @@ export const alokasikanDalamTransaksi = async (
     bidangKode,
     tanggal,
     aktor,
-    seqPilihan = null,
     metadata = {},
     status = STATUS_NOMOR.RESERVED,
     idempotencyKey = '',
@@ -330,7 +313,7 @@ export const alokasikanDalamTransaksi = async (
     menu: menuFinal,
     tahun: bagian.year
   });
-  const pilihan = pilihSeq(tersedia, maks, seqPilihan);
+  const pilihan = pilihSeq(tersedia, maks);
   const nomor = bangunNomor({
     menu: menuFinal,
     master,
@@ -479,7 +462,6 @@ export const reservasiNomor = async ({
   aktor,
   idempotencyKey,
   metadata = {},
-  seqPilihan = null,
   reservationIdLama = null
 }) => {
   const konteks = await siapkanKonteks({ menu, jenisId, bidangKode });
@@ -498,7 +480,6 @@ export const reservasiNomor = async ({
       bidangKode: konteks.bidangKode,
       tanggal: tanggalSurat,
       aktor,
-      seqPilihan,
       metadata,
       status: STATUS_NOMOR.RESERVED,
       idempotencyKey: idemKey,
@@ -514,8 +495,7 @@ export const tersediaNomor = async ({
   menu = MENU_NOMOR.SURAT_KELUAR,
   jenisId,
   bidangKode,
-  tanggal,
-  seqPilihan = null
+  tanggal
 }) => {
   const konteks = await siapkanKonteks({ menu, jenisId, bidangKode });
   const tanggalSurat = keTanggal(tanggal) || new Date();
@@ -548,8 +528,7 @@ export const tersediaNomor = async ({
     items,
     berikutnya: maks + 1,
     nomorBerikutnya,
-    kecilTersedia: items.length ? items[0].seq : maks + 1,
-    terjadwal: seqPilihan ? Number(seqPilihan) : null
+    kecilTersedia: items.length ? items[0].seq : maks + 1
   };
 };
 

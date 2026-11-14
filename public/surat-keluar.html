@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="assets/css/overrides.css">
   <link rel="stylesheet" href="assets/css/autocomplete.css">
   <style>
-    .filter-grid{display:grid;grid-template-columns:2fr repeat(2,1fr) auto;gap:1rem;align-items:end}
+    .filter-grid{display:grid;grid-template-columns:2fr repeat(3,1fr) auto;gap:1rem;align-items:end}
     .filter-grid label{display:grid;gap:.35rem}
     .filter-actions{display:flex;gap:.5rem}
     .wide{grid-column:1/-1}
@@ -36,7 +36,7 @@
         <label>Pencarian<input name="search" type="search" placeholder="Awalan nomor surat, hal, atau tujuan"></label>
         <label>Sifat<select name="sifat"><option value="semua">Semua</option><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
         <label>Status<select name="status"><option value="semua">Semua</option><option value="Aktif">Aktif</option><option value="Dibatalkan">Dibatalkan</option></select></label>
-        <label>Golongan<select name="golongan"><option value="semua">Semua</option><option value="SK">SK</option><option value="SE">SE</option><option value="LAINNYA">Lainnya</option></select></label>
+        <label id="bidang-filter-wrap" hidden>Bidang<select name="bidang"><option value="semua">Semua bidang</option></select></label>
         <div class="filter-actions"><button class="button primary" type="submit">Terapkan</button><button id="reset-filter" class="button secondary" type="button">Reset</button></div>
       </form>
     </section>
@@ -93,8 +93,7 @@
         <label>Sifat<select name="sifat"><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
         <label class="wide">Hal<input name="hal" maxlength="200" required></label>
         <label class="wide">Nomor surat
-          <input name="nomorGenerated" readonly placeholder="Pilih nomor tersedia atau klik Generate Nomor">
-          <select name="seqPilihan"><option value="">Otomatis — nomor terkecil yang tersedia</option></select>
+          <input name="nomorGenerated" readonly placeholder="Nomor dibuat otomatis oleh server">
           <span class="form-actions"><button id="generate-number" class="button secondary" type="button">Generate Nomor</button></span>
         </label>
         <label class="wide">Isi ringkas<textarea name="isiRingkas" rows="4" maxlength="2000" required></textarea></label>

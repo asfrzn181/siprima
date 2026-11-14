@@ -227,6 +227,116 @@ export const renderShell = ({ active, session, title, subtitle }) => {
   });
 };
 
+export const dialogInput = ({
+  judul = 'Konfirmasi',
+  deskripsi = '',
+  nomor = '',
+  label = 'Keterangan',
+  placeholder = '',
+  teksKonfirmasi = 'Simpan',
+  teksBatal = 'Kembali',
+  pesanWajib = 'Keterangan wajib diisi.'
+} = {}) =>
+  new Promise((selesai) => {
+    const overlay = document.createElement('section');
+    overlay.className = 'dialog-overlay';
+
+    const kartu = document.createElement('div');
+    kartu.className = 'dialog-card';
+    kartu.setAttribute('role', 'dialog');
+    kartu.setAttribute('aria-modal', 'true');
+
+    const judulNode = document.createElement('h2');
+    judulNode.className = 'dialog-title';
+    judulNode.textContent = judul;
+
+    const isi = [judulNode];
+    if (nomor) {
+      const nomorNode = document.createElement('p');
+      nomorNode.className = 'dialog-number';
+      nomorNode.textContent = nomor;
+      isi.push(nomorNode);
+    }
+    if (deskripsi) {
+      const ket = document.createElement('p');
+      ket.className = 'muted dialog-desc';
+      ket.textContent = deskripsi;
+      isi.push(ket);
+    }
+
+    const labelNode = document.createElement('label');
+    labelNode.className = 'dialog-field';
+    labelNode.append(
+      Object.assign(document.createElement('span'), { textContent: label }),
+      Object.assign(document.createElement('textarea'), {
+        name: 'keterangan',
+        rows: 3,
+        maxLength: 300,
+        placeholder
+      })
+    );
+    const area = labelNode.querySelector('textarea');
+    isi.push(labelNode);
+
+    const galat = document.createElement('p');
+    galat.className = 'form-error';
+    galat.setAttribute('role', 'alert');
+    galat.hidden = true;
+    isi.push(galat);
+
+    const aksi = document.createElement('div');
+    aksi.className = 'dialog-actions';
+    const batal = document.createElement('button');
+    batal.type = 'button';
+    batal.className = 'button secondary';
+    batal.textContent = teksBatal;
+    const konfirmasi = document.createElement('button');
+    konfirmasi.type = 'button';
+    konfirmasi.className = 'button primary';
+    konfirmasi.textContent = teksKonfirmasi;
+    aksi.append(batal, konfirmasi);
+    isi.push(aksi);
+
+    kartu.append(...isi);
+    overlay.append(kartu);
+    document.body.append(overlay);
+
+    const sebelumnya = document.activeElement;
+    const tutup = (nilai) => {
+      document.removeEventListener('keydown', onKey);
+      overlay.remove();
+      if (sebelumnya?.focus) sebelumnya.focus();
+      selesai(nilai);
+    };
+    const onKey = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        tutup(null);
+      }
+    };
+    const cobaKonfirmasi = () => {
+      const nilai = area.value.trim();
+      if (!nilai) {
+        galat.textContent = pesanWajib;
+        galat.hidden = false;
+        area.focus();
+        return;
+      }
+      tutup(nilai);
+    };
+
+    batal.addEventListener('click', () => tutup(null));
+    konfirmasi.addEventListener('click', cobaKonfirmasi);
+    area.addEventListener('input', () => {
+      if (!galat.hidden) galat.hidden = true;
+    });
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) tutup(null);
+    });
+    document.addEventListener('keydown', onKey);
+    area.focus();
+  });
+
 export const showToast = (message, kind = 'success') => {
   let region = document.querySelector('#toast-region');
   if (!region) {

@@ -61,7 +61,7 @@ try {
   // Terbitkan surat keluar.
   const keluar = await agen.post('/api/surat-keluar').set(headers).send({
     jenisId: String(nomor.id),
-    reservationId: reservasiId,
+    reservationId: String(reservasiId),
     tglSurat: tanggal,
     bidangPembuat: bidang.kode,
     tujuan: 'Uji HTTP',
@@ -107,15 +107,22 @@ try {
     cek('nomor SE berpola', /^\d+ TAHUN \d{4}$/.test(se.body.data.nomor), se.body.data.nomor);
   }
 
-  // Reservasi untuk nomor yang sudah dipakai harus gagal dengan pesan jelas.
-  const bentrok = await agen.post('/api/nomor/reservasi').set(headers).send({
+  // seqPilihan sudah dihapus: nomor selalu otomatis memakai urutan terkecil
+  // yang tersedia, sehingga nilai seqPilihan dari klien lama harus diabaikan.
+  const abaikanPilihan = await agen.post('/api/nomor/reservasi').set(headers).send({
     menu: 'SURAT_KELUAR',
     jenisId: String(nomor.id),
     bidangKode: bidang.kode,
     tanggal,
-    seqPilihan: 999999
+    seqPilihan: 999999,
+    idempotencyKey: `http-uji-abaikan-${Date.now()}`
   });
-  cek('seqPilihan tidak tersedia ditolak 409', bentrok.status === 409, `status ${bentrok.status}`);
+  cek(
+    'seqPilihan diabaikan dan nomor otomatis tetap dibuat',
+    abaikanPilihan.status === 201 && abaikanPilihan.body.data.id,
+    `status ${abaikanPilihan.status}`
+  );
+  if (abaikanPilihan.status === 201) bersih.nomor.push(abaikanPilihan.body.data.id);
 } catch (error) {
   console.error('ERROR', error?.stack || error);
 } finally {

@@ -4,6 +4,7 @@ const petaBidang = (row) => ({
   id: row.id,
   kode: row.kode,
   nama: row.nama,
+  aksesData: row.akses_data === 'SEMUA' ? 'SEMUA' : 'SENDIRI',
   aktif: row.aktif === 1
 });
 
@@ -26,37 +27,42 @@ const petaAsalTujuan = (row) => ({
 
 export const daftarBidang = async ({ hanyaAktif = false } = {}) => {
   const rows = await query(
-    `SELECT id, kode, nama, aktif FROM master_bidang
+    `SELECT id, kode, nama, akses_data, aktif FROM master_bidang
      ${hanyaAktif ? 'WHERE aktif = 1' : ''} ORDER BY nama ASC`
   );
   return rows.map(petaBidang);
 };
 
 export const cariBidangByKode = async (kode) => {
-  const row = await one('SELECT id, kode, nama, aktif FROM master_bidang WHERE kode = ? LIMIT 1', [
-    String(kode || '').trim()
-  ]);
+  const row = await one(
+    'SELECT id, kode, nama, akses_data, aktif FROM master_bidang WHERE kode = ? LIMIT 1',
+    [String(kode || '').trim()]
+  );
   return row ? petaBidang(row) : null;
 };
 
 export const cariBidangById = async (id) => {
-  const row = await one('SELECT id, kode, nama, aktif FROM master_bidang WHERE id = ?', [id]);
+  const row = await one('SELECT id, kode, nama, akses_data, aktif FROM master_bidang WHERE id = ?', [
+    id
+  ]);
   return row ? petaBidang(row) : null;
 };
 
 export const simpanBidang = async (id, data) => {
+  const aksesData = data.aksesData === 'SEMUA' ? 'SEMUA' : 'SENDIRI';
   if (id) {
-    await query('UPDATE master_bidang SET kode = ?, nama = ?, aktif = ? WHERE id = ?', [
+    await query('UPDATE master_bidang SET kode = ?, nama = ?, akses_data = ?, aktif = ? WHERE id = ?', [
       data.kode,
       data.nama,
+      aksesData,
       data.aktif ? 1 : 0,
       id
     ]);
   } else {
     await query(
-      `INSERT INTO master_bidang (kode, nama, aktif) VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE nama = VALUES(nama), aktif = VALUES(aktif)`,
-      [data.kode, data.nama, data.aktif ? 1 : 0]
+      `INSERT INTO master_bidang (kode, nama, akses_data, aktif) VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE nama = VALUES(nama), akses_data = VALUES(akses_data), aktif = VALUES(aktif)`,
+      [data.kode, data.nama, aksesData, data.aktif ? 1 : 0]
     );
   }
   return cariBidangByKode(data.kode);

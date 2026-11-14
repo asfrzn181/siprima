@@ -465,3 +465,63 @@ fieldset {
   #disposition-options,
   .golongan-options { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ------------------------------------------------------------ dialog input */
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-4);
+  background: #1a202880;
+  overflow: auto;
+}
+
+.dialog-card {
+  width: min(460px, 100%);
+  padding: var(--sp-5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 32px #1a20281f;
+}
+
+.dialog-title {
+  margin: 0 0 var(--sp-2);
+  font-size: 1.15rem;
+}
+
+.dialog-number {
+  margin: 0 0 var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-2, #f4f6f8);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.dialog-desc {
+  margin: 0 0 var(--sp-3);
+}
+
+.dialog-field {
+  display: grid;
+  gap: .35rem;
+  margin-bottom: var(--sp-3);
+}
+
+.dialog-field textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  margin-top: var(--sp-3);
+}
+

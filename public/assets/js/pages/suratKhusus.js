@@ -8,7 +8,7 @@ import {
   ubahSuratKhusus
 } from '../api/suratKhusus.api.js';
 import { createAutocomplete } from '../components/autocomplete.js';
-import { badge, renderShell, showToast } from '../components/ui.js';
+import { badge, dialogInput, renderShell, showToast } from '../components/ui.js';
 import { pesanTabel } from '../utils/dom.js';
 import { eksporExcel } from '../utils/excel.js';
 import { formatStatusKind, formatTanggal, inputTanggal, tanggalIso } from '../utils/format.js';
@@ -38,9 +38,8 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
   const saveButton = document.querySelector('#save');
   const cancelButton = document.querySelector('#cancel-record');
   const exportButton = document.querySelector('#export');
-  const jenisCari = form.elements.jenisCari;
-  const jenisId = form.elements.jenisId;
-  const seqPilihan = form.elements.seqPilihan;
+  const jenisCari = form.elements.jenisCari || null;
+  const jenisId = form.elements.jenisId || null;
 
   let halaman = 1;
   let totalHalaman = 1;
@@ -123,20 +122,14 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
 
   const muatTersedia = async () => {
     if (!form.elements.tanggal.value) return;
-    if (perluJenis && !jenisId.value) {
+    if (perluJenis && !jenisId?.value) {
       form.elements.nomorGenerated.value = '';
       return;
     }
-    seqPilihan.replaceChildren();
-    seqPilihan.append(new Option('Otomatis — nomor terkecil yang tersedia', ''));
     try {
       const hasil = await nomorTersediaSuratKhusus(jenis, {
-        jenisId: jenisId.value || undefined,
+        jenisId: jenisId?.value || undefined,
         tanggal: tanggalIso(form.elements.tanggal.value)
-      });
-      (hasil.items || []).forEach((item) => {
-        const label = `${item.nomor} — ${item.sumber === 'BATAL' ? 'batal, dapat dipakai ulang' : 'nomor bolong'}`;
-        seqPilihan.append(new Option(label, item.seq));
       });
       form.elements.nomorGenerated.value = hasil.items?.length
         ? hasil.items[0].nomor
@@ -175,9 +168,6 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
       jenisId.disabled = Boolean(item) || bacaSaja;
     }
 
-    seqPilihan.replaceChildren();
-    seqPilihan.append(new Option('Otomatis — nomor terkecil yang tersedia', ''));
-    seqPilihan.disabled = Boolean(item) || bacaSaja || !bolehTulis;
     form.querySelectorAll('input[name="tentang"], input[name="tanggal"], textarea[name="keterangan"]').forEach(
       (field) => {
         field.disabled = bacaSaja || dibatalkan;
@@ -228,13 +218,19 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
   form.elements.tanggal.addEventListener('change', muatTersedia);
 
   const batalkanData = async (item) => {
-    const alasan = prompt(`Keterangan pembatalan ${judul} "${item.tentang}" wajib diisi:`);
-    if (!alasan || !alasan.trim()) {
-      showToast('Keterangan pembatalan wajib diisi.', 'error');
-      return;
-    }
+    const alasan = await dialogInput({
+      judul: 'Batalkan Nomor',
+      nomor: item.nomor ? `Nomor: ${item.nomor}` : '',
+      deskripsi: `${judul} "${item.tentang || '—'}" akan ditandai batal. Data tidak dihapus.`,
+      label: 'Keterangan pembatalan',
+      placeholder: 'Tuliskan alasan pembatalan nomor…',
+      teksKonfirmasi: 'Batalkan Nomor',
+      teksBatal: 'Kembali',
+      pesanWajib: 'Keterangan pembatalan wajib diisi.'
+    });
+    if (!alasan) return;
     try {
-      await batalkanSuratKhusus(jenis, item.id, alasan.trim());
+      await batalkanSuratKhusus(jenis, item.id, alasan);
       showToast(`${judul} dibatalkan.`);
       await muat();
     } catch (error) {
@@ -306,8 +302,7 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
     const data = {
       tentang: form.elements.tentang.value.trim(),
       tanggal: tanggalIso(form.elements.tanggal.value),
-      keterangan: form.elements.keterangan.value.trim(),
-      seqPilihan: seqPilihan.value ? Number(seqPilihan.value) : undefined
+      keterangan: form.elements.keterangan.value.trim()
     };
     if (perluJenis) data.jenisId = jenisId.value || undefined;
     if (!data.tentang || !data.tanggal) {

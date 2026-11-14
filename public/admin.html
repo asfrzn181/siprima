@@ -14,6 +14,9 @@
     .peran-izin{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.5rem .9rem;margin:.75rem 0}
     .peran-izin label{display:flex;gap:.5rem;align-items:center;font-weight:500}
     .peran-izin input{width:auto}
+    .check-grid{display:flex;flex-wrap:wrap;gap:.65rem 1rem}
+    .check-option{display:flex;gap:.45rem;align-items:center;font-weight:500}
+    .check-option input{width:auto}
   </style>
 </head>
 <body>
@@ -63,7 +66,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>No. Urut</th><th>Kode</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>No. Urut</th><th>Kode</th><th>Nama</th><th>Akses data</th><th>Status</th><th>Aksi</th></tr></thead>
             <tbody id="bidang-body"></tbody>
           </table>
         </div>
@@ -242,6 +245,13 @@
         <input name="id" type="hidden">
         <label>Kode<input name="kode" maxlength="40" required></label>
         <label>Nama bidang<input name="nama" maxlength="120" required></label>
+        <label class="wide">Akses data
+          <span class="check-grid">
+            <label class="check-option"><input type="radio" name="aksesData" value="SENDIRI" checked><span>Hanya dapat melihat bidang sendiri</span></label>
+            <label class="check-option"><input type="radio" name="aksesData" value="SEMUA"><span>Dapat melihat semua bidang</span></label>
+          </span>
+          <small class="muted">Mengatur cakupan data yang terlihat pengguna pada bidang ini. Berlaku saat login berikutnya.</small>
+        </label>
         <label>Status aktif<input name="aktif" type="checkbox" checked></label>
         <div class="form-actions wide"><button class="button primary" type="submit">Simpan bidang</button></div>
         <p id="bidang-error" class="form-error wide" hidden></p>

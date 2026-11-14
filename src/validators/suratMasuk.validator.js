@@ -34,6 +34,7 @@ export const skemaFilterSuratMasuk = skemaPagination.extend({
   status: z
     .enum(['semua', STATUS_MASUK.BARU, STATUS_MASUK.DIDISPOSISIKAN, STATUS_MASUK.SELESAI])
     .default('semua'),
+  bidang: z.string().trim().max(40).default(''),
   tglMulai: tanggalOpsional,
   tglSelesai: tanggalOpsional
 });

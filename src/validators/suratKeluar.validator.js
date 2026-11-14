@@ -7,7 +7,6 @@ const teks = (maks) => z.string().trim().min(1, 'Wajib diisi.').max(maks);
 export const skemaPayloadSuratKeluar = z.object({
   jenisId: z.string().trim().min(1, 'Jenis nomor wajib dipilih.').max(200),
   reservationId: z.string().trim().max(200).optional().default(''),
-  seqPilihan: z.coerce.number().int().min(1).optional(),
   tglSurat: tanggalWajib,
   bidangPembuat: z.string().trim().max(40).optional(),
   tujuan: teks(200),
@@ -38,7 +37,6 @@ export const skemaReservasi = z.object({
   jenisId: z.string().trim().max(200).optional(),
   bidangKode: z.string().trim().max(40).optional(),
   tanggal: tanggalWajib,
-  seqPilihan: z.coerce.number().int().min(1).optional(),
   reservationIdLama: z.string().trim().max(200).optional(),
   perihal: z.string().trim().max(200).optional(),
   tujuan: z.string().trim().max(200).optional()
@@ -48,8 +46,7 @@ export const skemaTersediaNomor = z.object({
   menu: z.enum(['SURAT_KELUAR', 'SK', 'SE']).default('SURAT_KELUAR'),
   jenisId: z.string().trim().max(200).optional(),
   bidangKode: z.string().trim().max(40).optional(),
-  tanggal: tanggalOpsional,
-  seqPilihan: z.coerce.number().int().min(1).optional()
+  tanggal: tanggalOpsional
 });
 
 export const skemaBatal = z.object({
@@ -77,7 +74,7 @@ export const skemaFilterSuratKeluar = skemaPagination.extend({
   search: z.string().trim().max(200).default(''),
   sifat: z.enum(['semua', SIFAT.BIASA, SIFAT.RAHASIA]).default('semua'),
   status: z.enum(['semua', STATUS_KELUAR.AKTIF, STATUS_KELUAR.DIBATALKAN]).default('semua'),
-  golongan: z.enum(['semua', 'SK', 'SE', 'LAINNYA']).default('semua'),
+  bidang: z.string().trim().max(40).default(''),
   tglMulai: tanggalOpsional,
   tglSelesai: tanggalOpsional
 });

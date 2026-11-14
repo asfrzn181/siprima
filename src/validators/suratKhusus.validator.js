@@ -7,7 +7,6 @@ export const skemaSuratKhusus = z.object({
   jenisId: z.string().trim().max(200).optional(),
   tentang: teks(200),
   nomor: z.string().trim().max(120).optional().default(''),
-  seqPilihan: z.coerce.number().int().min(1).optional(),
   tanggal: tanggalWajib,
   keterangan: z.string().trim().max(1000).default('')
 });
@@ -23,6 +22,7 @@ export const skemaBatalKhusus = z.object({
 export const skemaFilterSuratKhusus = skemaPagination.extend({
   search: z.string().trim().max(200).default(''),
   status: z.enum(['', 'Aktif', 'Dibatalkan']).default(''),
+  bidang: z.string().trim().max(40).default(''),
   tglMulai: tanggalOpsional,
   tglSelesai: tanggalOpsional
 });
