@@ -86,6 +86,10 @@ export const tambah = async (jenis, payload, profil) => {
 export const ubah = async (jenis, id, payload, profil) => {
   const lama = await cariSuratKhusus(jenis, id);
   if (!lama) throw galatTidakDitemukan(`Surat ${jenis} tidak ditemukan.`);
+  const bidang = await bidangSuratKhusus(lama.letterNumberId);
+  if (profil && !bolehAksesBidang(profil, bidang) && bidang) {
+    throw galatTidakDitemukan(`Surat ${jenis} tidak ditemukan.`);
+  }
   if (lama.status === 'Dibatalkan') {
     throw new AppError(409, 'SURAT_DIBATALKAN', `Surat ${jenis} yang dibatalkan tidak dapat diubah.`);
   }
@@ -105,6 +109,10 @@ export const ubah = async (jenis, id, payload, profil) => {
 export const hapus = async (jenis, id, alasan, profil) => {
   const lama = await cariSuratKhusus(jenis, id);
   if (!lama) throw galatTidakDitemukan(`Surat ${jenis} tidak ditemukan.`);
+  const bidang = await bidangSuratKhusus(lama.letterNumberId);
+  if (profil && !bolehAksesBidang(profil, bidang) && bidang) {
+    throw galatTidakDitemukan(`Surat ${jenis} tidak ditemukan.`);
+  }
   const hasil = await batalkanSuratKhusus(jenis, id, alasan, { uid: profil.uid, nama: profil.nama });
   await catatAudit({
     uid: profil.uid,

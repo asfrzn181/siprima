@@ -160,6 +160,9 @@ export const ubahMasuk = async (id, payload, profil) => {
   if (!bolehUbahSuratMasuk(profil)) throw galatAkses();
   const lama = await cariSuratMasuk(id);
   if (!lama) throw galatTidakDitemukan('Surat masuk tidak ditemukan.');
+  if (!bolehAksesDaftarBidang(profil, lama.aksesBidang)) {
+    throw galatTidakDitemukan('Surat masuk tidak ditemukan.');
+  }
   const perubahan = {
     tglTerima: payload.tglTerima,
     tglSurat: payload.tglSurat,

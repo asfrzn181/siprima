@@ -1,8 +1,9 @@
 import { one, query } from '../config/db.js';
 
 const petaUser = (row, izin = []) => {
+  const role = String(row.role || '').toLowerCase();
   const aksesData =
-    row.role === 'bidang' && row.bidang_kode
+    role === 'bidang' && row.bidang_kode
       ? row.bidang_akses_data === 'SEMUA'
         ? 'SEMUA'
         : 'SENDIRI'
@@ -12,7 +13,7 @@ const petaUser = (row, izin = []) => {
     uid: row.id,
     email: row.email,
     nama: row.nama,
-    role: row.role,
+    role,
     bidang: row.bidang_kode || '',
     aksesData,
     aktif: row.aktif === 1,

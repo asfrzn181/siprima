@@ -40,7 +40,7 @@ export const bolehBacaSurat = (profil, surat) => {
 export const bolehBuatSuratMasuk = (profil) => [PERAN.ADMIN, PERAN.OPERATOR].includes(profil?.role);
 
 export const bolehUbahSuratMasuk = (profil) =>
-  [PERAN.ADMIN, PERAN.OPERATOR, PERAN.PIMPINAN].includes(profil?.role);
+  [PERAN.ADMIN, PERAN.OPERATOR].includes(profil?.role);
 
 export const bolehTindakLanjut = (profil, surat) =>
   adalahBidang(profil) && Array.isArray(surat?.aksesBidang) && surat.aksesBidang.includes(profil.bidang);

@@ -10,6 +10,7 @@ import { AppError, galatAkses, galatTidakDitemukan } from '../utils/AppError.js'
 import {
   adalahAdmin,
   adalahBidang,
+  adalahOperator,
   adalahPengelola,
   bolehAksesBidang,
   bolehBacaSurat,
@@ -218,7 +219,7 @@ export const ubahKeluar = async (id, perubahan, profil) => {
 };
 
 export const batalkanKeluar = async (id, alasan, profil) => {
-  if (!adalahPengelola(profil)) throw galatAkses('Pembatalan hanya untuk admin atau pimpinan.');
+  if (!adalahPengelola(profil) && !adalahOperator(profil)) throw galatAkses('Pembatalan hanya untuk admin, pimpinan, atau operator.');
   const lama = await cariSuratKeluar(id);
   if (!lama) throw galatTidakDitemukan('Surat keluar tidak ditemukan.');
   if (lama.status === STATUS_KELUAR.DIBATALKAN) {
