@@ -83,11 +83,14 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     form.querySelectorAll('input, select, textarea').forEach((field) => {
       const khususBidang =
         bidangSaja &&
-        ['jenisId', 'nomorCari', 'tglSurat', 'bidangPembuat', 'sifat', 'nomorGenerated'].includes(field.name);
+        ['bidangPembuat', 'nomorGenerated'].includes(field.name);
       field.disabled = bacaSaja || khususBidang;
     });
-    document.querySelectorAll('input[name="aksesBidang"], input[name="tandaTangan"]').forEach((input) => {
+    document.querySelectorAll('input[name="aksesBidang"]').forEach((input) => {
       input.disabled = bacaSaja || !bolehAturAkses;
+    });
+    document.querySelectorAll('input[name="tandaTangan"]').forEach((input) => {
+      input.disabled = bacaSaja;
     });
     simpan.hidden = bacaSaja || !bolehBuat || !milikSendiri;
     generate.hidden = Boolean(item) || !bolehBuat;
