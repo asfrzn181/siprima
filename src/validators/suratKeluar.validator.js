@@ -6,7 +6,6 @@ const teks = (maks) => z.string().trim().min(1, 'Wajib diisi.').max(maks);
 
 export const skemaPayloadSuratKeluar = z.object({
   jenisId: z.string().trim().min(1, 'Jenis nomor wajib dipilih.').max(200),
-  reservationId: z.string().trim().max(200).optional().default(''),
   tglSurat: tanggalWajib,
   bidangPembuat: z.string().trim().max(40).optional(),
   tujuan: teks(200),
@@ -14,9 +13,7 @@ export const skemaPayloadSuratKeluar = z.object({
   isiRingkas: teks(2000),
   sifat: z.enum([SIFAT.BIASA, SIFAT.RAHASIA]).default(SIFAT.BIASA),
   tandaTangan: z.enum(['TTE', 'BASAH']).default('BASAH'),
-  aksesBidang: z.array(z.string().trim().max(40)).default([]),
-  fileUrl: z.string().trim().max(1000).default(''),
-  idempotencyKey: z.string().trim().max(200).optional()
+  aksesBidang: z.array(z.string().trim().max(40)).default([])
 });
 
 export const skemaUbahSuratKeluar = z.object({
@@ -28,8 +25,7 @@ export const skemaUbahSuratKeluar = z.object({
   tandaTangan: z.enum(['TTE', 'BASAH']).optional(),
   aksesBidang: z.array(z.string().trim().max(40)).optional(),
   fileUrl: z.string().trim().max(1000).optional(),
-  fileId: z.string().trim().max(300).optional(),
-  dikirimKeLuar: z.boolean().optional()
+  fileId: z.string().trim().max(300).optional()
 });
 
 export const skemaReservasi = z.object({
@@ -64,10 +60,6 @@ export const skemaKoreksi = z.object({
 
 export const skemaGunakanUlang = z.object({
   payload: skemaPayloadSuratKeluar
-});
-
-export const skemaPengiriman = z.object({
-  dikirimKeLuar: z.boolean()
 });
 
 export const skemaFilterSuratKeluar = skemaPagination.extend({

@@ -3,9 +3,7 @@ import * as controller from '../controllers/suratKeluar.controller.js';
 import { IZIN, PERAN } from '../constants/index.js';
 import { wajibLogin } from '../middlewares/auth.js';
 import { verifikasiCsrf } from '../middlewares/csrf.js';
-import { batasiUnggah } from '../middlewares/rateLimit.js';
 import { izinkan, wajibIzin } from '../middlewares/role.js';
-import { unggahScan } from '../middlewares/upload.js';
 import { validasi } from '../middlewares/validate.js';
 import {
   skemaBatal,
@@ -13,7 +11,6 @@ import {
   skemaGunakanUlang,
   skemaKoreksi,
   skemaPayloadSuratKeluar,
-  skemaPengiriman,
   skemaUbahSuratKeluar
 } from '../validators/suratKeluar.validator.js';
 
@@ -61,14 +58,6 @@ suratKeluarRouter.post(
   controller.batal
 );
 suratKeluarRouter.post(
-  '/:id/kirim',
-  verifikasiCsrf,
-  izinkan(PERAN.ADMIN),
-  wajibIzin(IZIN.SURAT_KELUAR_KIRIM),
-  validasi(skemaPengiriman),
-  controller.kirim
-);
-suratKeluarRouter.post(
   '/:id/koreksi',
   verifikasiCsrf,
   izinkan(PERAN.ADMIN, PERAN.PIMPINAN),
@@ -83,13 +72,4 @@ suratKeluarRouter.post(
   wajibIzin(IZIN.SURAT_KELUAR_PAKAI_ULANG),
   validasi(skemaGunakanUlang),
   controller.pakaiUlang
-);
-suratKeluarRouter.post(
-  '/:id/scan',
-  verifikasiCsrf,
-  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.BIDANG),
-  wajibIzin(IZIN.SURAT_KELUAR_TULIS),
-  batasiUnggah,
-  unggahScan,
-  controller.unggahScan
 );

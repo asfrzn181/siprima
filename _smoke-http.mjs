@@ -44,24 +44,32 @@ try {
     .get(`/api/nomor/tersedia?menu=SURAT_KELUAR&jenisId=${nomor.id}&bidangKode=${bidang.kode}&tanggal=${encodeURIComponent(tanggal)}`);
   cek('GET /api/nomor/tersedia', tersedia.status === 200 && Array.isArray(tersedia.body.data.items), `status ${tersedia.status}`);
 
-  // Reservasi lewat HTTP.
-  const reservasi = await agen.post('/api/nomor/reservasi').set(headers).send({
+  // Pratinjau nomor bersifat read-only: tidak boleh ada baris baru.
+  const tahun = new Date(tanggal).getUTCFullYear();
+  const [sebelumPratinjau] = await query(
+    'SELECT COUNT(*) AS jumlah FROM letter_numbers WHERE menu = ? AND tahun = ?',
+    ['SURAT_KELUAR', tahun]
+  );
+  const pratinjau = await agen.post('/api/nomor/pratinjau').set(headers).send({
     menu: 'SURAT_KELUAR',
     jenisId: String(nomor.id),
     bidangKode: bidang.kode,
-    tanggal,
-    idempotencyKey: `http-uji-${Date.now()}`
+    tanggal
   });
-  cek('POST /api/nomor/reservasi', reservasi.status === 201 && reservasi.body.data.id, `status ${reservasi.status}`);
-  if (reservasi.status !== 201) throw new Error(JSON.stringify(reservasi.body));
-  const reservasiId = reservasi.body.data.id;
-  bersih.nomor.push(reservasiId);
-  cek('nomor hasil reservasi berpola', /^\d+\/\d+\/BKPSDMD\/[A-Z]+\/\d{4}$/.test(reservasi.body.data.full_number), reservasi.body.data.full_number);
+  const [sesudahPratinjau] = await query(
+    'SELECT COUNT(*) AS jumlah FROM letter_numbers WHERE menu = ? AND tahun = ?',
+    ['SURAT_KELUAR', tahun]
+  );
+  cek('POST /api/nomor/pratinjau', pratinjau.status === 200, `status ${pratinjau.status}`);
+  cek(
+    'pratinjau tidak menyimpan nomor',
+    Number(sesudahPratinjau.jumlah) === Number(sebelumPratinjau.jumlah),
+    `${sebelumPratinjau.jumlah} -> ${sesudahPratinjau.jumlah}`
+  );
 
-  // Terbitkan surat keluar.
+  // Terbitkan surat keluar langsung tanpa reservasi.
   const keluar = await agen.post('/api/surat-keluar').set(headers).send({
     jenisId: String(nomor.id),
-    reservationId: String(reservasiId),
     tglSurat: tanggal,
     bidangPembuat: bidang.kode,
     tujuan: 'Uji HTTP',
@@ -70,10 +78,23 @@ try {
     sifat: 'biasa',
     tandaTangan: 'BASAH',
     aksesBidang: [],
-    fileUrl: ''
+    noSurat: '999/999/BKPSDMD/ZZZ/1999'
   });
   cek('POST /api/surat-keluar', keluar.status === 201, `status ${keluar.status} ${keluar.body.message || ''}`);
-  if (keluar.status === 201) bersih.keluar.push(keluar.body.data.id);
+  if (keluar.status === 201) {
+    bersih.keluar.push(keluar.body.data.id);
+    bersih.nomor.push(keluar.body.data.letterNumberId);
+    cek(
+      'nomor surat keluar berpola',
+      /^\d+\/\d+\/BKPSDMD\/[A-Z]+\/\d{4}$/.test(keluar.body.data.noSurat || ''),
+      keluar.body.data.noSurat
+    );
+    cek(
+      'nomor tidak dapat dipaksa dari klien',
+      keluar.body.data.noSurat !== '999/999/BKPSDMD/ZZZ/1999',
+      keluar.body.data.noSurat
+    );
+  }
 
   // SK lewat HTTP.
   const sk = await agen.post('/api/sk').set(headers).send({
@@ -107,22 +128,6 @@ try {
     cek('nomor SE berpola', /^\d+ TAHUN \d{4}$/.test(se.body.data.nomor), se.body.data.nomor);
   }
 
-  // seqPilihan sudah dihapus: nomor selalu otomatis memakai urutan terkecil
-  // yang tersedia, sehingga nilai seqPilihan dari klien lama harus diabaikan.
-  const abaikanPilihan = await agen.post('/api/nomor/reservasi').set(headers).send({
-    menu: 'SURAT_KELUAR',
-    jenisId: String(nomor.id),
-    bidangKode: bidang.kode,
-    tanggal,
-    seqPilihan: 999999,
-    idempotencyKey: `http-uji-abaikan-${Date.now()}`
-  });
-  cek(
-    'seqPilihan diabaikan dan nomor otomatis tetap dibuat',
-    abaikanPilihan.status === 201 && abaikanPilihan.body.data.id,
-    `status ${abaikanPilihan.status}`
-  );
-  if (abaikanPilihan.status === 201) bersih.nomor.push(abaikanPilihan.body.data.id);
 } catch (error) {
   console.error('ERROR', error?.stack || error);
 } finally {

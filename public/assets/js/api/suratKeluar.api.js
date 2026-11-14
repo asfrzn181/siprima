@@ -19,8 +19,6 @@ export const tambahSuratKeluar = (data) => api.post('/surat-keluar', data);
 export const ubahSuratKeluar = (id, data) => api.put(`/surat-keluar/${encodeURIComponent(id)}`, data);
 export const batalkanSuratKeluar = (id, alasan) =>
   api.post(`/surat-keluar/${encodeURIComponent(id)}/batal`, { alasan });
-export const kirimSuratKeluar = (id, dikirimKeLuar) =>
-  api.post(`/surat-keluar/${encodeURIComponent(id)}/kirim`, { dikirimKeLuar });
 export const koreksiSuratKeluar = (id, payload, reason) =>
   api.post(`/surat-keluar/${encodeURIComponent(id)}/koreksi`, { payload, reason });
 export const pakaiUlangNomor = (id, payload) =>
@@ -28,16 +26,7 @@ export const pakaiUlangNomor = (id, payload) =>
 export const eksporSuratKeluar = (filter) =>
   api.get(`/surat-keluar/export${query({ ...filter, limit: 5000 })}`);
 
-export const unggahScanKeluar = (id, file) => {
-  const form = new FormData();
-  form.append('scan', file);
-  return api.unggah(`/surat-keluar/${encodeURIComponent(id)}/scan`, form);
-};
-
-export const urlBerkasKeluar = (id) => `/api/surat-keluar/${encodeURIComponent(id)}/berkas`;
-
 export const pratinjauNomor = (data) => api.post('/nomor/pratinjau', data);
-export const reservasiNomor = (data) => api.post('/nomor/reservasi', data);
 export const nomorTersedia = (filter) => api.get(`/nomor/tersedia${bangunQuery(filter)}`);
 export const kedaluwarsaNomor = () => api.post('/nomor/kedaluwarsa');
 export const cariNomorLengkap = (nomor) => api.get(`/nomor/cari${bangunQuery({ nomor })}`);

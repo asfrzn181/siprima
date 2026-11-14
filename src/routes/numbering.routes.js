@@ -41,14 +41,6 @@ numberingRouter.post(
   controller.pratinjauNomor
 );
 numberingRouter.post(
-  '/reservasi',
-  verifikasiCsrf,
-  izinkan(PERAN.ADMIN, PERAN.OPERATOR, PERAN.BIDANG),
-  wajibIzin(IZIN.SURAT_KELUAR_TULIS),
-  validasi(skemaReservasi),
-  controller.reservasiNomor
-);
-numberingRouter.post(
   '/kedaluwarsa',
   verifikasiCsrf,
   izinkan(PERAN.ADMIN, PERAN.PIMPINAN),

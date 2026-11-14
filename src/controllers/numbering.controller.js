@@ -3,7 +3,6 @@ import {
   daftarTersedia,
   kedaluwarsa,
   pratinjau,
-  reservasi,
   verifikasi
 } from '../services/numbering.service.js';
 import { kirimSukses } from '../utils/response.js';
@@ -13,13 +12,6 @@ export const pratinjauNomor = async (req, res) =>
 
 export const tersedia = async (req, res) =>
   kirimSukses(res, { data: await daftarTersedia(req.query, req.profile) });
-
-export const reservasiNomor = async (req, res) =>
-  kirimSukses(res, {
-    status: 201,
-    message: 'Nomor berhasil direservasi.',
-    data: await reservasi(req.body, req.profile)
-  });
 
 export const kedaluwarsaNomor = async (req, res) =>
   kirimSukses(res, { data: { jumlah: (await kedaluwarsa(req.profile)).length } });

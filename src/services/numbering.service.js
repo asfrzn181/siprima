@@ -1,7 +1,11 @@
 import { PERAN } from '../constants/index.js';
 import { MENU_NOMOR } from '../utils/nomor.js';
 import { cariSuratKeluar } from '../repositories/suratKeluar.repository.js';
-import { reservasiNomor, terbitkanNomor } from '../repositories/numbering.repository.js';
+import {
+  buatSuratKeluarBernomor,
+  reservasiNomor,
+  terbitkanNomor
+} from '../repositories/numbering.repository.js';
 import {
   kedaluwarsakanReservasi,
   perbaruiMetadataNomor,
@@ -40,16 +44,15 @@ export const daftarTersedia = (payload, profil) =>
     tanggal: payload.tanggal
   });
 
-export const reservasi = (payload, profil) =>
-  reservasiNomor({
-    menu: payload.menu || MENU_NOMOR.SURAT_KELUAR,
-    jenisId: payload.jenisId,
-    bidangKode: bidangPayload(payload, profil),
-    tanggal: payload.tanggal,
-    aktor: aktorDari(profil),
-    idempotencyKey: payload.idempotencyKey,
-    reservationIdLama: payload.reservationIdLama,
-    metadata: { perihal: payload.perihal || '', tujuan: payload.tujuan || '' }
+// Terbitkan surat keluar langsung: nomor final ditentukan server di dalam
+// transaksi Simpan. Pratinjau di klien hanya informatif.
+export const terbitkanSuratKeluar = ({ jenisId, bidangKode, tanggal, payload, profil }) =>
+  buatSuratKeluarBernomor({
+    jenisId,
+    bidangKode,
+    tanggal,
+    payload,
+    aktor: aktorDari(profil)
   });
 
 export const terbitkan = async (payload, profil) => {

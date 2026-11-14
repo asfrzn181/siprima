@@ -2,19 +2,13 @@ import { punyaIzin } from '../api/client.js';
 import { cariNomor, daftarNomor } from '../api/master.api.js';
 import {
   batalkanSuratKeluar,
-  kirimSuratKeluar,
-  nomorTersedia,
   pratinjauNomor,
-  reservasiNomor,
   tambahSuratKeluar,
-  ubahSuratKeluar,
-  unggahScanKeluar
+  ubahSuratKeluar
 } from '../api/suratKeluar.api.js';
 import { createAutocomplete } from '../components/autocomplete.js';
 import { dialogInput, showToast } from '../components/ui.js';
 import { inputTanggal, tanggalIso } from '../utils/format.js';
-
-const MIME = ['application/pdf', 'image/jpeg', 'image/png'];
 
 const opsiBidangAkses = (wadah, daftar, terpilih = []) => {
   wadah.replaceChildren();
@@ -59,11 +53,11 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
   const bidangSaja = sesi.profile.role === 'bidang';
   const bolehBuat = punyaIzin(sesi.profile, 'surat_keluar.tulis');
   const bolehBatal = punyaIzin(sesi.profile, 'surat_keluar.batal');
-  const bolehKirim = punyaIzin(sesi.profile, 'surat_keluar.kirim');
   const bolehAturAkses = bolehBuat && !bidangSaja;
   const selectJenis = form.elements.jenisId;
   const inputCari = form.elements.nomorCari;
   let masters = [];
+  let nomorPratinjau = '';
 
   const tampilPesan = (teks) => {
     pesan.textContent = teks;
@@ -71,10 +65,6 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
   };
 
   const bidangTerpilih = () => form.elements.bidangPembuat.value || sesi.profile.bidang;
-
-  const bersihkanReservasi = () => {
-    form.elements.reservationId.value = '';
-  };
 
   const isiBidang = (terpilih) => {
     form.elements.bidangPembuat.replaceChildren();
@@ -93,32 +83,37 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
       const khususBidang =
         bidangSaja &&
         ['jenisId', 'nomorCari', 'tglSurat', 'bidangPembuat', 'sifat', 'nomorGenerated'].includes(field.name);
-      field.disabled = bacaSaja || khususBidang || (field.name === 'scan' && !bolehBuat);
+      field.disabled = bacaSaja || khususBidang;
     });
     document.querySelectorAll('input[name="aksesBidang"], input[name="tandaTangan"]').forEach((input) => {
       input.disabled = bacaSaja || !bolehAturAkses;
     });
     simpan.hidden = bacaSaja || !bolehBuat || !milikSendiri;
     generate.hidden = Boolean(item) || !bolehBuat;
-    document.querySelector('#berkas-opsi').hidden = !bolehBuat;
     tombolBatal.hidden = !item || !bolehBatal;
-    form.elements.dikirimKeLuar.disabled = !bolehKirim;
   };
 
+  // Pratinjau hanya membaca data. Tidak ada INSERT/UPDATE sampai pengguna
+  // menekan Simpan; nomor final tetap ditentukan server saat penyimpanan.
   const muatTersedia = async () => {
-    if (!selectJenis.value || !form.elements.tglSurat.value) return;
+    if (!selectJenis.value || !form.elements.tglSurat.value) {
+      nomorPratinjau = '';
+      form.elements.nomorGenerated.value = '';
+      return;
+    }
     try {
-      const hasil = await nomorTersedia({
+      const hasil = await pratinjauNomor({
         menu: 'SURAT_KELUAR',
         jenisId: selectJenis.value,
         bidangKode: bidangTerpilih(),
         tanggal: tanggalIso(form.elements.tglSurat.value)
       });
-      form.elements.nomorGenerated.value = hasil.items?.length
-        ? hasil.items[0].nomor
-        : hasil.nomorBerikutnya || '';
+      nomorPratinjau = hasil?.noSurat || '';
+      form.elements.nomorGenerated.value = nomorPratinjau;
     } catch (error) {
-      tampilPesan(error.message || 'Daftar nomor tersedia gagal dimuat.');
+      nomorPratinjau = '';
+      form.elements.nomorGenerated.value = '';
+      tampilPesan(error.message || 'Pratinjau nomor gagal dimuat.');
     }
   };
 
@@ -132,16 +127,13 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
       : 'Nomor surat dibuat otomatis oleh server memakai nomor terkecil yang tersedia.';
     form.elements.id.value = item?.id || '';
     form.elements.noSurat.value = item?.noSurat || '';
-    bersihkanReservasi();
-    form.elements.idempotencyKey.value = crypto.randomUUID();
     form.elements.tglSurat.value = inputTanggal(item?.tglSurat || new Date());
     form.elements.tujuan.value = item?.tujuan || '';
     form.elements.hal.value = item?.hal || '';
     form.elements.isiRingkas.value = item?.isiRingkas || '';
     form.elements.sifat.value = item?.sifat || 'biasa';
-    form.elements.scanUrl.value = item?.fileUrl || '';
-    form.elements.dikirimKeLuar.checked = item?.dikirimKeLuar === true;
-    form.elements.nomorGenerated.value = item?.noSurat || '';
+    nomorPratinjau = item?.noSurat || '';
+    form.elements.nomorGenerated.value = nomorPratinjau;
     form.elements.nomorGenerated.required = !item;
     [...form.querySelectorAll('input[name="tandaTangan"]')].forEach((input) => {
       input.checked = input.value === (item?.tandaTangan || 'BASAH');
@@ -177,8 +169,6 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     const bidangKode = bidangTerpilih();
     return {
       jenisId,
-      reservationId: form.elements.reservationId.value,
-      idempotencyKey: form.elements.idempotencyKey.value,
       tglSurat: tanggalIso(form.elements.tglSurat.value),
       bidangPembuat: bidangKode,
       tujuan: form.elements.tujuan.value.trim(),
@@ -188,8 +178,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
       tandaTangan: form.querySelector('input[name="tandaTangan"]:checked')?.value || 'BASAH',
       aksesBidang: [...document.querySelectorAll('input[name="aksesBidang"]:checked')].map(
         (input) => input.value
-      ),
-      fileUrl: form.elements.scanUrl.value.trim()
+      )
     };
   };
 
@@ -229,36 +218,10 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
       if (!selectJenis.value || !form.elements.tglSurat.value) {
         throw new Error('Pilih jenis nomor dan tanggal surat terlebih dahulu.');
       }
-      const hasil = await reservasiNomor({
-        menu: 'SURAT_KELUAR',
-        jenisId: selectJenis.value,
-        bidangKode: bidangTerpilih(),
-        tanggal: tanggalIso(form.elements.tglSurat.value),
-        reservationIdLama: form.elements.reservationId.value || undefined,
-        idempotencyKey: crypto.randomUUID(),
-        perihal: form.elements.hal.value.trim(),
-        tujuan: form.elements.tujuan.value.trim()
-      });
-      form.elements.reservationId.value = hasil.id;
-      form.elements.nomorGenerated.value = hasil.full_number;
-      form.elements.noSurat.value = hasil.full_number;
-    } catch (error) {
-      bersihkanReservasi();
-      form.elements.nomorGenerated.value = '';
-      try {
-        const pratinjau = await pratinjauNomor({
-          menu: 'SURAT_KELUAR',
-          jenisId: selectJenis.value,
-          bidangKode: bidangTerpilih(),
-          tanggal: tanggalIso(form.elements.tglSurat.value)
-        });
-        if (pratinjau?.noSurat) {
-          form.elements.nomorGenerated.value = `${pratinjau.noSurat} (pratinjau)`;
-        }
-      } catch {
-        form.elements.nomorGenerated.value = '';
+      await muatTersedia();
+      if (!nomorPratinjau) {
+        tampilPesan('Nomor belum tersedia. Periksa jenis nomor, bidang, dan tanggal surat.');
       }
-      tampilPesan(error.message || 'Nomor surat tidak dapat dibuat.');
     } finally {
       generate.disabled = false;
     }
@@ -272,11 +235,8 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
       return tampilPesan('Semua field wajib diisi.');
     }
     if (!data.jenisId) return tampilPesan('Pilih jenis nomor dari autocomplete.');
-    const file = form.elements.scan.files[0];
-    if (file && (!MIME.includes(file.type) || file.size > 5 * 1024 * 1024)) {
-      return tampilPesan('File harus PDF/JPG/PNG maksimal 5 MB.');
-    }
     simpan.disabled = true;
+    const pratinjau = nomorPratinjau;
     try {
       const id = form.elements.id.value;
       let tersimpan;
@@ -288,16 +248,26 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
           isiRingkas: data.isiRingkas,
           sifat: data.sifat,
           tandaTangan: data.tandaTangan,
-          aksesBidang: data.aksesBidang,
-          fileUrl: data.fileUrl
+          aksesBidang: data.aksesBidang
         });
-        if (bolehKirim) await kirimSuratKeluar(id, form.elements.dikirimKeLuar.checked);
       } else {
         tersimpan = await tambahSuratKeluar(data);
       }
-      if (file) await unggahScanKeluar(tersimpan.id, file);
       tutup();
-      showToast(id ? 'Surat keluar diperbarui.' : 'Nomor surat diterbitkan.');
+      if (id) {
+        showToast('Surat keluar diperbarui.');
+      } else {
+        const nomorFinal = tersimpan?.noSurat || '';
+        if (pratinjau && nomorFinal && pratinjau !== nomorFinal) {
+          showToast(
+            `Nomor ${pratinjau} sudah digunakan, surat Anda disimpan dengan nomor ${nomorFinal}.`
+          );
+        } else if (nomorFinal) {
+          showToast(`Surat keluar disimpan dengan nomor ${nomorFinal}.`);
+        } else {
+          showToast('Surat keluar disimpan.');
+        }
+      }
       await onSaved();
     } catch (error) {
       tampilPesan(error.message || 'Gagal menyimpan surat keluar.');

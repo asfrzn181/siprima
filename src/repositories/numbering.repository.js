@@ -451,7 +451,13 @@ export const alokasikanDalamTransaksi = async (
     previousHash: auditHead
   });
 
-  return { id: letterId, nomor, reuse: Boolean(pilihan.row), existing: false };
+  return {
+    id: letterId,
+    nomor,
+    reuse: Boolean(pilihan.row),
+    existing: false,
+    rowVersion: after.row_version
+  };
 };
 
 export const reservasiNomor = async ({
@@ -651,5 +657,84 @@ export const terbitkanNomor = async ({ reservationId, payload, aktor }) =>
     const [surat] = await koneksi.query('SELECT * FROM surat_keluar WHERE id = ?', [suratId]);
     return { ...petaKeluar(surat[0]), aksesBidang: akses, letterNumberId: before.id };
   });
+
+/**
+ * Terbitkan surat keluar langsung tanpa reservasi.
+ *
+ * Nomor resmi dialokasikan di dalam transaksi yang sama dengan penyimpanan
+ * surat. Server selalu memilih nomor terkecil yang tersedia saat Simpan,
+ * sehingga pratinjau di klien tidak pernah mengikat nomor.
+ */
+export const buatSuratKeluarBernomor = async ({ jenisId, bidangKode, tanggal, payload, aktor }) => {
+  const konteks = await siapkanKonteks({
+    menu: MENU_NOMOR.SURAT_KELUAR,
+    jenisId,
+    bidangKode
+  });
+  const tanggalSurat = keTanggal(tanggal);
+  if (!tanggalSurat) throw new AppError(400, 'TANGGAL_TIDAK_VALID', 'Tanggal surat tidak valid.');
+  await pastikanCounter(bagianJakarta(tanggalSurat).year, konteks.menu);
+
+  return withTransaction(async (koneksi) => {
+    const alokasi = await alokasikanDalamTransaksi(koneksi, {
+      menu: konteks.menu,
+      master: konteks.master,
+      bidangKode: konteks.bidangKode,
+      tanggal: tanggalSurat,
+      aktor,
+      metadata: { perihal: payload.hal || '', tujuan: payload.tujuan || '' },
+      status: STATUS_NOMOR.ISSUED
+    });
+
+    const aktorData = dataAktor(aktor);
+    const akses =
+      payload.sifat === 'rahasia'
+        ? [...new Set([...(payload.aksesBidang || []), konteks.bidangKode].filter(Boolean))]
+        : [];
+    const versi = Number(alokasi.rowVersion || 1);
+
+    const [hasil] = await koneksi.query(
+      `INSERT INTO surat_keluar
+         (no_surat, jenis_id, golongan, tgl_surat, tujuan, hal, isi_ringkas, sifat, tanda_tangan,
+          file_id, file_url, bidang_pembuat_kode, dibuat_oleh_id, dibuat_oleh_nama,
+          status, alasan_batal, dikirim_ke_luar, letter_number_id, letter_row_version, dibuat_pada)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '', '', ?, ?, ?, 'Aktif', '', 0, ?, ?, UTC_TIMESTAMP(3))`,
+      [
+        alokasi.nomor.full_number,
+        konteks.master ? konteks.master.id : null,
+        normalizeGolongan(alokasi.nomor.golongan),
+        tanggalSurat,
+        payload.tujuan,
+        payload.hal,
+        payload.isiRingkas,
+        payload.sifat,
+        payload.tandaTangan || 'BASAH',
+        konteks.bidangKode,
+        aktorData.uid,
+        aktorData.nama,
+        alokasi.id,
+        versi
+      ]
+    );
+    const suratId = hasil.insertId;
+
+    for (const kode of akses) {
+      await koneksi.query(
+        'INSERT INTO surat_keluar_akses_bidang (surat_keluar_id, bidang_kode) VALUES (?, ?)',
+        [suratId, kode]
+      );
+    }
+
+    await koneksi.query(
+      `UPDATE letter_numbers
+          SET letter_id = ?, perihal = ?, tujuan = ?, letter_date = ?
+        WHERE id = ?`,
+      [suratId, payload.hal, payload.tujuan, tanggalSurat, alokasi.id]
+    );
+
+    const [surat] = await koneksi.query('SELECT * FROM surat_keluar WHERE id = ?', [suratId]);
+    return { ...petaKeluar(surat[0]), aksesBidang: akses, letterNumberId: alokasi.id };
+  });
+};
 
 export { reservasiNomor as reserveLetterNumber, terbitkanNomor as issueLetterNumber };

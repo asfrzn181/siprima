@@ -5,9 +5,7 @@ import {
   berkasKeluar,
   daftarKeluar,
   eksporKeluar,
-  kirimKeluar,
   koreksiKeluar,
-  lampirkanScanKeluar,
   pakaiUlangNomor,
   tambahKeluar,
   ubahKeluar
@@ -48,12 +46,6 @@ export const batal = async (req, res) =>
     data: await batalkanKeluar(req.params.id, req.body.alasan, req.profile)
   });
 
-export const kirim = async (req, res) =>
-  kirimSukses(res, {
-    message: 'Status pengiriman diperbarui.',
-    data: await kirimKeluar(req.params.id, req.body.dikirimKeLuar, req.profile)
-  });
-
 export const koreksi = async (req, res) =>
   kirimSukses(res, {
     message: 'Nomor surat berhasil dikoreksi.',
@@ -64,13 +56,6 @@ export const pakaiUlang = async (req, res) =>
   kirimSukses(res, {
     message: 'Nomor berhasil digunakan kembali.',
     data: await pakaiUlangNomor({ id: req.params.id, payload: req.body.payload, profil: req.profile })
-  });
-
-export const unggahScan = async (req, res) =>
-  kirimSukses(res, {
-    status: 201,
-    message: 'Scan berhasil diunggah.',
-    data: await lampirkanScanKeluar(req.params.id, req.file, req.profile)
   });
 
 export const unduhBerkas = async (req, res) =>

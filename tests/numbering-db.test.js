@@ -133,6 +133,116 @@ test('penomoran per menu: pola, pemakaian ulang, dan pembatalan', { skip: lewati
   }
 });
 
+test('surat keluar: pratinjau read-only dan nomor final dari server', { skip: lewati }, async () => {
+  const { query } = await import('../src/config/db.js');
+  const { buatSuratKeluarBernomor, tersediaNomor } = await import(
+    '../src/repositories/numbering.repository.js'
+  );
+  const { voidNomor } = await import('../src/repositories/numberingLanjutan.repository.js');
+  const { bagianJakarta } = await import('../src/utils/tanggal.js');
+
+  const { nomor, bidang } = await muatKonteks();
+  if (!nomor.length || !bidang.length) return;
+
+  const tanggal = new Date();
+  const tahun = bagianJakarta(tanggal).year;
+  const kodeBidang = bidang.kode;
+  const dibuat = { nomor: [], keluar: [] };
+  const [kepala] = await query('SELECT last_hash FROM letter_audit_heads WHERE id = 1');
+  const hashAwal = kepala ? String(kepala.last_hash || '') : '';
+
+  const hitung = async () => {
+    const [row] = await query(
+      'SELECT COUNT(*) AS jumlah FROM letter_numbers WHERE menu = ? AND tahun = ?',
+      ['SURAT_KELUAR', tahun]
+    );
+    return Number(row.jumlah);
+  };
+
+  const terbitkan = (overrides = {}) =>
+    buatSuratKeluarBernomor({
+      jenisId: nomor[0].id,
+      bidangKode: kodeBidang,
+      tanggal,
+      payload: {
+        jenisId: String(nomor[0].id),
+        tglSurat: tanggal,
+        bidangPembuat: kodeBidang,
+        tujuan: 'Uji alur',
+        hal: 'Uji alur',
+        isiRingkas: 'Uji alur',
+        sifat: 'biasa',
+        tandaTangan: 'BASAH',
+        aksesBidang: [],
+        ...overrides
+      },
+      aktor
+    });
+
+  try {
+    const awal = await tersediaNomor({
+      menu: 'SURAT_KELUAR',
+      jenisId: nomor[0].id,
+      bidangKode: kodeBidang,
+      tanggal
+    });
+    const seqAwal = awal.kecilTersedia;
+
+    // Pratinjau berulang tidak boleh membuat baris nomor.
+    const sebelum = await hitung();
+    await tersediaNomor({
+      menu: 'SURAT_KELUAR',
+      jenisId: nomor[0].id,
+      bidangKode: kodeBidang,
+      tanggal
+    });
+    await tersediaNomor({
+      menu: 'SURAT_KELUAR',
+      jenisId: nomor[0].id,
+      bidangKode: kodeBidang,
+      tanggal
+    });
+    assert.equal(await hitung(), sebelum, 'pratinjau tidak boleh menyimpan nomor');
+
+    const s1 = await terbitkan();
+    dibuat.keluar.push(s1.id);
+    dibuat.nomor.push(s1.letterNumberId);
+    assert.equal(s1.noSurat, `${nomor[0].kode}/${seqAwal}/BKPSDMD/${kodeBidang}/${tahun}`);
+
+    // Pengguna kedua yang menyimpan setelahnya mendapat nomor berikutnya.
+    const s2 = await terbitkan();
+    dibuat.keluar.push(s2.id);
+    dibuat.nomor.push(s2.letterNumberId);
+    assert.equal(s2.noSurat, `${nomor[0].kode}/${seqAwal + 1}/BKPSDMD/${kodeBidang}/${tahun}`);
+
+    // Batal pada hari yang sama: nomor terkecil kembali tersedia untuk pratinjau.
+    await voidNomor({ letterNumberId: s1.letterNumberId, reason: 'Uji batal', aktor });
+    const setelahBatal = await tersediaNomor({
+      menu: 'SURAT_KELUAR',
+      jenisId: nomor[0].id,
+      bidangKode: kodeBidang,
+      tanggal
+    });
+    assert.equal(setelahBatal.kecilTersedia, seqAwal);
+    assert.equal(setelahBatal.items[0].seq, seqAwal);
+  } finally {
+    const idsKeluar = [...new Set(dibuat.keluar.filter(Boolean))];
+    const idsNomor = [...new Set(dibuat.nomor.filter(Boolean))];
+    if (idsKeluar.length) {
+      const tanda = idsKeluar.map(() => '?').join(',');
+      await query(`DELETE FROM surat_keluar_akses_bidang WHERE surat_keluar_id IN (${tanda})`, idsKeluar);
+      await query(`DELETE FROM surat_keluar WHERE id IN (${tanda})`, idsKeluar);
+    }
+    if (idsNomor.length) {
+      const tanda = idsNomor.map(() => '?').join(',');
+      await query(`DELETE FROM letter_audit_log WHERE letter_id IN (${tanda})`, idsNomor);
+      await query(`DELETE FROM letter_idempotency WHERE letter_id IN (${tanda})`, idsNomor);
+      await query(`DELETE FROM letter_numbers WHERE id IN (${tanda})`, idsNomor);
+    }
+    await query('UPDATE letter_audit_heads SET last_hash = ? WHERE id = 1', [hashAwal]);
+  }
+});
+
 after(async () => {
   if (!aktif) return;
   const { tutupPool } = await import('../src/config/db.js');

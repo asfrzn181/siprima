@@ -41,7 +41,6 @@ const KOLOM = {
   bidangPembuat: 'bidang_pembuat_kode',
   status: 'status',
   alasanBatal: 'alasan_batal',
-  dikirimKeLuar: 'dikirim_ke_luar',
   letterNumberId: 'letter_number_id',
   letterRowVersion: 'letter_row_version',
   dibuatPada: 'dibuat_pada',
@@ -66,7 +65,6 @@ export const petaKeluar = (row) => ({
   status: row.status,
   alasanBatal: row.alasan_batal,
   aksesBidang: [],
-  dikirimKeLuar: row.dikirim_ke_luar === 1,
   letterNumberId: row.letter_number_id,
   letterRowVersion: row.letter_row_version,
   dibuatPada: row.dibuat_pada,
@@ -135,7 +133,7 @@ export const ubahSuratKeluar = async (id, data) => {
     for (const [kunci, kolom] of Object.entries(KOLOM)) {
       if (data[kunci] === undefined) continue;
       bagian.push(`${kolom} = ?`);
-      params.push(kunci === 'dikirimKeLuar' ? (data[kunci] === true ? 1 : 0) : data[kunci]);
+      params.push(data[kunci]);
     }
     bagian.push('diubah_pada = NOW(3)');
     params.push(id);
@@ -144,11 +142,6 @@ export const ubahSuratKeluar = async (id, data) => {
   });
   return cariSuratKeluar(id);
 };
-
-export const setBerkasSuratKeluar = (id, { fileId, fileUrl = '' }) =>
-  ubahSuratKeluar(id, { fileId: String(fileId || ''), fileUrl: String(fileUrl || '') });
-
-export const setPengiriman = (id, dikirim) => ubahSuratKeluar(id, { dikirimKeLuar: dikirim === true });
 
 export const cariSuratKeluarByNomor = async (nomor) => {
   const row = await one('SELECT * FROM surat_keluar WHERE no_surat = ? LIMIT 1', [

@@ -81,8 +81,6 @@
         <form id="form" class="form-grid">
         <input name="id" type="hidden">
         <input name="noSurat" type="hidden">
-        <input name="reservationId" type="hidden">
-        <input name="idempotencyKey" type="hidden">
         <label>Jenis nomor
           <input name="nomorCari" placeholder="Ketik kode, contoh 800" autocomplete="off" required>
           <select name="jenisId" hidden></select>
@@ -91,43 +89,24 @@
         <label>Bidang pembuat<select name="bidangPembuat" required></select></label>
         <label>Tujuan<input name="tujuan" maxlength="200" required></label>
         <label>Sifat<select name="sifat"><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
-        <label class="wide">Hal<input name="hal" maxlength="200" required></label>
-        <label class="wide">Nomor surat
-          <input name="nomorGenerated" readonly placeholder="Nomor dibuat otomatis oleh server">
-          <span class="form-actions"><button id="generate-number" class="button secondary" type="button">Generate Nomor</button></span>
-        </label>
-        <label class="wide">Isi ringkas<textarea name="isiRingkas" rows="4" maxlength="2000" required></textarea></label>
-        <label class="wide">Metode tanda tangan
+        <label>Metode tanda tangan
           <span class="check-grid">
             <label class="check-option"><input type="radio" name="tandaTangan" value="TTE" checked><span>TTE</span></label>
             <label class="check-option"><input type="radio" name="tandaTangan" value="BASAH"><span>BASAH</span></label>
           </span>
         </label>
+        <label class="wide">Hal<input name="hal" maxlength="200" required></label>
+        <label class="wide">Nomor surat (pratinjau)
+          <input name="nomorGenerated" readonly placeholder="Nomor dibuat otomatis oleh server saat disimpan">
+          <span class="form-actions"><button id="generate-number" class="button secondary" type="button">Tampilkan Nomor</button></span>
+          <small class="muted">Pratinjau bisa berubah jika ada pengguna lain yang lebih dulu menyimpan. Nomor final ditentukan server.</small>
+        </label>
+        <label class="wide">Isi ringkas<textarea name="isiRingkas" rows="4" maxlength="2000" required></textarea></label>
         <fieldset id="access" class="wide" hidden>
           <legend>Bidang yang boleh melihat surat rahasia</legend>
           <div id="access-options" class="check-grid"></div>
           <small class="muted">Bidang pembuat selalu ditambahkan otomatis.</small>
         </fieldset>
-        <div id="berkas-opsi" class="wide" data-berkas>
-          <span class="segmented" role="radiogroup" aria-label="Sumber berkas scan">
-            <label><input type="radio" name="sumberBerkas" value="upload" checked> Unggah berkas</label>
-            <label><input type="radio" name="sumberBerkas" value="drive"> Tautan Google Drive</label>
-          </span>
-          <div id="file-label" data-berkas-panel="upload" class="segmented-panel">
-            <label>Scan final — opsional (PDF/JPG/PNG, maksimal 5 MB)
-              <input name="scan" type="file" accept="application/pdf,image/jpeg,image/png">
-            </label>
-          </div>
-          <div data-berkas-panel="drive" class="segmented-panel" hidden>
-            <label>Link dokumen scan — opsional
-              <small class="muted">Tempel URL Google Drive atau dokumen lain yang dapat diakses pengguna.</small>
-              <input name="scanUrl" type="url" maxlength="1000" placeholder="https://drive.google.com/...">
-            </label>
-          </div>
-        </div>
-        <label class="wide delivery-state">Status pengiriman
-          <span class="check-option delivery-check"><input name="dikirimKeLuar" type="checkbox"><span>Surat sudah dikirim ke pihak luar</span></span>
-        </label>
         <div class="form-actions wide">
           <button id="save" class="button primary" type="submit">Simpan dan terbitkan nomor</button>
           <button id="cancel" class="button secondary" type="button" hidden>Batalkan surat</button>
