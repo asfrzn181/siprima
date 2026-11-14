@@ -32,7 +32,7 @@ const cek = (label, kondisi, info = '') => {
 };
 
 const headers = { 'x-csrf-token': token };
-const tanggal = new Date().toISOString();
+const tanggal = new Date().toISOString().slice(0, 10);
 const bersih = { nomor: [], khusus: [], keluar: [] };
 
 try {

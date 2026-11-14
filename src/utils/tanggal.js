@@ -12,19 +12,30 @@ const hariDalamBulan = (tahun, bulan) => {
 // Tanggal dokumen diperlakukan sebagai string murni YYYY-MM-DD. Tidak ada
 // konversi ke Date, toISOString(), atau zona waktu di jalur ini sehingga
 // tanggal yang dipilih pengguna tersimpan dan tampil persis sama.
+// Untuk kompatibilitas dengan klien lama yang mengirim stempel waktu lengkap,
+// nilai tersebut diubah ke tanggal kalender Jakarta terlebih dahulu.
 export const tanggalMurni = (nilai) => {
   if (nilai === null || nilai === undefined || nilai === '') return null;
   if (nilai instanceof Date) {
     return Number.isNaN(nilai.getTime()) ? null : tanggalInput(nilai);
   }
   const teks = String(nilai).trim();
-  const cocok = teks.slice(0, 10).match(POLA_TANGGAL);
-  if (!cocok) return null;
-  const tahun = Number(cocok[1]);
-  const bulan = Number(cocok[2]);
-  const hari = Number(cocok[3]);
+  const iso = teks.slice(0, 10);
+  if (!POLA_TANGGAL.test(iso)) return null;
+  if (teks.length === 10) {
+    const tahun = Number(iso.slice(0, 4));
+    const bulan = Number(iso.slice(5, 7));
+    const hari = Number(iso.slice(8, 10));
+    if (bulan < 1 || bulan > 12 || hari < 1 || hari > hariDalamBulan(tahun, bulan)) return null;
+    return iso;
+  }
+  const hasil = tanggalInput(teks);
+  if (!POLA_TANGGAL.test(hasil)) return null;
+  const tahun = Number(hasil.slice(0, 4));
+  const bulan = Number(hasil.slice(5, 7));
+  const hari = Number(hasil.slice(8, 10));
   if (bulan < 1 || bulan > 12 || hari < 1 || hari > hariDalamBulan(tahun, bulan)) return null;
-  return `${cocok[1]}-${cocok[2]}-${cocok[3]}`;
+  return hasil;
 };
 
 export const bagianTanggal = (nilai) => {
@@ -101,9 +112,18 @@ export const keIso = (nilai) => {
 // Untuk tanggal dokumen, nilai ISO dipertahankan apa adanya. Konversi Jakarta
 // hanya dipakai untuk objek Date (mis. "hari ini") atau timestamp.
 export const tanggalInput = (nilai) => {
+  if (nilai === null || nilai === undefined || nilai === '') return '';
   if (typeof nilai === 'string') {
-    const teks = nilai.trim().slice(0, 10);
+    const teks = nilai.trim();
     if (POLA_TANGGAL.test(teks)) return teks;
+    if (POLA_TANGGAL.test(teks.slice(0, 10)) && teks.length > 10) {
+      let kandidat = teks;
+      if (!/[zZ]|[+-]\\d{2}:?\\d{2}$/.test(kandidat)) {
+        kandidat = `${kandidat}+07:00`;
+      }
+      const bagian = bagianJakarta(kandidat);
+      return `${bagian.year}-${String(bagian.month).padStart(2, '0')}-${String(bagian.day).padStart(2, '0')}`;
+    }
   }
   const bagian = bagianJakarta(nilai);
   return `${bagian.year}-${String(bagian.month).padStart(2, '0')}-${String(bagian.day).padStart(2, '0')}`;

@@ -29,8 +29,11 @@ const POLA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 export const keIsoTanggal = (nilai) => {
   if (!nilai) return '';
   if (typeof nilai === 'string') {
-    const teks = nilai.trim().slice(0, 10);
+    const teks = nilai.trim();
     if (POLA_ISO.test(teks)) return teks;
+    if (POLA_ISO.test(teks.slice(0, 10)) && teks.length > 10) {
+      return inputTanggal(teks);
+    }
   }
   return inputTanggal(nilai);
 };
@@ -76,8 +79,26 @@ export const formatWaktu = (nilai) => {
 export const inputTanggal = (nilai) => {
   if (nilai === null || nilai === undefined || nilai === '') return '';
   if (typeof nilai === 'string') {
-    const teks = nilai.trim().slice(0, 10);
+    const teks = nilai.trim();
     if (POLA_ISO.test(teks)) return teks;
+    if (POLA_ISO.test(teks.slice(0, 10)) && teks.length > 10) {
+      let kandidat = teks;
+      if (!/[zZ]|[+-]\\d{2}:?\\d{2}$/.test(kandidat)) {
+        kandidat = `${kandidat}+07:00`;
+      }
+      const tanggal = keTanggal(kandidat);
+      if (tanggal) {
+        const bagian = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Jakarta',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        })
+          .formatToParts(tanggal)
+          .reduce((hasil, item) => ({ ...hasil, [item.type]: item.value }), {});
+        return `${bagian.year}-${bagian.month}-${bagian.day}`;
+      }
+    }
   }
   const tanggal = keTanggal(nilai || new Date());
   if (!tanggal) return '';
