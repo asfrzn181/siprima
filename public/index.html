@@ -6,39 +6,29 @@
   <title>SiPrima — Masuk</title>
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/overrides.css">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Agbalumo&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="auth-page">
-  <main class="auth-shell">
-    <section class="auth-brand">
-      <img class="brand-wordmark" src="assets/images/wordmark-dark.svg" alt="SiPRIMA" width="260" height="72">
-      <div>
-        <p class="eyebrow">BKPSDMD Bangka</p>
-        <p class="brand-tagline">Aplikasi agenda surat masuk dan surat keluar.</p>
+  <main class="auth-card" aria-labelledby="judul-login">
+    <img class="brand-logo" src="assets/images/logo-siprima.png" alt="Logo SiPrima">
+    <div class="brand-mark">S</div>
+    <p class="eyebrow">Sekretariat Dinas</p>
+    <h1 id="judul-login" class="brand-title">SiPRIMA</h1>
+    <p class="muted">Aplikasi agenda surat masuk dan surat keluar.</p>
+    <form id="login-form" class="stack" novalidate>
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="username" required>
+      <label for="password">Kata sandi</label>
+      <div class="password-field">
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button type="button" class="password-toggle" aria-label="Tampilkan kata sandi" data-visible="false">👁</button>
       </div>
-      <p class="brand-footer">Profesional Responsif Integritas Melayani Akuntabel</p>
-    </section>
-    <section class="auth-form">
-      <div class="auth-form-inner">
-        <h2 id="judul-login">Masuk</h2>
-        <span class="accent-line" aria-hidden="true"></span>
-        <p class="muted">Akses hanya untuk akun internal yang terdaftar.</p>
-        <form id="login-form" class="stack" novalidate>
-          <label for="email">Email</label>
-          <input id="email" name="email" type="email" autocomplete="username" required>
-          <label for="password">Kata sandi</label>
-          <div class="password-field">
-            <input id="password" name="password" type="password" autocomplete="current-password" required>
-            <button type="button" class="password-toggle" aria-label="Tampilkan kata sandi" data-visible="false">👁</button>
-          </div>
-          <button class="button primary" type="submit">Masuk</button>
-          <p id="login-error" class="form-error" role="alert" hidden></p>
-        </form>
-      </div>
-    </section>
+      <button class="button primary" type="submit">Masuk</button>
+      <p id="login-error" class="form-error" role="alert" hidden></p>
+    </form>
+    <p class="fine-print">Akses hanya untuk akun internal yang terdaftar.</p>
   </main>
   <script type="module" src="assets/js/pages/login.js"></script>
 </body>
