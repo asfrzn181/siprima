@@ -230,7 +230,7 @@ button { font: inherit; cursor: pointer; }
 }
 
 .auth-brand .brand-logo {
-  width: 120px;
+  width: 90px;
   height: auto;
   margin-bottom: var(--sp-4);
   border-radius: var(--radius);
@@ -246,9 +246,15 @@ button { font: inherit; cursor: pointer; }
   line-height: 1;
   letter-spacing: 0.02em;
   font-weight: 400;
+  -webkit-text-stroke: 1.5px #0C3F7A;
+  text-stroke: 1.5px #0C3F7A;
 }
 
-.auth-brand .brand-title span { display: inline-block; }
+.auth-brand .brand-title span {
+  display: inline-block;
+  -webkit-text-stroke: 1.5px #0C3F7A;
+  text-stroke: 1.5px #0C3F7A;
+}
 
 .auth-brand .letter-s { color: #3CA0F0; }
 .auth-brand .letter-i { color: #DCEEFD; }
