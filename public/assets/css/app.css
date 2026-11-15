@@ -49,6 +49,7 @@
   --radius: 6px;
   --radius-lg: 8px;
   --sidebar-width: 224px;
+  --font-brand: "Baloo 2", "Fredoka", system-ui, sans-serif;
   --topbar-height: 56px;
 
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -911,4 +912,14 @@ td .cell-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--mu
   .detail-meta { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .detail-meta dt { margin-top: var(--sp-2); }
   .toast { right: var(--sp-2); left: var(--sp-2); bottom: var(--sp-2); max-width: none; }
+}
+
+
+.auth-brand .brand-title text {
+  font-family: var(--font-brand);
+}
+
+.sidebar-brand span:not(.mark) {
+  font-family: var(--font-brand);
+  font-weight: 700;
 }
