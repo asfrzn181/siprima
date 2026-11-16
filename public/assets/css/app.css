@@ -926,7 +926,7 @@ td .cell-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--mu
 
 .brand-title-logo {
   width: 100%;
-  max-width: 320px;
+  max-width: 220px;
   height: auto;
   display: block;
   margin: var(--sp-2) 0 var(--sp-4);
