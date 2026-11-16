@@ -923,3 +923,11 @@ td .cell-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--mu
   font-family: var(--font-brand);
   font-weight: 700;
 }
+
+.brand-title-logo {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  display: block;
+  margin: var(--sp-2) 0 var(--sp-4);
+}
