@@ -22,7 +22,8 @@ const simpanNomor = async (tahun, scopeKey, input) => {
     return;
   }
   try {
-    await api.put('/nomor/counter', { jenis: 'nomor', tahun, scopeKey, lastSeq: nilai });
+    const res = await api.put('/nomor/counter', { jenis: 'nomor', tahun, scopeKey, lastSeq: nilai });
+    if (res?.data?.lastSeq !== undefined) input.value = res.data.lastSeq;
     showToast('Counter nomor diperbarui.');
     await muat();
   } catch (error) {
@@ -37,7 +38,8 @@ const simpanAgenda = async (tahun, input) => {
     return;
   }
   try {
-    await api.put('/nomor/counter', { jenis: 'agenda', tahun, lastSeq: nilai });
+    const res = await api.put('/nomor/counter', { jenis: 'agenda', tahun, lastSeq: nilai });
+    if (res?.data?.lastSeq !== undefined) input.value = res.data.lastSeq;
     showToast('Counter agenda diperbarui.');
     await muat();
   } catch (error) {
@@ -49,7 +51,7 @@ const muat = async () => {
   selKosong(bodyNomor, 5, 'Memuat counter nomor...');
   selKosong(bodyAgenda, 3, 'Memuat counter agenda...');
   try {
-    const res = await api.get('/nomor/counter');
+    const res = await api.get(`/nomor/counter?_=${Date.now()}`);
     const nomor = res?.data?.nomor || [];
     const agenda = res?.data?.agenda || [];
 
