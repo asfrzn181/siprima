@@ -53,64 +53,67 @@ const muat = async () => {
     const nomor = res?.data?.nomor || [];
     const agenda = res?.data?.agenda || [];
 
-    bodyNomor.replaceChildren();
-    if (!nomor.length) {
-      selKosong(bodyNomor, 5, 'Belum ada counter nomor.');
-    } else {
-      nomor.forEach((row) => {
-        const baris = document.createElement('tr');
-        const tahun = document.createElement('td');
-        tahun.textContent = row.tahun;
-        const jenis = document.createElement('td');
-        jenis.textContent = row.scope_key;
-        const nilai = document.createElement('td');
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.min = '0';
-        input.value = row.last_seq;
-        input.style.width = '120px';
-        nilai.append(input);
-        const diperbarui = document.createElement('td');
-        diperbarui.textContent = row.updated_at || '—';
-        const aksi = document.createElement('td');
-        const tombol = document.createElement('button');
-        tombol.className = 'button small primary';
-        tombol.type = 'button';
-        tombol.textContent = 'Simpan';
-        tombol.addEventListener('click', () => simpanNomor(row.tahun, row.scope_key, input));
-        aksi.append(tombol);
-        baris.append(tahun, jenis, nilai, diperbarui, aksi);
-        bodyNomor.append(baris);
-      });
+    const tahunSekarang = new Date().getFullYear();
+    const jenisNomor = ['SURAT_KELUAR', 'SK', 'SE'];
+    for (const jenis of jenisNomor) {
+      if (!nomor.some((row) => Number(row.tahun) === tahunSekarang && row.scope_key === jenis)) {
+        nomor.push({ tahun: tahunSekarang, scope_key: jenis, last_seq: 0, updated_at: '—' });
+      }
+    }
+    if (!agenda.some((row) => row.name === `agendaMasuk_${tahunSekarang}`)) {
+      agenda.push({ name: `agendaMasuk_${tahunSekarang}`, nilai: 0 });
     }
 
+    bodyNomor.replaceChildren();
+    nomor.forEach((row) => {
+      const baris = document.createElement('tr');
+      const tahun = document.createElement('td');
+      tahun.textContent = row.tahun;
+      const jenis = document.createElement('td');
+      jenis.textContent = row.scope_key;
+      const nilai = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = '0';
+      input.value = row.last_seq;
+      input.style.width = '120px';
+      nilai.append(input);
+      const diperbarui = document.createElement('td');
+      diperbarui.textContent = row.updated_at || '—';
+      const aksi = document.createElement('td');
+      const tombol = document.createElement('button');
+      tombol.className = 'button small primary';
+      tombol.type = 'button';
+      tombol.textContent = 'Simpan';
+      tombol.addEventListener('click', () => simpanNomor(row.tahun, row.scope_key, input));
+      aksi.append(tombol);
+      baris.append(tahun, jenis, nilai, diperbarui, aksi);
+      bodyNomor.append(baris);
+    });
+
     bodyAgenda.replaceChildren();
-    if (!agenda.length) {
-      selKosong(bodyAgenda, 3, 'Belum ada counter agenda.');
-    } else {
-      agenda.forEach((row) => {
-        const tahun = row.name.replace('agendaMasuk_', '');
-        const baris = document.createElement('tr');
-        const nama = document.createElement('td');
-        nama.textContent = row.name;
-        const nilai = document.createElement('td');
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.min = '0';
-        input.value = row.nilai;
-        input.style.width = '120px';
-        nilai.append(input);
-        const aksi = document.createElement('td');
-        const tombol = document.createElement('button');
-        tombol.className = 'button small primary';
-        tombol.type = 'button';
-        tombol.textContent = 'Simpan';
-        tombol.addEventListener('click', () => simpanAgenda(tahun, input));
-        aksi.append(tombol);
-        baris.append(nama, nilai, aksi);
-        bodyAgenda.append(baris);
-      });
-    }
+    agenda.forEach((row) => {
+      const tahun = row.name.replace('agendaMasuk_', '');
+      const baris = document.createElement('tr');
+      const nama = document.createElement('td');
+      nama.textContent = row.name;
+      const nilai = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = '0';
+      input.value = row.nilai;
+      input.style.width = '120px';
+      nilai.append(input);
+      const aksi = document.createElement('td');
+      const tombol = document.createElement('button');
+      tombol.className = 'button small primary';
+      tombol.type = 'button';
+      tombol.textContent = 'Simpan';
+      tombol.addEventListener('click', () => simpanAgenda(tahun, input));
+      aksi.append(tombol);
+      baris.append(nama, nilai, aksi);
+      bodyAgenda.append(baris);
+    });
   } catch (error) {
     selKosong(bodyNomor, 5, error.message || 'Gagal memuat counter nomor.');
     selKosong(bodyAgenda, 3, error.message || 'Gagal memuat counter agenda.');
