@@ -587,7 +587,10 @@ export const tersediaNomor = async ({
   const tanggalSurat = tanggalMurni(tanggal);
   if (!tanggalSurat) throw new AppError(400, 'TANGGAL_TIDAK_VALID', 'Tanggal surat tidak valid.');
   const bagian = bagianTanggal(tanggalSurat);
-  const [counterRows] = await query('SELECT last_seq FROM letter_counters WHERE tahun = ? AND scope_key = ?', [bagian.year, konteks.menu]);
+  const counterRows = await query(
+    'SELECT last_seq FROM letter_counters WHERE tahun = ? AND scope_key = ?',
+    [bagian.year, konteks.menu]
+  );
   const lastSeq = counterRows.length ? Number(counterRows[0].last_seq) : 0;
   const { tersedia, maks, bolehBaru } = await kumpulkanTersedia({
     menu: konteks.menu,

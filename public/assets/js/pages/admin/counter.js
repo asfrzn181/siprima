@@ -23,7 +23,7 @@ const simpanNomor = async (tahun, scopeKey, input) => {
   }
   try {
     const res = await api.put('/nomor/counter', { jenis: 'nomor', tahun, scopeKey, lastSeq: nilai });
-    if (res?.data?.lastSeq !== undefined) input.value = res.data.lastSeq;
+    if (res?.lastSeq !== undefined) input.value = res.lastSeq;
     showToast('Counter nomor diperbarui.');
     await muat();
   } catch (error) {
@@ -39,7 +39,7 @@ const simpanAgenda = async (tahun, input) => {
   }
   try {
     const res = await api.put('/nomor/counter', { jenis: 'agenda', tahun, lastSeq: nilai });
-    if (res?.data?.lastSeq !== undefined) input.value = res.data.lastSeq;
+    if (res?.lastSeq !== undefined) input.value = res.lastSeq;
     showToast('Counter agenda diperbarui.');
     await muat();
   } catch (error) {
@@ -52,8 +52,8 @@ const muat = async () => {
   selKosong(bodyAgenda, 3, 'Memuat counter agenda...');
   try {
     const res = await api.get(`/nomor/counter?_=${Date.now()}`);
-    const nomor = res?.data?.nomor || [];
-    const agenda = res?.data?.agenda || [];
+    const nomor = res?.nomor || [];
+    const agenda = res?.agenda || [];
 
     const tahunSekarang = new Date().getFullYear();
     const jenisNomor = ['SURAT_KELUAR', 'SK', 'SE'];
@@ -124,6 +124,8 @@ const muat = async () => {
 
 export const initCounter = async () => {
   const form = document.querySelector('#counter-form');
+  const inputTahun = document.querySelector('#counter-tahun');
+  if (inputTahun) inputTahun.value = new Date().getFullYear();
   if (form) {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
