@@ -10,9 +10,18 @@ const sesi = await wajibIzin('laporan.baca');
 renderShell({ active: 'laporan', session: sesi });
 
 const PAGE_SIZE = 20;
+const JENIS_VALID = ['masuk', 'keluar', 'sk', 'se'];
+const JUDUL = {
+  masuk: 'Surat Masuk',
+  keluar: 'Surat Keluar',
+  sk: 'Surat Keputusan',
+  se: 'Surat Edaran'
+};
 const COLS = {
   keluar: ['No. Urut', 'No. Surat', 'Tanggal Surat', 'Tujuan', 'Hal', 'Bidang Pembuat', 'Sifat', 'Status'],
-  masuk: ['No. Urut', 'No. Agenda', 'Tgl Terima', 'Tgl Surat', 'No. Surat', 'Asal', 'Hal', 'Sifat', 'Status']
+  masuk: ['No. Urut', 'No. Agenda', 'Tgl Terima', 'Tgl Surat', 'No. Surat', 'Asal', 'Hal', 'Sifat', 'Status'],
+  sk: ['No. Urut', 'Nomor SK', 'Tanggal', 'Tentang', 'Keterangan', 'Status'],
+  se: ['No. Urut', 'Nomor SE', 'Tanggal', 'Tentang', 'Keterangan', 'Status']
 };
 const STATUS = {
   keluar: [
@@ -25,11 +34,20 @@ const STATUS = {
     ['Baru', 'Baru'],
     ['Didisposisikan', 'Didisposisikan'],
     ['Selesai', 'Selesai']
+  ],
+  sk: [
+    ['semua', 'Semua'],
+    ['Aktif', 'Aktif'],
+    ['Dibatalkan', 'Dibatalkan']
+  ],
+  se: [
+    ['semua', 'Semua'],
+    ['Aktif', 'Aktif'],
+    ['Dibatalkan', 'Dibatalkan']
   ]
 };
 
 const form = document.querySelector('#filter-form');
-const jenisSelect = document.querySelector('#jenis-select');
 const statusSelect = document.querySelector('#status-select');
 const thead = document.querySelector('#results-thead');
 const body = document.querySelector('#results-body');
@@ -43,11 +61,22 @@ const pageLabel = document.querySelector('#page-label');
 
 let items = [];
 let halaman = 1;
-let jenis = 'keluar';
 let filterAktif = null;
+
+const jenisAwal = new URLSearchParams(window.location.search).get('jenis');
+const jenis = JENIS_VALID.includes(jenisAwal) ? jenisAwal : 'keluar';
 
 const isiStatus = () => {
   statusSelect.replaceChildren(...STATUS[jenis].map(([value, label]) => new Option(label, value)));
+};
+
+const renderJudul = () => {
+  const judul = `Laporan ${JUDUL[jenis]}`;
+  document.title = `SiPrima — ${judul}`;
+  const heading = document.querySelector('#page-title');
+  if (heading) heading.textContent = judul;
+  const wrapSifat = form.elements.sifat?.closest('label');
+  if (wrapSifat) wrapSifat.hidden = jenis === 'sk' || jenis === 'se';
 };
 
 const renderThead = () => {
@@ -70,54 +99,68 @@ const selTeks = (teks) => {
   return td;
 };
 
+const barisKeluar = (item, nomor) =>
+  [
+    selTeks(String(nomor)),
+    selTeks(item.noSurat),
+    selTeks(formatTanggal(item.tglSurat)),
+    selTeks(item.tujuan),
+    selTeks(item.hal),
+    selTeks(item.bidangPembuat),
+    selBadge(
+      badge(
+        item.sifat === 'rahasia' ? 'Rahasia' : 'Biasa',
+        item.sifat === 'rahasia' ? 'danger' : 'muted'
+      )
+    ),
+    selBadge(badge(item.status, formatStatusKind(item.status)))
+  ];
+
+const barisMasuk = (item, nomor) =>
+  [
+    selTeks(String(nomor)),
+    selTeks(item.noAgenda),
+    selTeks(formatTanggal(item.tglTerima)),
+    selTeks(formatTanggal(item.tglSurat)),
+    selTeks(item.noSurat),
+    selTeks(item.asal),
+    selTeks(item.hal),
+    selBadge(
+      badge(
+        item.sifat === 'rahasia' ? 'Rahasia' : 'Biasa',
+        item.sifat === 'rahasia' ? 'danger' : 'muted'
+      )
+    ),
+    selBadge(badge(item.status, formatStatusKind(item.status)))
+  ];
+
+const barisKhusus = (item, nomor) =>
+  [
+    selTeks(String(nomor)),
+    selTeks(item.nomor),
+    selTeks(formatTanggal(item.tanggal)),
+    selTeks(item.tentang),
+    selTeks(item.keterangan),
+    selBadge(badge(item.status, formatStatusKind(item.status)))
+  ];
+
+const barisUntuk = (item, nomor) => {
+  if (jenis === 'keluar') return barisKeluar(item, nomor);
+  if (jenis === 'masuk') return barisMasuk(item, nomor);
+  return barisKhusus(item, nomor);
+};
+
 const renderHalaman = () => {
   const totalHalaman = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
   const mulai = (halaman - 1) * PAGE_SIZE;
   const potongan = items.slice(mulai, mulai + PAGE_SIZE);
   if (!potongan.length) {
     pesanTabel(body, COLS[jenis].length, 'Tidak ada data surat untuk filter ini.');
-  } else if (jenis === 'keluar') {
-    body.replaceChildren(
-      ...potongan.map((item, index) => {
-        const baris = document.createElement('tr');
-        baris.append(
-          selTeks(String(mulai + index + 1)),
-          selTeks(item.noSurat),
-          selTeks(formatTanggal(item.tglSurat)),
-          selTeks(item.tujuan),
-          selTeks(item.hal),
-          selTeks(item.bidangPembuat),
-          selBadge(
-            badge(
-              item.sifat === 'rahasia' ? 'Rahasia' : 'Biasa',
-              item.sifat === 'rahasia' ? 'danger' : 'muted'
-            )
-          ),
-          selBadge(badge(item.status, formatStatusKind(item.status)))
-        );
-        return baris;
-      })
-    );
   } else {
     body.replaceChildren(
       ...potongan.map((item, index) => {
         const baris = document.createElement('tr');
-        baris.append(
-          selTeks(String(mulai + index + 1)),
-          selTeks(item.noAgenda),
-          selTeks(formatTanggal(item.tglTerima)),
-          selTeks(formatTanggal(item.tglSurat)),
-          selTeks(item.noSurat),
-          selTeks(item.asal),
-          selTeks(item.hal),
-          selBadge(
-            badge(
-              item.sifat === 'rahasia' ? 'Rahasia' : 'Biasa',
-              item.sifat === 'rahasia' ? 'danger' : 'muted'
-            )
-          ),
-          selBadge(badge(item.status, formatStatusKind(item.status)))
-        );
+        baris.append(...barisUntuk(item, mulai + index + 1));
         return baris;
       })
     );
@@ -128,8 +171,8 @@ const renderHalaman = () => {
 };
 
 const renderStatistik = () => {
-  const aktif = jenis === 'keluar' ? 'Aktif' : 'Baru';
-  const selesai = jenis === 'keluar' ? 'Dibatalkan' : 'Selesai';
+  const aktif = jenis === 'masuk' ? 'Baru' : 'Aktif';
+  const selesai = jenis === 'masuk' ? 'Selesai' : 'Dibatalkan';
   document.querySelector('#stat-total').textContent = items.length;
   document.querySelector('#stat-active').textContent = items.filter((item) => item.status === aktif).length;
   document.querySelector('#stat-closed').textContent = items.filter((item) => item.status === selesai).length;
@@ -157,20 +200,12 @@ const muat = async () => {
   }
 };
 
-jenisSelect.addEventListener('change', () => {
-  isiStatus();
-  items = [];
-  panel.classList.remove('visible');
-  stats.style.display = 'none';
-});
-
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(form));
   if (!data.tglMulai || !data.tglSelesai) return showToast('Tanggal mulai dan sampai wajib diisi.');
   if (data.tglMulai > data.tglSelesai)
     return showToast('Tanggal mulai tidak boleh lebih dari tanggal sampai.');
-  jenis = data.jenis;
   filterAktif = {
     tglMulai: tanggalIso(data.tglMulai),
     tglSelesai: tanggalIso(data.tglSelesai),
@@ -188,7 +223,6 @@ document.querySelector('#reset-button').addEventListener('click', () => {
   isiStatus();
   items = [];
   filterAktif = null;
-  jenis = 'keluar';
   panel.classList.remove('visible');
   stats.style.display = 'none';
 });
@@ -208,47 +242,53 @@ next.addEventListener('click', () => {
   renderHalaman();
 });
 
+const barisEkspor = (item, index) => {
+  if (jenis === 'keluar') {
+    return {
+      'No. Urut': index + 1,
+      'No. Surat': item.noSurat || '',
+      'Tanggal Surat': formatTanggal(item.tglSurat),
+      Tujuan: item.tujuan || '',
+      Hal: item.hal || '',
+      'Bidang Pembuat': item.bidangPembuat || '',
+      Sifat: item.sifat || '',
+      Status: item.status || ''
+    };
+  }
+  if (jenis === 'masuk') {
+    return {
+      'No. Urut': index + 1,
+      'No. Agenda': item.noAgenda || '',
+      'Tgl Terima': formatTanggal(item.tglTerima),
+      'Tgl Surat': formatTanggal(item.tglSurat),
+      'No. Surat': item.noSurat || '',
+      Asal: item.asal || '',
+      Hal: item.hal || '',
+      Sifat: item.sifat || '',
+      Status: item.status || ''
+    };
+  }
+  return {
+    'No. Urut': index + 1,
+    Nomor: item.nomor || '',
+    Tanggal: formatTanggal(item.tanggal),
+    Tentang: item.tentang || '',
+    Keterangan: item.keterangan || '',
+    Status: item.status || ''
+  };
+};
+
 exportButton.addEventListener('click', async () => {
   if (!items.length) return;
   try {
-    const rows =
-      jenis === 'keluar'
-        ? items.map((item, index) => ({
-            'No. Urut': index + 1,
-            'No. Surat': item.noSurat || '',
-            'Tanggal Surat': formatTanggal(item.tglSurat),
-            Tujuan: item.tujuan || '',
-            Hal: item.hal || '',
-            'Bidang Pembuat': item.bidangPembuat || '',
-            Sifat: item.sifat || '',
-            Status: item.status || ''
-          }))
-        : items.map((item, index) => ({
-            'No. Urut': index + 1,
-            'No. Agenda': item.noAgenda || '',
-            'Tgl Terima': formatTanggal(item.tglTerima),
-            'Tgl Surat': formatTanggal(item.tglSurat),
-            'No. Surat': item.noSurat || '',
-            Asal: item.asal || '',
-            Hal: item.hal || '',
-            Sifat: item.sifat || '',
-            Status: item.status || ''
-          }));
-    await eksporExcel(
-      rows,
-      `laporan-surat-${jenis}.xlsx`,
-      jenis === 'masuk' ? 'Surat Masuk' : 'Surat Keluar'
-    );
+    const rows = items.map(barisEkspor);
+    await eksporExcel(rows, `laporan-${jenis}.xlsx`, JUDUL[jenis]);
   } catch (error) {
     showToast(error.message || 'Ekspor gagal.', 'error');
   }
 });
 
-const jenisAwal = new URLSearchParams(window.location.search).get('jenis');
-if (jenisAwal === 'masuk' || jenisAwal === 'keluar') {
-  jenis = jenisAwal;
-}
-jenisSelect.value = jenis;
+renderJudul();
 isiStatus();
 renderThead();
 

@@ -4,7 +4,11 @@ import { IZIN, PERAN } from '../constants/index.js';
 import { wajibLogin } from '../middlewares/auth.js';
 import { izinkan, wajibIzin } from '../middlewares/role.js';
 import { validasi } from '../middlewares/validate.js';
-import { skemaLaporanKeluar, skemaLaporanMasuk } from '../validators/laporan.validator.js';
+import {
+  skemaLaporanKeluar,
+  skemaLaporanKhusus,
+  skemaLaporanMasuk
+} from '../validators/laporan.validator.js';
 
 export const laporanRouter = Router();
 
@@ -16,3 +20,5 @@ laporanRouter.use(
 
 laporanRouter.get('/masuk', validasi(skemaLaporanMasuk, 'query'), controller.masuk);
 laporanRouter.get('/keluar', validasi(skemaLaporanKeluar, 'query'), controller.keluar);
+laporanRouter.get('/sk', validasi(skemaLaporanKhusus, 'query'), controller.sk);
+laporanRouter.get('/se', validasi(skemaLaporanKhusus, 'query'), controller.se);

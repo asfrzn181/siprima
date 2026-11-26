@@ -40,6 +40,8 @@ INSERT INTO menus (kunci, label, parent_id, href, izin, urutan) VALUES
   ('se', 'Surat Edaran', @agenda, 'se.html', 'se.lihat', 40),
   ('laporan-masuk', 'Surat Masuk', @laporan, 'laporan.html?jenis=masuk', 'laporan.baca', 10),
   ('laporan-keluar', 'Surat Keluar', @laporan, 'laporan.html?jenis=keluar', 'laporan.baca', 20),
+  ('laporan-sk', 'Surat Keputusan', @laporan, 'laporan.html?jenis=sk', 'laporan.baca', 30),
+  ('laporan-se', 'Surat Edaran', @laporan, 'laporan.html?jenis=se', 'laporan.baca', 40),
   ('master-bidang', 'Bidang', @master, 'admin.html#bidang', 'master.kelola', 10),
   ('master-nomor', 'Nomor Surat', @master, 'admin.html#nomor', 'master.kelola', 20),
   ('master-asal-tujuan', 'Asal & Tujuan', @master, 'admin.html#asal-tujuan', 'master.kelola', 30),

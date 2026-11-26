@@ -7,6 +7,7 @@ import { izinkan, wajibIzin } from '../middlewares/role.js';
 import { validasi } from '../middlewares/validate.js';
 import {
   skemaBatal,
+  skemaFilterEksporKeluar,
   skemaFilterSuratKeluar,
   skemaGunakanUlang,
   skemaKoreksi,
@@ -27,7 +28,7 @@ suratKeluarRouter.get(
 suratKeluarRouter.get(
   '/export',
   wajibIzin(IZIN.SURAT_KELUAR_CETAK),
-  validasi(skemaFilterSuratKeluar, 'query'),
+  validasi(skemaFilterEksporKeluar, 'query'),
   controller.ekspor
 );
 suratKeluarRouter.get('/:id', wajibIzin(IZIN.SURAT_KELUAR_BACA), controller.ambil);

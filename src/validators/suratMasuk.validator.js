@@ -38,3 +38,10 @@ export const skemaFilterSuratMasuk = skemaPagination.extend({
   tglMulai: tanggalOpsional,
   tglSelesai: tanggalOpsional
 });
+
+// Ekspor selalu mengambil seluruh data (dibatasi PAGINATION.MAX_EXPORT di
+// service), jadi parameter pagination dari klien tidak divalidasi di sini.
+export const skemaFilterEksporMasuk = skemaFilterSuratMasuk.omit({
+  page: true,
+  limit: true
+});

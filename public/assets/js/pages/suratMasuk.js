@@ -233,7 +233,7 @@ const bukaForm = (item = null, bacaSaja = false) => {
   sinkronDatepicker(formPanel);
   form.elements.noSurat.value = item?.noSurat || '';
   form.elements.asal.value = item?.asal || '';
-  form.elements.tujuan.value = item?.tujuan || '';
+  form.elements.tujuan.value = item ? item.tujuan || '' : 'Kepala Badan';
   form.elements.hal.value = item?.hal || '';
   form.elements.isiRingkas.value = item?.isiRingkas || '';
   form.elements.sifat.value = item?.sifat || 'biasa';

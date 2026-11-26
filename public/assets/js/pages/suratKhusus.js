@@ -282,8 +282,20 @@ export const initSuratKhusus = async ({ jenis, judul, labelTentang, labelNomor }
   if (!bolehCetak) exportButton.hidden = true;
   exportButton.addEventListener('click', async () => {
     try {
-      const hasil = await daftarSuratKhusus(jenis, { ...filter, page: 1, limit: 100 });
-      const rows = hasil.items.map((item, index) => ({
+      const kumpulan = [];
+      let halamanEkspor = 1;
+      let totalEkspor = 1;
+      do {
+        const hasil = await daftarSuratKhusus(jenis, {
+          ...filter,
+          page: halamanEkspor,
+          limit: 100
+        });
+        kumpulan.push(...hasil.items);
+        totalEkspor = hasil.pagination.totalPages;
+        halamanEkspor += 1;
+      } while (halamanEkspor <= totalEkspor && kumpulan.length < 5000);
+      const rows = kumpulan.map((item, index) => ({
         'No. Urut': index + 1,
         [labelNomor]: item.nomor,
         [labelTentang]: item.tentang,

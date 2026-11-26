@@ -9,6 +9,7 @@ import { unggahScan } from '../middlewares/upload.js';
 import { validasi } from '../middlewares/validate.js';
 import {
   skemaDisposisi,
+  skemaFilterEksporMasuk,
   skemaFilterSuratMasuk,
   skemaSuratMasuk,
   skemaTindakLanjut
@@ -27,7 +28,7 @@ suratMasukRouter.get(
 suratMasukRouter.get(
   '/export',
   wajibIzin(IZIN.SURAT_MASUK_CETAK),
-  validasi(skemaFilterSuratMasuk, 'query'),
+  validasi(skemaFilterEksporMasuk, 'query'),
   controller.ekspor
 );
 suratMasukRouter.get('/:id', wajibIzin(IZIN.SURAT_MASUK_BACA), controller.ambil);

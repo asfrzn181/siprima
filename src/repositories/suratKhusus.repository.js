@@ -38,7 +38,10 @@ const peta = (row) => ({
   diubahPada: row.diubah_pada
 });
 
-const filterDaftar = (jenis, { search = '', status = '', bidang = '' } = {}) => {
+const filterDaftar = (
+  jenis,
+  { search = '', status = '', bidang = '', tglMulai = null, tglSelesai = null } = {}
+) => {
   const kunci = String(search || '').trim();
   const pola = `%${kunci}%`;
   const params = [pastikanJenis(jenis)];
@@ -55,14 +58,33 @@ const filterDaftar = (jenis, { search = '', status = '', bidang = '' } = {}) => 
     filter += ' AND letter_number_id IN (SELECT id FROM letter_numbers WHERE kode_bidang = ?)';
     params.push(String(bidang));
   }
+  const mulai = tanggalMurni(tglMulai);
+  if (mulai) {
+    filter += ' AND tanggal >= ?';
+    params.push(mulai);
+  }
+  const selesai = tanggalMurni(tglSelesai);
+  if (selesai) {
+    // Aman untuk kolom DATE maupun DATETIME: ambil seluruh hari terakhir.
+    filter += ' AND tanggal < DATE_ADD(?, INTERVAL 1 DAY)';
+    params.push(selesai);
+  }
   return { filter, params };
 };
 
 export const daftarSuratKhusus = async (
   jenis,
-  { search = '', status = '', bidang = '', limit = 20, offset = 0 } = {}
+  {
+    search = '',
+    status = '',
+    bidang = '',
+    tglMulai = null,
+    tglSelesai = null,
+    limit = 20,
+    offset = 0
+  } = {}
 ) => {
-  const { filter, params } = filterDaftar(jenis, { search, status, bidang });
+  const { filter, params } = filterDaftar(jenis, { search, status, bidang, tglMulai, tglSelesai });
   const rows = await query(
     `SELECT * FROM surat_khusus WHERE ${filter}
       ORDER BY tanggal DESC, id DESC LIMIT ? OFFSET ?`,
@@ -71,8 +93,11 @@ export const daftarSuratKhusus = async (
   return rows.map(peta);
 };
 
-export const hitungSuratKhusus = async (jenis, { search = '', status = '', bidang = '' } = {}) => {
-  const { filter, params } = filterDaftar(jenis, { search, status, bidang });
+export const hitungSuratKhusus = async (
+  jenis,
+  { search = '', status = '', bidang = '', tglMulai = null, tglSelesai = null } = {}
+) => {
+  const { filter, params } = filterDaftar(jenis, { search, status, bidang, tglMulai, tglSelesai });
   const row = await one(`SELECT COUNT(*) AS jumlah FROM surat_khusus WHERE ${filter}`, params);
   return Number(row?.jumlah || 0);
 };

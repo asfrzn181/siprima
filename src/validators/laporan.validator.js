@@ -20,3 +20,8 @@ export const skemaLaporanMasuk = dasar.extend({
 export const skemaLaporanKeluar = dasar.extend({
   status: z.enum(statusKeluar).default('semua')
 });
+
+// SK/SE memakai status yang sama dengan surat keluar (Aktif/Dibatalkan).
+export const skemaLaporanKhusus = dasar.extend({
+  status: z.enum(statusKeluar).default('semua')
+});

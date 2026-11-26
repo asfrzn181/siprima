@@ -115,7 +115,9 @@ const NAV_FALLBACK = [
     izin: null,
     children: [
       { kunci: 'laporan-masuk', label: 'Surat Masuk', href: 'laporan.html?jenis=masuk', izin: 'laporan.baca' },
-      { kunci: 'laporan-keluar', label: 'Surat Keluar', href: 'laporan.html?jenis=keluar', izin: 'laporan.baca' }
+      { kunci: 'laporan-keluar', label: 'Surat Keluar', href: 'laporan.html?jenis=keluar', izin: 'laporan.baca' },
+      { kunci: 'laporan-sk', label: 'Surat Keputusan', href: 'laporan.html?jenis=sk', izin: 'laporan.baca' },
+      { kunci: 'laporan-se', label: 'Surat Edaran', href: 'laporan.html?jenis=se', izin: 'laporan.baca' }
     ]
   },
   {

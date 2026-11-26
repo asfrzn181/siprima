@@ -39,7 +39,9 @@ export const daftar = async (jenis, filter = {}, profil) => {
   const kueri = {
     search: filter.search,
     status: filter.status || '',
-    bidang: bidangFilter(profil, filter)
+    bidang: bidangFilter(profil, filter),
+    tglMulai: filter.tglMulai || null,
+    tglSelesai: filter.tglSelesai || null
   };
   const [items, total] = await Promise.all([
     daftarSuratKhusus(jenis, { ...kueri, limit, offset }),

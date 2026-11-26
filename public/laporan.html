@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/overrides.css">
   <style>
-    .filter-grid { display: grid; grid-template-columns: repeat(4, 1fr) repeat(2, 1fr) auto; gap: 1rem; align-items: end; }
+    .filter-grid { display: grid; grid-template-columns: repeat(3, 1fr) repeat(2, 1fr) auto; gap: 1rem; align-items: end; }
     .filter-grid label { display: grid; gap: .35rem; }
     .filter-actions { display: flex; gap: .5rem; }
     .pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1rem; }
@@ -28,19 +28,13 @@
     <section class="page-heading">
       <div>
         <p class="eyebrow">Laporan</p>
-        <h1>Laporan Surat</h1>
+        <h1 id="page-title">Laporan Surat</h1>
         <p class="muted">Filter berdasarkan rentang tanggal dan ekspor ke Excel.</p>
       </div>
     </section>
 
     <section class="panel filter-panel">
       <form id="filter-form" class="filter-grid" novalidate>
-        <label>Jenis
-          <select name="jenis" id="jenis-select">
-            <option value="keluar">Surat Keluar</option>
-            <option value="masuk">Surat Masuk</option>
-          </select>
-        </label>
         <label>Tanggal mulai<input name="tglMulai" type="date" required></label>
         <label>Tanggal sampai<input name="tglSelesai" type="date" required></label>
         <label>Status
