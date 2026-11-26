@@ -126,77 +126,13 @@
         </div>
         <p id="error" class="form-error wide" hidden></p>
       </form>
-<html lang="id">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SiPrima ΓÇö Surat Keluar</title>
-  <link rel="stylesheet" href="assets/css/app.css">
-  <link rel="stylesheet" href="assets/css/overrides.css">
-  <link rel="stylesheet" href="assets/css/autocomplete.css">
-  <style>
-    .filter-grid{display:grid;grid-template-columns:2fr repeat(3,1fr) auto;gap:1rem;align-items:end}
-    .filter-grid label{display:grid;gap:.35rem}
-    .filter-actions{display:flex;gap:.5rem}
-    .wide{grid-column:1/-1}
-    .check-grid{display:flex;flex-wrap:wrap;gap:.65rem 1rem}
-    .check-option{display:flex;gap:.45rem;align-items:center;font-weight:500}
-    .check-option input{width:auto}
-    .badge.danger{color:#9b1c1c;background:#fee4e2}
-    @media(max-width:700px){.filter-grid{grid-template-columns:1fr}}
-  </style>
-</head>
-<body>
-  <div id="app-shell"></div>
-  <main class="page-container">
-    <section class="page-heading">
-      <div>
-        <p class="eyebrow">Agenda</p>
-        <h1>Surat keluar</h1>
-        <p class="muted">Nomor terbit otomatis saat surat disimpan.</p>
-      </div>
-      <button id="new-button" class="button primary" type="button">+ Surat keluar</button>
+</div>
     </section>
+  </main>
 
-    <section class="panel">
-      <form id="filter-form" class="filter-grid">
-        <label>Pencarian<input name="search" type="search" placeholder="Awalan nomor surat, hal, atau tujuan"></label>
-        <label>Sifat<select name="sifat"><option value="semua">Semua</option><option value="biasa">Biasa</option><option value="rahasia">Rahasia</option></select></label>
-        <label>Status<select name="status"><option value="semua">Semua</option><option value="Aktif">Aktif</option><option value="Dibatalkan">Dibatalkan</option></select></label>
-        <label id="bidang-filter-wrap" hidden>Bidang<select name="bidang"><option value="semua">Semua bidang</option></select></label>
-        <div class="filter-actions"><button class="button primary" type="submit">Terapkan</button><button id="reset-filter" class="button secondary" type="button">Reset</button></div>
-      </form>
-    </section>
-
-    <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>Daftar surat</h2>
-          <p id="list-note" class="muted"></p>
-        </div>
-        <div class="toolbar">
-          <button id="export" class="button secondary" type="button">Ekspor Excel</button>
-          <button id="refresh" class="button secondary" type="button">Muat ulang</button>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>No. Urut</th><th>Nomor</th><th>Tanggal</th><th>Tujuan</th><th>Hal</th><th>Pembuat</th><th>Sifat</th><th>Status</th><th></th>
-            </tr>
-          </thead>
-          <tbody id="list-body"></tbody>
-        </table>
-      </div>
-      <div class="pagination">
-        <button id="prev" class="button secondary" type="button" disabled>Sebelumnya</button>
-        <span id="page-label">Halaman 1</span>
-        <button id="next" class="button secondary" type="button" disabled>Berikutnya</button>
-      </div>
-    </section>
-
-      </main>
-  <script type="module" src="assets/js/pages/suratKeluar.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/autocomplete.js"></script>
+  <script src="assets/js/surat-keluar.js"></script>
+  
 </body>
 </html>
