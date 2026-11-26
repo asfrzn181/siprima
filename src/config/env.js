@@ -38,7 +38,7 @@ const skema = z.object({
   DB_SSL: boolean(false),
 
   SESSION_COOKIE_NAME: z.string().min(1).default('siprima_session'),
-  SESSION_MAX_AGE_HOURS: z.coerce.number().int().min(1).max(336).default(8),
+  SESSION_MAX_AGE_HOURS: z.coerce.number().int().min(1).max(336).default(6),
   CSRF_COOKIE_NAME: z.string().min(1).default('siprima_csrf'),
   BCRYPT_ROUNDS: z.coerce.number().int().min(8).max(15).default(12),
   PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().min(5).max(1440).default(30),

@@ -92,7 +92,8 @@ export const bolehPakaiUlangNomor = ({
   tahunAcuan,
   tanggalAcuan,
   batasBawah = null,
-  batasAtas = null
+  batasAtas = null,
+  allowBackdate = false
 }) => {
   if (status !== 'VOID' || !voidedAt || !letterDate) return false;
   const tanggalNomor = tanggalMurni(letterDate);
@@ -104,6 +105,7 @@ export const bolehPakaiUlangNomor = ({
   const acuan = tanggalMurni(tanggalAcuan);
   if (!acuan) return false;
   if (Number(tahunDasar) !== tahunTanggal(acuan)) return false;
+  if (allowBackdate) return true;
   if (acuan === tanggalNomor) return true;
   return tanggalDalamRentang(acuan, batasBawah, batasAtas);
 };

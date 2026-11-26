@@ -139,6 +139,22 @@ const renderBaris = () => {
       detail.addEventListener('click', () => bukaForm(item, !canEdit));
       aksiSel.append(detail);
 
+      if (canDisposisi) {
+        const disposisi = document.createElement('button');
+        disposisi.className = 'button small secondary';
+        disposisi.type = 'button';
+        disposisi.textContent = 'Disposisi';
+        disposisi.addEventListener('click', () => {
+          bukaForm(item, false);
+          window.setTimeout(() => {
+            const fieldset = document.querySelector('#disposition-fieldset');
+            if (fieldset) fieldset.hidden = false;
+            fieldset?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 0);
+        });
+        aksiSel.append(disposisi);
+      }
+
       baris.append(
         sel('No. Urut', String(mulai + index + 1)),
         sel('Agenda', item.noAgenda),
@@ -198,6 +214,20 @@ const bukaForm = (item = null, bacaSaja = false) => {
   const tujuan = item?.disposisi?.kepada || item?.aksesBidang || [];
   form.elements.id.value = item?.id || '';
   form.elements.scanUrl.value = item?.fileUrl || '';
+
+  const preview = document.querySelector('#preview-berkas');
+  const frame = document.querySelector('#preview-frame');
+  const link = document.querySelector('#preview-link');
+  const url = item?.fileUrl || (item?.id ? `${location.origin}/siprima/api/surat-masuk/${item.id}/berkas` : '');
+  if (url) {
+    if (preview) preview.hidden = false;
+    if (frame) frame.src = url;
+    if (link) link.href = url;
+  } else {
+    if (preview) preview.hidden = true;
+    if (frame) frame.src = 'about:blank';
+    if (link) link.href = '#';
+  }
   form.elements.tglTerima.value = inputTanggal(item?.tglTerima || new Date());
   form.elements.tglSurat.value = inputTanggal(item?.tglSurat || new Date());
   sinkronDatepicker(formPanel);

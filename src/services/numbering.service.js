@@ -41,7 +41,8 @@ export const daftarTersedia = (payload, profil) =>
     menu: payload.menu || MENU_NOMOR.SURAT_KELUAR,
     jenisId: payload.jenisId,
     bidangKode: bidangPayload(payload, profil),
-    tanggal: payload.tanggal
+    tanggal: payload.tanggal,
+    backdate: Boolean(payload.backdate)
   });
 
 // Terbitkan surat keluar langsung: nomor final ditentukan server di dalam
@@ -52,7 +53,8 @@ export const terbitkanSuratKeluar = ({ jenisId, bidangKode, tanggal, payload, pr
     bidangKode,
     tanggal,
     payload,
-    aktor: aktorDari(profil)
+    aktor: aktorDari(profil),
+    backdate: Boolean(payload?.backdate)
   });
 
 export const terbitkan = async (payload, profil) => {

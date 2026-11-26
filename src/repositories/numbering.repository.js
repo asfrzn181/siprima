@@ -149,7 +149,7 @@ export const bangunNomor = ({ menu, master, bidangKode, seq, date }) => {
   };
 };
 
-export const bolehPakaiUlang = (menu, row, tahun, tanggalAcuan, batasBawah = null, batasAtas = null) =>
+export const bolehPakaiUlang = (menu, row, tahun, tanggalAcuan, batasBawah = null, batasAtas = null, allowBackdate = false) =>
   bolehPakaiUlangNomor({
     menu,
     status: row.status,
@@ -159,7 +159,8 @@ export const bolehPakaiUlang = (menu, row, tahun, tanggalAcuan, batasBawah = nul
     tahunAcuan: tahun,
     tanggalAcuan,
     batasBawah,
-    batasAtas
+    batasAtas,
+    allowBackdate
   });
 
 const nomorAktif = (row) => row && row.status !== STATUS_NOMOR.VOID && Boolean(row.letter_date);
@@ -185,7 +186,7 @@ const tetanggaAktif = (peta, maks, seq) => {
   return { sebelum, sesudah };
 };
 
-const kumpulkanTersedia = async ({ menu, tahun, tanggalAcuan, koneksi = null }) => {
+const kumpulkanTersedia = async ({ menu, tahun, tanggalAcuan, koneksi = null, allowBackdate = false }) => {
   const sql = `SELECT id, seq, status, letter_date, voided_at, tahun
                FROM letter_numbers WHERE menu = ? AND tahun = ?
                ORDER BY seq ASC`;
@@ -210,13 +211,14 @@ const kumpulkanTersedia = async ({ menu, tahun, tanggalAcuan, koneksi = null }) 
         tersedia.push({ seq, sumber: 'BOLONG', row: null });
         continue;
       }
-      // Nomor bolong hanya tersedia di antara tanggal tetangga aktifnya.
-      if (tanggalDalamRentang(acuan, batasBawah, batasAtas)) {
+      // Nomor bolong hanya tersedia di antara tanggal tetangga aktifnya,
+      // kecuali mode tanggal mundur yang mengizinkan pemakaian bebas.
+      if (allowBackdate || tanggalDalamRentang(acuan, batasBawah, batasAtas)) {
         tersedia.push({ seq, sumber: 'BOLONG', row: null });
       }
       continue;
     }
-    if (bolehPakaiUlang(menuFinal, row, tahun, acuan, batasBawah, batasAtas)) {
+    if (bolehPakaiUlang(menuFinal, row, tahun, acuan, batasBawah, batasAtas, allowBackdate)) {
       tersedia.push({ seq, sumber: 'BATAL', row });
     }
   }
@@ -230,6 +232,7 @@ const kumpulkanTersedia = async ({ menu, tahun, tanggalAcuan, koneksi = null }) 
   const batasBaru = aktifTerakhir ? tanggalMurni(aktifTerakhir.letter_date) : null;
   const bolehBaru =
     menuFinal !== MENU_NOMOR.SURAT_KELUAR ||
+    allowBackdate ||
     !batasBaru ||
     (acuan !== null && acuan >= batasBaru);
 
@@ -292,7 +295,8 @@ export const alokasikanDalamTransaksi = async (
     status = STATUS_NOMOR.RESERVED,
     idempotencyKey = '',
     reservationIdLama = null,
-    reservationMinutes = 15
+    reservationMinutes = 15,
+    allowBackdate = false
   }
 ) => {
   const menuFinal = normalisasiMenu(menu);
@@ -374,7 +378,8 @@ export const alokasikanDalamTransaksi = async (
     koneksi,
     menu: menuFinal,
     tahun: bagian.year,
-    tanggalAcuan: tanggalSurat
+    tanggalAcuan: tanggalSurat,
+    allowBackdate
   });
   const pilihan = pilihSeq(tersedia, maks, bolehBaru);
   if (!pilihan) {
@@ -571,7 +576,8 @@ export const tersediaNomor = async ({
   menu = MENU_NOMOR.SURAT_KELUAR,
   jenisId,
   bidangKode,
-  tanggal
+  tanggal,
+  backdate = false
 }) => {
   const konteks = await siapkanKonteks({ menu, jenisId, bidangKode });
   const tanggalSurat = tanggalMurni(tanggal);
@@ -580,7 +586,8 @@ export const tersediaNomor = async ({
   const { tersedia, maks, bolehBaru } = await kumpulkanTersedia({
     menu: konteks.menu,
     tahun: bagian.year,
-    tanggalAcuan: tanggalSurat
+    tanggalAcuan: tanggalSurat,
+    allowBackdate: backdate
   });
   const items = tersedia.map((item) => ({
     seq: item.seq,
@@ -740,7 +747,7 @@ export const terbitkanNomor = async ({ reservationId, payload, aktor }) =>
  * surat. Server selalu memilih nomor terkecil yang tersedia saat Simpan,
  * sehingga pratinjau di klien tidak pernah mengikat nomor.
  */
-export const buatSuratKeluarBernomor = async ({ jenisId, bidangKode, tanggal, payload, aktor }) => {
+export const buatSuratKeluarBernomor = async ({ jenisId, bidangKode, tanggal, payload, aktor, backdate = false }) => {
   const konteks = await siapkanKonteks({
     menu: MENU_NOMOR.SURAT_KELUAR,
     jenisId,
@@ -758,7 +765,8 @@ export const buatSuratKeluarBernomor = async ({ jenisId, bidangKode, tanggal, pa
       tanggal: tanggalSurat,
       aktor,
       metadata: { perihal: payload.hal || '', tujuan: payload.tujuan || '' },
-      status: STATUS_NOMOR.ISSUED
+      status: STATUS_NOMOR.ISSUED,
+      allowBackdate: backdate
     });
 
     const aktorData = dataAktor(aktor);

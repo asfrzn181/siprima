@@ -124,6 +124,11 @@
               </label>
             </div>
           </div>
+          <div id="preview-berkas" class="wide" hidden>
+            <label>Pratinjau scan</label>
+            <iframe id="preview-frame" title="Pratinjau scan surat masuk" style="width:100%;min-height:320px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);"></iframe>
+            <p class="muted small-text"><a id="preview-link" href="#" target="_blank" rel="noopener">Buka file di tab baru</a></p>
+          </div>
           <div class="form-actions wide">
             <button id="save-button" class="button primary" type="submit">Simpan</button>
             <button id="disposition-button" class="button secondary" type="submit" data-action="disposition" hidden>Simpan dan disposisikan</button>

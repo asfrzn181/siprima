@@ -20,9 +20,9 @@ export const cariRegisterNomor = async (id) => {
   return row ? petaNomor(row) : null;
 };
 
-export const pratinjauNomor = async ({ menu, jenisId, bidangKode, tanggal }) => {
+export const pratinjauNomor = async ({ menu, jenisId, bidangKode, tanggal, backdate = false }) => {
   const konteks = await siapkanKonteks({ menu, jenisId, bidangKode });
-  const daftar = await tersediaNomor({ menu: konteks.menu, jenisId, bidangKode, tanggal });
+  const daftar = await tersediaNomor({ menu: konteks.menu, jenisId, bidangKode, tanggal, backdate });
   const tanggalBagian = daftar.tahun;
   const seqBerikut = daftar.berikutnya;
   const nomorBerikut = seqBerikut

@@ -118,7 +118,7 @@ export const tanggalInput = (nilai) => {
     if (POLA_TANGGAL.test(teks)) return teks;
     if (POLA_TANGGAL.test(teks.slice(0, 10)) && teks.length > 10) {
       let kandidat = teks;
-      if (!/[zZ]|[+-]\\d{2}:?\\d{2}$/.test(kandidat)) {
+      if (!/[zZ]|[+-]\d{2}:?\d{2}$/.test(kandidat)) {
         kandidat = `${kandidat}+07:00`;
       }
       const bagian = bagianJakarta(kandidat);

@@ -110,7 +110,8 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
         menu: 'SURAT_KELUAR',
         jenisId: selectJenis.value,
         bidangKode: bidangTerpilih(),
-        tanggal: tanggalIso(form.elements.tglSurat.value)
+        tanggal: tanggalIso(form.elements.tglSurat.value),
+        backdate: Boolean(form.elements.backdate?.checked)
       });
       nomorPratinjau = hasil?.noSurat || '';
       form.elements.nomorGenerated.value = nomorPratinjau;
@@ -183,7 +184,8 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
       tandaTangan: form.querySelector('input[name="tandaTangan"]:checked')?.value || 'BASAH',
       aksesBidang: [...document.querySelectorAll('input[name="aksesBidang"]:checked')].map(
         (input) => input.value
-      )
+      ),
+      backdate: Boolean(form.elements.backdate?.checked)
     };
   };
 
@@ -210,7 +212,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     document.querySelector('#access').hidden = form.elements.sifat.value !== 'rahasia';
   });
 
-  ['tglSurat', 'bidangPembuat'].forEach((nama) => {
+  ['tglSurat', 'bidangPembuat', 'backdate'].forEach((nama) => {
     form.elements[nama].addEventListener('change', () => {
       muatTersedia();
     });

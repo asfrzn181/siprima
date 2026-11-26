@@ -13,7 +13,8 @@ export const skemaPayloadSuratKeluar = z.object({
   isiRingkas: teks(2000),
   sifat: z.enum([SIFAT.BIASA, SIFAT.RAHASIA]).default(SIFAT.BIASA),
   tandaTangan: z.enum(['TTE', 'BASAH']).default('BASAH'),
-  aksesBidang: z.array(z.string().trim().max(40)).default([])
+  aksesBidang: z.array(z.string().trim().max(40)).default([]),
+  backdate: z.boolean().optional().default(false)
 });
 
 export const skemaUbahSuratKeluar = z.object({

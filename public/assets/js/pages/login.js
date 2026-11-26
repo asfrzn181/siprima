@@ -9,6 +9,17 @@ const tampilkanError = (teks) => {
   pesan.hidden = false;
 };
 
+const togglePassword = document.querySelector('#toggle-password');
+const inputPassword = form.elements.password;
+if (togglePassword && inputPassword) {
+  togglePassword.addEventListener('click', () => {
+    const tampil = inputPassword.type === 'password';
+    inputPassword.type = tampil ? 'text' : 'password';
+    togglePassword.textContent = tampil ? 'Sembunyikan' : 'Tampilkan';
+    togglePassword.setAttribute('aria-label', tampil ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
+  });
+}
+
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   pesan.hidden = true;
