@@ -62,9 +62,9 @@
             </thead>
             <tbody>
               <tr><td>Admin</td><td>Seluruh menu, master data, pengguna, peran, pengaturan, audit, dan verifikasi nomor.</td></tr>
-              <tr><td>Operator/Staf</td><td>Surat masuk, surat keluar, SK, SE, laporan, dan master baca.</td></tr>
-              <tr><td>Pimpinan/Viewer</td><td>Melihat dan mencetak surat, laporan, audit, serta verifikasi nomor.</td></tr>
-              <tr><td>Bidang</td><td>Surat keluar milik bidangnya dan surat masuk yang didisposisikan kepadanya.</td></tr>
+               <tr><td>Operator/Staf</td><td>Surat masuk, surat keluar, SK, SE, laporan, dashboard, dan pencarian data referensi untuk form.</td></tr>
+               <tr><td>Pimpinan/Viewer</td><td>Dashboard dan Laporan (lihat saja), serta ganti kata sandi.</td></tr>
+               <tr><td>Bidang</td><td>Surat keluar milik bidangnya, SK/SE global (lihat dan tambah), surat masuk yang didisposisikan kepadanya (lihat saja), dashboard dan laporan bidang sendiri.</td></tr>
             </tbody>
           </table>
           <div class="guide-callout">
@@ -217,6 +217,9 @@
             Nomor yang batal tetap dapat dipakai lagi kapan saja pada <strong>tahun yang sama</strong>,
             tanpa harus sama tanggalnya.
           </p>
+          <div class="guide-callout">
+            <p><strong>SK dan SE bersifat global:</strong> semua bidang yang berhak dapat melihat dan membuat nomor SK/SE. Namun, ubah dan batalkan hanya boleh dilakukan oleh admin, operator, atau bidang pembuat SK/SE tersebut.</p>
+          </div>
           <div class="guide-callout success">
             <p><strong>Contoh:</strong> SK nomor 3 tahun 2026 dibatalkan. Saat membuat SK baru dengan Tanggal SK kapan pun di tahun 2026, nomor 3 akan dipakai kembali lebih dulu.</p>
           </div>
@@ -227,6 +230,10 @@
           <p>
             Nomor surat dibuat otomatis oleh server. Tahun pada nomor dan reset urutan mengikuti
             <strong>tanggal dokumen yang Anda input</strong>, bukan tanggal sistem dan bukan tanggal data dibuat.
+          </p>
+          <p>
+            Tanggal dokumen disimpan sebagai <code>YYYY-MM-DD</code> murni, tanpa jam atau zona waktu,
+            sehingga tanggal yang dipilih pengguna tampil persis sama.
           </p>
 
           <h3>Format nomor</h3>
