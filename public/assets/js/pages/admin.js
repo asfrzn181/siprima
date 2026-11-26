@@ -4,6 +4,7 @@ import { initAsalTujuan } from './admin/asalTujuan.js';
 import { initAudit } from './admin/audit.js';
 import { initBidang } from './admin/bidang.js';
 import { initCleaner } from './admin/cleaner.js';
+import { initCounter } from './admin/counter.js';
 import { initMenu } from './admin/menu.js';
 import { initNomor } from './admin/nomor.js';
 import { initPengaturan } from './admin/pengaturan.js';
@@ -24,6 +25,7 @@ const inisialisasi = {
   settings: initPengaturan,
   audit: initAudit,
   cleaner: initCleaner,
+  counter: initCounter,
   menu: initMenu
 };
 

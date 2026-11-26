@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as controller from '../controllers/numbering.controller.js';
+import * as counterController from '../controllers/counter.controller.js';
 import { IZIN, PERAN } from '../constants/index.js';
 import { wajibLogin } from '../middlewares/auth.js';
 import { verifikasiCsrf } from '../middlewares/csrf.js';
@@ -46,4 +47,19 @@ numberingRouter.post(
   izinkan(PERAN.ADMIN, PERAN.PIMPINAN),
   wajibIzin(IZIN.NOMOR_VERIFIKASI),
   controller.kedaluwarsaNomor
+);
+
+numberingRouter.get(
+  '/counter',
+  izinkan(PERAN.ADMIN),
+  wajibIzin(IZIN.MASTER_KELOLA),
+  counterController.daftarCounter
+);
+
+numberingRouter.put(
+  '/counter',
+  verifikasiCsrf,
+  izinkan(PERAN.ADMIN),
+  wajibIzin(IZIN.MASTER_KELOLA),
+  counterController.aturCounter
 );

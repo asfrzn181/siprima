@@ -39,6 +39,7 @@
       <button class="tab-button" data-tab="settings" type="button">Pengaturan</button>
       <button class="tab-button" data-tab="audit" type="button">Audit Log</button>
       <button class="tab-button" data-tab="cleaner" type="button">Pembersih Nomor Ganda</button>
+      <button class="tab-button" data-tab="counter" type="button">Counter Nomor</button>
       <button class="tab-button" data-tab="menu" type="button">Menu Navigasi</button>
     </nav>
 
@@ -183,6 +184,27 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <section id="tab-counter" class="tab-panel" hidden>
+      <div class="panel">
+        <div class="admin-toolbar">
+          <div><h2>Counter Nomor</h2><p class="muted">Atur nomor urut terakhir agar penomoran melanjutkan data lama.</p></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tahun</th><th>Jenis</th><th>Nomor Terakhir</th><th>Diperbarui</th><th>Aksi</th></tr></thead>
+            <tbody id="counter-nomor-body"></tbody>
+          </table>
+        </div>
+        <div class="table-wrap" style="margin-top:1rem">
+          <table>
+            <thead><tr><th>Nama Counter</th><th>Nilai</th><th>Aksi</th></tr></thead>
+            <tbody id="counter-agenda-body"></tbody>
+          </table>
+        </div>
+        <p class="muted small-text">Isi nomor terakhir yang sudah terpakai. Sistem akan memakai nilai tertinggi antara input dan data yang ada.</p>
       </div>
     </section>
 
