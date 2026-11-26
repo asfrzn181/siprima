@@ -192,6 +192,17 @@
         <div class="admin-toolbar">
           <div><h2>Counter Nomor</h2><p class="muted">Atur nomor urut terakhir agar penomoran melanjutkan data lama.</p></div>
         </div>
+        <div class="panel" style="margin-bottom:1rem">
+          <div class="admin-toolbar">
+            <div><h3>Tambah / Ubah Counter</h3><p class="muted">Isi tahun dan nomor urut terakhir. Sistem akan memakai nilai tertinggi.</p></div>
+          </div>
+          <form id="counter-form" class="filter-grid" style="grid-template-columns:120px 180px 160px auto;align-items:end">
+            <label>Tahun<input id="counter-tahun" type="number" min="2000" max="2100" value="2026" required></label>
+            <label>Jenis<select id="counter-jenis"><option value="SURAT_KELUAR">Surat Keluar</option><option value="SK">SK</option><option value="SE">SE</option><option value="agenda">Agenda Surat Masuk</option></select></label>
+            <label>Nomor terakhir<input id="counter-nilai" type="number" min="0" value="0" required></label>
+            <div class="filter-actions"><button class="button primary" type="submit">Simpan</button></div>
+          </form>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Tahun</th><th>Jenis</th><th>Nomor Terakhir</th><th>Diperbarui</th><th>Aksi</th></tr></thead>

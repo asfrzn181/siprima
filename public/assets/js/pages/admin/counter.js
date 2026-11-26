@@ -121,5 +121,25 @@ const muat = async () => {
 };
 
 export const initCounter = async () => {
+  const form = document.querySelector('#counter-form');
+  if (form) {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const tahun = Number(document.querySelector('#counter-tahun')?.value);
+      const jenis = document.querySelector('#counter-jenis')?.value;
+      const nilai = Number(document.querySelector('#counter-nilai')?.value);
+      try {
+        if (jenis === 'agenda') {
+          await api.put('/nomor/counter', { jenis: 'agenda', tahun, lastSeq: nilai });
+        } else {
+          await api.put('/nomor/counter', { jenis: 'nomor', tahun, scopeKey: jenis, lastSeq: nilai });
+        }
+        showToast('Counter diperbarui.');
+        await muat();
+      } catch (error) {
+        showToast(error.message || 'Gagal memperbarui counter.', 'error');
+      }
+    });
+  }
   await muat();
 };
