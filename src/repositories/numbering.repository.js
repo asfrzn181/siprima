@@ -186,7 +186,7 @@ const tetanggaAktif = (peta, maks, seq) => {
   return { sebelum, sesudah };
 };
 
-const kumpulkanTersedia = async ({ menu, tahun, tanggalAcuan, koneksi = null, allowBackdate = false }) => {
+const kumpulkanTersedia = async ({ menu, tahun, tanggalAcuan, koneksi = null, allowBackdate = false, lastSeq = 0 }) => {
   const sql = `SELECT id, seq, status, letter_date, voided_at, tahun
                FROM letter_numbers WHERE menu = ? AND tahun = ?
                ORDER BY seq ASC`;
@@ -194,12 +194,14 @@ const kumpulkanTersedia = async ({ menu, tahun, tanggalAcuan, koneksi = null, al
     ? (await koneksi.query(sql, [menu, tahun]))[0]
     : await query(sql, [menu, tahun]);
   const peta = new Map(rows.map((row) => [Number(row.seq), row]));
-  const maks = rows.reduce((hasil, row) => Math.max(hasil, Number(row.seq)), 0);
+  const maksData = rows.reduce((hasil, row) => Math.max(hasil, Number(row.seq)), 0);
+  const maks = Math.max(maksData, Number(lastSeq) || 0);
   const menuFinal = normalisasiMenu(menu);
   const acuan = tanggalMurni(tanggalAcuan);
   const tersedia = [];
 
-  for (let seq = 1; seq <= maks; seq += 1) {
+  const mulai = Math.max(1, (Number(lastSeq) || 0) + 1);
+  for (let seq = mulai; seq <= maks; seq += 1) {
     const row = peta.get(seq);
     const { sebelum, sesudah } = tetanggaAktif(peta, maks, seq);
     const batasBawah = sebelum ? sebelum.letter_date : null;
@@ -329,6 +331,7 @@ export const alokasikanDalamTransaksi = async (
       [bagian.year, menuFinal]
     );
   }
+  const lastSeq = counterRows.length ? Number(counterRows[0].last_seq) : 0;
 
   let auditHead = await bacaAuditHead(koneksi);
   const aktorData = dataAktor(aktor);
@@ -379,7 +382,8 @@ export const alokasikanDalamTransaksi = async (
     menu: menuFinal,
     tahun: bagian.year,
     tanggalAcuan: tanggalSurat,
-    allowBackdate
+    allowBackdate,
+    lastSeq
   });
   const pilihan = pilihSeq(tersedia, maks, bolehBaru);
   if (!pilihan) {
@@ -583,11 +587,14 @@ export const tersediaNomor = async ({
   const tanggalSurat = tanggalMurni(tanggal);
   if (!tanggalSurat) throw new AppError(400, 'TANGGAL_TIDAK_VALID', 'Tanggal surat tidak valid.');
   const bagian = bagianTanggal(tanggalSurat);
+  const [counterRows] = await query('SELECT last_seq FROM letter_counters WHERE tahun = ? AND scope_key = ?', [bagian.year, konteks.menu]);
+  const lastSeq = counterRows.length ? Number(counterRows[0].last_seq) : 0;
   const { tersedia, maks, bolehBaru } = await kumpulkanTersedia({
     menu: konteks.menu,
     tahun: bagian.year,
     tanggalAcuan: tanggalSurat,
-    allowBackdate: backdate
+    allowBackdate: backdate,
+    lastSeq
   });
   const items = tersedia.map((item) => ({
     seq: item.seq,
