@@ -26,6 +26,7 @@ let filter = { search: '', sifat: 'semua', status: 'semua', bidang: 'semua' };
 let items = [];
 
 let bidang = [];
+const namaBidang = (kode) => bidang.find((item) => item.kode === kode)?.nama || kode || '—';
 try {
   bidang = await daftarBidang(false);
 } catch {
@@ -100,7 +101,7 @@ const render = () => {
         sel(formatTanggal(item.tglSurat)),
         sel(item.tujuan),
         sel(item.hal),
-        sel(item.bidangPembuat),
+        sel(namaBidang(item.bidangPembuat)),
         sifat,
         status,
         aksi
@@ -170,7 +171,7 @@ document.querySelector('#export').addEventListener('click', async () => {
       Tujuan: item.tujuan,
       Hal: item.hal,
       'Isi Ringkas': item.isiRingkas,
-      'Bidang Pembuat': item.bidangPembuat,
+      'Bidang Pembuat': namaBidang(item.bidangPembuat),
       Sifat: item.sifat,
       Status: item.status
     }));

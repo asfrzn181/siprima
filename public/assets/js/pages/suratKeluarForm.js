@@ -93,7 +93,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
       input.disabled = bacaSaja;
     });
     simpan.hidden = bacaSaja || !bolehBuat || !milikSendiri;
-    generate.hidden = Boolean(item) || !bolehBuat;
+    if (generate) generate.hidden = true;
     tombolBatal.hidden = !item || !bolehBatal;
   };
 
@@ -218,7 +218,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     });
   });
 
-  generate.addEventListener('click', async () => {
+  if (generate) generate.addEventListener('click', async () => {
     generate.disabled = true;
     pesan.hidden = true;
     try {
@@ -242,7 +242,9 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
       return tampilPesan('Semua field wajib diisi.');
     }
     if (!data.jenisId) return tampilPesan('Pilih jenis nomor dari autocomplete.');
+    if (!confirm('Terbitkan nomor surat untuk data ini?')) return;
     simpan.disabled = true;
+    simpan.textContent = 'Menyimpan…';
     const pratinjau = nomorPratinjau;
     try {
       const id = form.elements.id.value;
@@ -280,6 +282,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
       tampilPesan(error.message || 'Gagal menyimpan surat keluar.');
     } finally {
       simpan.disabled = false;
+      simpan.textContent = 'Simpan dan terbitkan nomor';
     }
   });
 
