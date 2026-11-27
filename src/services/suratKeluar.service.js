@@ -74,23 +74,32 @@ const urutkan = (items) =>
 
 const cariPrefix = async (profil, filter) => {
   const hasil = [];
+  const kataKunci = String(filter.search || '');
   for (const medan of ['noSurat', 'hal', 'tujuan']) {
+    // Nomor surat keluar kini berawalan B-/T-, jadi pencarian angka juga
+    // dicoba dengan kedua awalan agar "800" tetap menemukan "B-800/...".
+    const varian =
+      medan === 'noSurat'
+        ? [...new Set([kataKunci, `B-${kataKunci}`, `T-${kataKunci}`])]
+        : [kataKunci];
     for (const mode of modeUntuk(profil, filter.sifat)) {
-      try {
-        hasil.push(
-          ...(await daftarSuratKeluar({
-            where: [
-              ...whereMode(profil, mode, { status: filter.status, bidang: filter.bidang }),
-              [medan, '>=', filter.search],
-              [medan, '<=', `${filter.search}\uf8ff`]
-            ],
-            field: medan,
-            arah: 'asc',
-            limit: 100
-          }))
-        );
-      } catch {
-        // Abaikan medan tanpa indeks komposit; medan lain tetap dicari.
+      for (const kata of varian) {
+        try {
+          hasil.push(
+            ...(await daftarSuratKeluar({
+              where: [
+                ...whereMode(profil, mode, { status: filter.status, bidang: filter.bidang }),
+                [medan, '>=', kata],
+                [medan, '<=', `${kata}\uf8ff`]
+              ],
+              field: medan,
+              arah: 'asc',
+              limit: 100
+            }))
+          );
+        } catch {
+          // Abaikan medan tanpa indeks komposit; medan lain tetap dicari.
+        }
       }
     }
   }
@@ -177,13 +186,15 @@ export const ubahKeluar = async (id, perubahan, profil) => {
         )
       );
 
+  let nomorBaru = null;
   if (
     lama.letterNumberId &&
     ((bolehField.hal !== null && bolehField.hal !== undefined) ||
       (bolehField.tujuan !== null && bolehField.tujuan !== undefined) ||
-      (bolehField.tglSurat !== null && bolehField.tglSurat !== undefined))
+      (bolehField.tglSurat !== null && bolehField.tglSurat !== undefined) ||
+      (bolehField.sifat !== null && bolehField.sifat !== undefined))
   ) {
-    await perbaruiMetadata({
+    const metadata = await perbaruiMetadata({
       surat: lama,
       changes: {
         ...(bolehField.hal === null || bolehField.hal === undefined ? {} : { perihal: bolehField.hal }),
@@ -192,10 +203,14 @@ export const ubahKeluar = async (id, perubahan, profil) => {
           : { tujuan: bolehField.tujuan }),
         ...(bolehField.tglSurat === null || bolehField.tglSurat === undefined
           ? {}
-          : { letter_date: bolehField.tglSurat })
+          : { letter_date: bolehField.tglSurat }),
+        ...(bolehField.sifat === null || bolehField.sifat === undefined
+          ? {}
+          : { sifat: bolehField.sifat })
       },
       profil
     });
+    nomorBaru = metadata?.full_number || null;
   }
 
   const sisa = { ...bolehField };
@@ -205,7 +220,7 @@ export const ubahKeluar = async (id, perubahan, profil) => {
   delete sisa.letterNumberId;
   if (Object.keys(sisa).length) await ubahSuratKeluar(id, sisa);
 
-  const sesudah = { ...lama, ...bolehField };
+  const sesudah = { ...lama, ...bolehField, ...(nomorBaru ? { noSurat: nomorBaru } : {}) };
   await catatAudit({
     uid: profil.uid,
     nama: profil.nama,

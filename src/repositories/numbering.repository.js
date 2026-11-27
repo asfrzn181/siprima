@@ -13,6 +13,7 @@ import {
   defaultFormatMenu,
   monthRoman,
   normalizeGolongan,
+  prefixSifat,
   renderNomor
 } from '../utils/nomor.js';
 import { cariBidangByKode, cariNomor } from './master.repository.js';
@@ -120,14 +121,15 @@ export const siapkanKonteks = async ({ menu, jenisId, bidangKode }) => {
   return { menu: menuFinal, master, bidangKode: bidang ? bidang.kode : null, bidang };
 };
 
-export const bangunNomor = ({ menu, master, bidangKode, seq, date }) => {
+export const bangunNomor = ({ menu, master, bidangKode, seq, date, sifat = '' }) => {
   const bagian = bagianTanggal(date) || { year: 0, month: 0, day: 0 };
   const golongan = golonganMenu(menu);
   const kode = master ? String(master.kode || '') : '';
+  const menuFinal = normalisasiMenu(menu);
   return {
     seq: Number(seq),
     seq_suffix: null,
-    menu,
+    menu: menuFinal,
     klasifikasi: kode,
     golongan,
     unit: bidangKode || 'BKPSDMD',
@@ -135,10 +137,11 @@ export const bangunNomor = ({ menu, master, bidangKode, seq, date }) => {
     bulan: bagian.month,
     bulan_romawi: monthRoman(bagian.month),
     tahun: bagian.year,
-    scope_key: menu,
-    full_number: renderNomor(defaultFormatMenu(menu), {
+    scope_key: menuFinal,
+    full_number: renderNomor(defaultFormatMenu(menuFinal), {
       KODE: kode,
       GOLONGAN: golongan,
+      SIFAT: menuFinal === MENU_NOMOR.SURAT_KELUAR ? prefixSifat(sifat) : '',
       URUT: seq,
       UNIT: bidangKode || 'BKPSDMD',
       BIDANG: bidangKode || '',
@@ -200,14 +203,20 @@ const kumpulkanTersedia = async ({ menu, tahun, tanggalAcuan, koneksi = null, al
   const acuan = tanggalMurni(tanggalAcuan);
   const tersedia = [];
 
-  const mulai = Math.max(1, (Number(lastSeq) || 0) + 1);
-  for (let seq = mulai; seq <= maks; seq += 1) {
+  // Counter hanya menjadi lantai untuk nomor baru/bolong, bukan untuk nomor
+  // batal. Nomor batal tetap disimpan sebagai baris VOID dan boleh dipakai
+  // ulang sesuai aturan kronologisnya walau urutannya sudah di bawah counter.
+  const lantai = Math.max(0, Number(lastSeq) || 0);
+  for (let seq = 1; seq <= maks; seq += 1) {
     const row = peta.get(seq);
     const { sebelum, sesudah } = tetanggaAktif(peta, maks, seq);
     const batasBawah = sebelum ? sebelum.letter_date : null;
     const batasAtas = sesudah ? sesudah.letter_date : null;
 
     if (!row) {
+      // Nomor bolong di bawah lantai counter tidak ditawarkan agar nomor baru
+      // tetap mengikuti counter yang diatur admin.
+      if (seq <= lantai) continue;
       if (menuFinal !== MENU_NOMOR.SURAT_KELUAR) {
         // SK/SE: nomor bolong selalu tersedia dalam tahun yang sama.
         tersedia.push({ seq, sumber: 'BOLONG', row: null });
@@ -298,7 +307,8 @@ export const alokasikanDalamTransaksi = async (
     idempotencyKey = '',
     reservationIdLama = null,
     reservationMinutes = 15,
-    allowBackdate = false
+    allowBackdate = false,
+    sifat = ''
   }
 ) => {
   const menuFinal = normalisasiMenu(menu);
@@ -398,7 +408,8 @@ export const alokasikanDalamTransaksi = async (
     master,
     bidangKode,
     seq: pilihan.seq,
-    date: tanggalSurat
+    date: tanggalSurat,
+    sifat
   });
 
   const kedaluwarsa = new Date(Date.now() + Math.max(1, reservationMinutes) * 60000);
@@ -547,7 +558,8 @@ export const reservasiNomor = async ({
   aktor,
   idempotencyKey,
   metadata = {},
-  reservationIdLama = null
+  reservationIdLama = null,
+  sifat = ''
 }) => {
   const konteks = await siapkanKonteks({ menu, jenisId, bidangKode });
   const tanggalSurat = tanggalMurni(tanggal);
@@ -569,7 +581,8 @@ export const reservasiNomor = async ({
       status: STATUS_NOMOR.RESERVED,
       idempotencyKey: idemKey,
       reservationIdLama,
-      reservationMinutes: pengaturan.reservationMinutes
+      reservationMinutes: pengaturan.reservationMinutes,
+      sifat
     })
   );
 
@@ -581,7 +594,8 @@ export const tersediaNomor = async ({
   jenisId,
   bidangKode,
   tanggal,
-  backdate = false
+  backdate = false,
+  sifat = ''
 }) => {
   const konteks = await siapkanKonteks({ menu, jenisId, bidangKode });
   const tanggalSurat = tanggalMurni(tanggal);
@@ -607,7 +621,8 @@ export const tersediaNomor = async ({
       master: konteks.master,
       bidangKode: konteks.bidangKode,
       seq: item.seq,
-      date: tanggalSurat
+      date: tanggalSurat,
+      sifat
     }).full_number
   }));
   const seqBaru = maks + 1;
@@ -617,7 +632,8 @@ export const tersediaNomor = async ({
         master: konteks.master,
         bidangKode: konteks.bidangKode,
         seq: seqBaru,
-        date: tanggalSurat
+        date: tanggalSurat,
+        sifat
       }).full_number
     : '';
   return {
@@ -776,7 +792,8 @@ export const buatSuratKeluarBernomor = async ({ jenisId, bidangKode, tanggal, pa
       aktor,
       metadata: { perihal: payload.hal || '', tujuan: payload.tujuan || '' },
       status: STATUS_NOMOR.ISSUED,
-      allowBackdate: backdate
+      allowBackdate: backdate,
+      sifat: payload.sifat || ''
     });
 
     const aktorData = dataAktor(aktor);

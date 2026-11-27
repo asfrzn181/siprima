@@ -6,7 +6,13 @@ import {
   siapkanKonteks,
   tersediaNomor
 } from './numbering.repository.js';
-import { defaultFormatMenu, monthRoman, normalizeGolongan, renderNomor } from '../utils/nomor.js';
+import {
+  MENU_NOMOR,
+  defaultFormatMenu,
+  monthRoman,
+  normalizeGolongan,
+  renderNomor
+} from '../utils/nomor.js';
 
 export const cariNomorByFullNumber = async (fullNumber) => {
   const row = await one('SELECT * FROM letter_numbers WHERE full_number = ? LIMIT 1', [
@@ -20,9 +26,9 @@ export const cariRegisterNomor = async (id) => {
   return row ? petaNomor(row) : null;
 };
 
-export const pratinjauNomor = async ({ menu, jenisId, bidangKode, tanggal, backdate = false }) => {
+export const pratinjauNomor = async ({ menu, jenisId, bidangKode, tanggal, backdate = false, sifat = '' }) => {
   const konteks = await siapkanKonteks({ menu, jenisId, bidangKode });
-  const daftar = await tersediaNomor({ menu: konteks.menu, jenisId, bidangKode, tanggal, backdate });
+  const daftar = await tersediaNomor({ menu: konteks.menu, jenisId, bidangKode, tanggal, backdate, sifat });
   const tanggalBagian = daftar.tahun;
   const seqBerikut = daftar.berikutnya;
   const nomorBerikut = seqBerikut
@@ -31,7 +37,8 @@ export const pratinjauNomor = async ({ menu, jenisId, bidangKode, tanggal, backd
         master: konteks.master,
         bidangKode: konteks.bidangKode,
         seq: seqBerikut,
-        date: tanggal
+        date: tanggal,
+        sifat
       }).full_number
     : '';
   const terpilih = daftar.items.length
@@ -93,6 +100,7 @@ export const verifikasiUrutan = async (tahun, scopeKey = null) => {
     const expected = renderNomor(defaultFormatMenu(menu), {
       KODE: row.klasifikasi,
       GOLONGAN: golongan,
+      SIFAT: '',
       URUT: row.seq,
       UNIT: row.kode_bidang || row.unit,
       BIDANG: row.kode_bidang || row.unit,
@@ -100,7 +108,13 @@ export const verifikasiUrutan = async (tahun, scopeKey = null) => {
       BULAN: String(row.bulan ?? '').padStart(2, '0'),
       BULAN_ROMAWI: row.bulan_romawi || monthRoman(row.bulan)
     });
-    if (row.full_number !== expected) {
+    // letter_numbers tidak menyimpan sifat, jadi awalan B-/T- pada nomor
+    // surat keluar dilepas sebelum dibandingkan dengan pola.
+    const aktual =
+      menu === MENU_NOMOR.SURAT_KELUAR
+        ? String(row.full_number || '').replace(/^[BT]-/, '')
+        : String(row.full_number || '');
+    if (aktual !== expected) {
       issues.push({ type: 'NUMBER_MISMATCH', id: row.id, expected, actual: row.full_number, seq: row.seq });
     }
 

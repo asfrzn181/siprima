@@ -111,7 +111,8 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
         jenisId: selectJenis.value,
         bidangKode: bidangTerpilih(),
         tanggal: tanggalIso(form.elements.tglSurat.value),
-        backdate: Boolean(form.elements.backdate?.checked)
+        backdate: Boolean(form.elements.backdate?.checked),
+        sifat: form.elements.sifat.value
       });
       nomorPratinjau = hasil?.noSurat || '';
       form.elements.nomorGenerated.value = nomorPratinjau;
@@ -210,6 +211,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
 
   form.elements.sifat.addEventListener('change', () => {
     document.querySelector('#access').hidden = form.elements.sifat.value !== 'rahasia';
+    muatTersedia();
   });
 
   ['tglSurat', 'bidangPembuat', 'backdate'].forEach((nama) => {

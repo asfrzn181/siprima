@@ -33,7 +33,8 @@ export const pratinjau = (payload, profil) =>
     menu: payload.menu || MENU_NOMOR.SURAT_KELUAR,
     jenisId: payload.jenisId,
     bidangKode: bidangPayload(payload, profil),
-    tanggal: payload.tanggal
+    tanggal: payload.tanggal,
+    sifat: payload.sifat || ''
   });
 
 export const daftarTersedia = (payload, profil) =>
@@ -42,7 +43,8 @@ export const daftarTersedia = (payload, profil) =>
     jenisId: payload.jenisId,
     bidangKode: bidangPayload(payload, profil),
     tanggal: payload.tanggal,
-    backdate: Boolean(payload.backdate)
+    backdate: Boolean(payload.backdate),
+    sifat: payload.sifat || ''
   });
 
 // Terbitkan surat keluar langsung: nomor final ditentukan server di dalam
@@ -111,7 +113,8 @@ export const koreksi = async ({ suratId, payload, reason, profil }) => {
     tanggal: payload.tglSurat,
     aktor: aktorDari(profil),
     idempotencyKey: payload.idempotencyKey,
-    metadata: { perihal: payload.hal, tujuan: payload.tujuan }
+    metadata: { perihal: payload.hal, tujuan: payload.tujuan },
+    sifat: payload.sifat || lama.sifat
   });
   await voidNomor({
     letterNumberId: lama.letterNumberId,

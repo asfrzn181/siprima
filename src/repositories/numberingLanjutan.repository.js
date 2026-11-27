@@ -2,7 +2,7 @@
 import { STATUS_NOMOR } from '../constants/index.js';
 import { AppError } from '../utils/AppError.js';
 import { tanggalMurni, tahunTanggal } from '../utils/tanggal.js';
-import { bolehPakaiUlangNomor, normalizeGolongan } from '../utils/nomor.js';
+import { bolehPakaiUlangNomor, normalizeGolongan, prefixSifat } from '../utils/nomor.js';
 import { bacaAuditHead, tulisAuditDalamTransaksi } from './numberingAudit.repository.js';
 import { petaNomor } from './numbering.repository.js';
 import { petaKeluar } from './suratKeluar.repository.js';
@@ -334,23 +334,53 @@ export const perbaruiMetadataNomor = async ({
     const perihal = changes.perihal ?? before.perihal;
     const tujuan = changes.tujuan ?? before.tujuan;
     const letterDate = changes.letter_date ?? before.letter_date;
+    const menu = before.menu || 'SURAT_KELUAR';
+    const sifatBaru = changes.sifat ?? suratRow?.sifat ?? null;
+    // Nomor surat keluar memuat awalan sifat (B-/T-). Saat sifat diubah,
+    // awalan lama diganti tanpa mengubah urutan dan bagian nomor lainnya.
+    // Nomor lama tanpa awalan tidak diubah hanya karena metadata lain diedit.
+    const punyaPrefix = /^[BT]-/.test(String(before.full_number || ''));
+    let fullNumber = before.full_number;
+    if (
+      menu === 'SURAT_KELUAR' &&
+      (changes.sifat !== undefined || punyaPrefix) &&
+      (sifatBaru === 'biasa' || sifatBaru === 'rahasia')
+    ) {
+      fullNumber = `${prefixSifat(sifatBaru)}${String(before.full_number || '').replace(/^[BT]-/, '')}`;
+    }
 
     await koneksi.query(
       `UPDATE letter_numbers
-          SET perihal = ?, tujuan = ?, letter_date = ?, row_version = ?
+          SET perihal = ?, tujuan = ?, letter_date = ?, full_number = ?, row_version = ?
         WHERE id = ?`,
-      [perihal, tujuan, letterDate, versi, letterNumberId]
+      [perihal, tujuan, letterDate, fullNumber, versi, letterNumberId]
     );
     if (suratRow) {
       await koneksi.query(
         `UPDATE surat_keluar
-            SET tujuan = ?, hal = ?, tgl_surat = ?, letter_row_version = ?, diubah_pada = UTC_TIMESTAMP(3)
+            SET tujuan = ?, hal = ?, tgl_surat = ?, sifat = ?, no_surat = ?,
+                letter_row_version = ?, diubah_pada = UTC_TIMESTAMP(3)
           WHERE id = ?`,
-        [tujuan, perihal, letterDate, versi, suratRow.id]
+        [
+          tujuan,
+          perihal,
+          letterDate,
+          sifatBaru ?? suratRow.sifat,
+          fullNumber,
+          versi,
+          suratRow.id
+        ]
       );
     }
 
-    const after = { ...petaNomor(before), perihal, tujuan, letter_date: letterDate, row_version: versi };
+    const after = {
+      ...petaNomor(before),
+      perihal,
+      tujuan,
+      letter_date: letterDate,
+      full_number: fullNumber,
+      row_version: versi
+    };
     await tulisAuditDalamTransaksi(koneksi, {
       letterId: letterNumberId,
       action: 'EDIT_METADATA',

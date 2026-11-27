@@ -24,12 +24,17 @@ export const normalizeGolongan = (nilai) => {
 
 export const golonganUsesKode = (golongan) => normalizeGolongan(golongan) !== 'SE';
 
+// Awalan nomor surat keluar menurut klasifikasi sifat: B- untuk biasa dan
+// T- untuk rahasia. Nilai tak dikenal diperlakukan sebagai biasa.
+export const prefixSifat = (sifat) =>
+  String(sifat || '').trim().toLowerCase() === 'rahasia' ? 'T-' : 'B-';
+
 // Pola nomor mengikuti menu, bukan golongan jenis nomor. Nomor urut tidak
 // memakai nol di depan (1, 20, 333) dan kode bidang menggantikan bulan.
 export const defaultFormatMenu = (menu) => {
   if (menu === MENU_NOMOR.SK) return '{KODE}/{URUT}/BKPSDMD/{TAHUN}';
   if (menu === MENU_NOMOR.SE) return '{URUT} TAHUN {TAHUN}';
-  return '{KODE}/{URUT}/BKPSDMD/{BIDANG}/{TAHUN}';
+  return '{SIFAT}{KODE}/{URUT}/BKPSDMD/{BIDANG}/{TAHUN}';
 };
 
 export const defaultFormatGolongan = (golongan) => {
@@ -65,7 +70,7 @@ export const scopeKeyFor = ({ golongan, kode, scope }) => {
 
 export const renderNomor = (format, values) =>
   normalizeFormatGolongan(format, values.GOLONGAN).replace(
-    /\{(KODE|UNIT|TAHUN|BULAN|BULAN_ROMAWI|BIDANG|GOLONGAN)\}|\{URUT(?::(\d+))?\}/g,
+    /\{(KODE|UNIT|TAHUN|BULAN|BULAN_ROMAWI|BIDANG|GOLONGAN|SIFAT)\}|\{URUT(?::(\d+))?\}/g,
     (_, nama, lebar) => {
       if (nama) return String(values[nama] ?? '');
       const urut = String(values.URUT ?? '');

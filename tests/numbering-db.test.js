@@ -56,7 +56,7 @@ test('penomoran per menu: pola, pemakaian ulang, dan pembatalan', { skip: lewati
     });
     dibuat.nomor.push(r1.id);
     assert.equal(Number(r1.seq), seqAwal);
-    assert.equal(r1.full_number, `${utama.kode}/${seqAwal}/BKPSDMD/${kodeBidang}/${tahun}`);
+    assert.equal(r1.full_number, `B-${utama.kode}/${seqAwal}/BKPSDMD/${kodeBidang}/${tahun}`);
 
     // Ganti jenis dengan melepas reservasi lama: urutan tetap, kode berubah.
     const r2 = await reservasiNomor({
@@ -70,7 +70,7 @@ test('penomoran per menu: pola, pemakaian ulang, dan pembatalan', { skip: lewati
     });
     dibuat.nomor.push(r2.id);
     assert.equal(Number(r2.seq), seqAwal);
-    assert.equal(r2.full_number, `${(cadangan || utama).kode}/${seqAwal}/BKPSDMD/${kodeBidang}/${tahun}`);
+    assert.equal(r2.full_number, `B-${(cadangan || utama).kode}/${seqAwal}/BKPSDMD/${kodeBidang}/${tahun}`);
 
     // Batal di hari yang sama: nomor boleh dipakai ulang otomatis.
     await voidNomor({ letterNumberId: r2.id, reason: 'Uji pembatalan', aktor });

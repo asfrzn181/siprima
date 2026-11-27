@@ -242,11 +242,16 @@
               <tr><th>Menu</th><th>Format</th><th>Contoh</th></tr>
             </thead>
             <tbody>
-              <tr><td>Surat Keluar</td><td><code>KODE/URUT/BKPSDMD/BIDANG/TAHUN</code></td><td><code>800/4/BKPSDMD/III/2026</code></td></tr>
+              <tr><td>Surat Keluar</td><td><code>SIFAT-KODE/URUT/BKPSDMD/BIDANG/TAHUN</code></td><td><code>B-800/4/BKPSDMD/III/2026</code></td></tr>
               <tr><td>SK</td><td><code>KODE/URUT/BKPSDMD/TAHUN</code></td><td><code>800/12/BKPSDMD/2026</code></td></tr>
               <tr><td>SE</td><td><code>URUT TAHUN YYYY</code></td><td><code>7 TAHUN 2026</code></td></tr>
             </tbody>
           </table>
+          <p>
+            Awalan <code>SIFAT-</code> pada Surat Keluar mengikuti klasifikasi sifat:
+            <code>B-</code> untuk <strong>Biasa</strong> dan <code>T-</code> untuk <strong>Rahasia</strong>.
+            Bila sifat surat diubah, awalan nomor ikut diperbarui tanpa mengubah urutan dan bagian lainnya.
+          </p>
 
           <h3>Surat Keluar: nomor batal dan nomor bolong</h3>
           <p>
@@ -260,6 +265,7 @@
             <li>Batas atas = tanggal nomor aktif terdekat sesudah nomor tersebut (bila ada).</li>
             <li>Nomor tersedia bila <strong>batas bawah ≤ Tanggal Surat ≤ batas atas</strong>, atau Tanggal Surat sama dengan tanggal nomor itu sendiri.</li>
             <li>Bila nomor batal adalah nomor terakhir (tidak ada penerus aktif), nomor tetap tersedia untuk tanggal berikutnya.</li>
+            <li>Nomor batal tetap <strong>disimpan</strong> di register (status VOID) dan dapat <strong>dipakai ulang</strong>. Counter nomor hanya menjadi lantai untuk nomor baru/bolong, bukan untuk nomor batal.</li>
             <li>Nomor baru (maksimum + 1) hanya dapat terbit bila Tanggal Surat tidak lebih awal dari tanggal nomor aktif tertinggi.</li>
             <li>Tanggal sistem (<code>created_at</code>) tidak pernah dipakai sebagai pembanding.</li>
           </ul>

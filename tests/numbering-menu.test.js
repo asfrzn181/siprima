@@ -4,6 +4,7 @@ import {
   MENU_NOMOR,
   bolehPakaiUlangNomor,
   defaultFormatMenu,
+  prefixSifat,
   renderNomor
 } from '../src/utils/nomor.js';
 import { tanggalDalamRentang, tanggalMurni } from '../src/utils/tanggal.js';
@@ -11,13 +12,14 @@ import { tanggalDalamRentang, tanggalMurni } from '../src/utils/tanggal.js';
 const nomor = (menu, values) =>
   renderNomor(defaultFormatMenu(menu), {
     GOLONGAN: menu === MENU_NOMOR.SK ? 'SK' : menu === MENU_NOMOR.SE ? 'SE' : 'LAINNYA',
+    SIFAT: menu === MENU_NOMOR.SURAT_KELUAR ? 'B-' : '',
     ...values
   });
 
 test('pola nomor tiap menu sesuai ketentuan', () => {
   assert.equal(
     nomor(MENU_NOMOR.SURAT_KELUAR, { KODE: '900', URUT: 4, BIDANG: 'III', TAHUN: 2026 }),
-    '900/4/BKPSDMD/III/2026'
+    'B-900/4/BKPSDMD/III/2026'
   );
   assert.equal(
     nomor(MENU_NOMOR.SK, { KODE: '800', URUT: 12, TAHUN: 2026 }),
@@ -26,14 +28,31 @@ test('pola nomor tiap menu sesuai ketentuan', () => {
   assert.equal(nomor(MENU_NOMOR.SE, { URUT: 7, TAHUN: 2026 }), '7 TAHUN 2026');
 });
 
+test('awalan nomor mengikuti klasifikasi sifat', () => {
+  assert.equal(prefixSifat('biasa'), 'B-');
+  assert.equal(prefixSifat('rahasia'), 'T-');
+  assert.equal(prefixSifat('RAHASIA'), 'T-');
+  assert.equal(prefixSifat(''), 'B-');
+  assert.equal(
+    nomor(MENU_NOMOR.SURAT_KELUAR, {
+      KODE: '900',
+      URUT: 4,
+      BIDANG: 'III',
+      TAHUN: 2026,
+      SIFAT: 'T-'
+    }),
+    'T-900/4/BKPSDMD/III/2026'
+  );
+});
+
 test('nomor urut tidak memakai nol di depan', () => {
   assert.equal(
     nomor(MENU_NOMOR.SURAT_KELUAR, { KODE: '800', URUT: 1, BIDANG: 'III', TAHUN: 2026 }),
-    '800/1/BKPSDMD/III/2026'
+    'B-800/1/BKPSDMD/III/2026'
   );
   assert.equal(
     nomor(MENU_NOMOR.SURAT_KELUAR, { KODE: '800', URUT: 333, BIDANG: 'III', TAHUN: 2026 }),
-    '800/333/BKPSDMD/III/2026'
+    'B-800/333/BKPSDMD/III/2026'
   );
 });
 
@@ -46,8 +65,8 @@ test('mengganti jenis hanya mengubah kode klasifikasi', () => {
   };
   const pertama = nomor(MENU_NOMOR.SURAT_KELUAR, { ...nilai, KODE: '900' });
   const kedua = nomor(MENU_NOMOR.SURAT_KELUAR, { ...nilai, KODE: '800' });
-  assert.equal(pertama, '900/4/BKPSDMD/III/2026');
-  assert.equal(kedua, '800/4/BKPSDMD/III/2026');
+  assert.equal(pertama, 'B-900/4/BKPSDMD/III/2026');
+  assert.equal(kedua, 'B-800/4/BKPSDMD/III/2026');
   assert.equal(pertama.split('/')[1], kedua.split('/')[1]);
 });
 

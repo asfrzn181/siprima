@@ -36,14 +36,16 @@ export const skemaReservasi = z.object({
   tanggal: tanggalWajib,
   reservationIdLama: z.string().trim().max(200).optional(),
   perihal: z.string().trim().max(200).optional(),
-  tujuan: z.string().trim().max(200).optional()
+  tujuan: z.string().trim().max(200).optional(),
+  sifat: z.enum([SIFAT.BIASA, SIFAT.RAHASIA]).optional()
 });
 
 export const skemaTersediaNomor = z.object({
   menu: z.enum(['SURAT_KELUAR', 'SK', 'SE']).default('SURAT_KELUAR'),
   jenisId: z.string().trim().max(200).optional(),
   bidangKode: z.string().trim().max(40).optional(),
-  tanggal: tanggalOpsional
+  tanggal: tanggalOpsional,
+  sifat: z.enum([SIFAT.BIASA, SIFAT.RAHASIA]).optional()
 });
 
 export const skemaBatal = z.object({
