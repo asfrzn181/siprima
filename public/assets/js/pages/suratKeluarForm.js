@@ -94,7 +94,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     });
     simpan.hidden = bacaSaja || !bolehBuat || !milikSendiri;
     if (generate) generate.hidden = true;
-    tombolBatal.hidden = !item || !bolehBatal;
+    tombolBatal.hidden = bacaSaja || !item || !bolehBatal;
   };
 
   // Pratinjau hanya membaca data. Tidak ada INSERT/UPDATE sampai pengguna
@@ -127,9 +127,12 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     pesan.hidden = true;
     form.reset();
     panel.hidden = false;
+    const dibatalkan = item?.status === 'Dibatalkan';
     judul.textContent = item ? 'Detail/ubah surat keluar' : 'Tambah surat keluar';
     catatan.textContent = item
-      ? 'Data surat dapat diedit. Nomor resmi tidak berubah saat penyuntingan.'
+      ? dibatalkan
+        ? 'Surat ini sudah dibatalkan sehingga hanya dapat dilihat. Nomornya tetap tersimpan dan dapat dipakai ulang saat membuat surat baru.'
+        : 'Data surat dapat diedit. Nomor resmi tidak berubah saat penyuntingan.'
       : 'Nomor surat dibuat otomatis oleh server memakai nomor terkecil yang tersedia.';
     form.elements.id.value = item?.id || '';
     form.elements.noSurat.value = item?.noSurat || '';
@@ -159,7 +162,8 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     document.querySelector('#access').hidden = form.elements.sifat.value !== 'rahasia';
 
     const bacaSaja =
-      Boolean(item) && (!bolehBuat || (bidangSaja && item.bidangPembuat !== sesi.profile.bidang));
+      dibatalkan ||
+      (Boolean(item) && (!bolehBuat || (bidangSaja && item.bidangPembuat !== sesi.profile.bidang)));
     aturKunci(bacaSaja, item);
     if (!item) {
       await muatTersedia();
