@@ -108,14 +108,14 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
   const renderOpsiNomor = (daftar, nomorDefault) => {
     const modeBaru = !form.elements.id.value;
     if (!modeBaru || !daftar.length) {
-      wrapOpsiNomor.hidden = true;
-      opsiNomor.replaceChildren();
+      if (wrapOpsiNomor) wrapOpsiNomor.hidden = true;
+      opsiNomor?.replaceChildren();
       seqDipilih = null;
       return;
     }
     const terpilih = daftar.find((item) => item.nomor === nomorDefault) || daftar[0];
     seqDipilih = Number(terpilih.seq);
-    opsiNomor.replaceChildren(
+    opsiNomor?.replaceChildren(
       ...daftar.map((item) => {
         const label = document.createElement('label');
         label.className = 'check-option';
@@ -137,7 +137,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
         return label;
       })
     );
-    wrapOpsiNomor.hidden = false;
+    if (wrapOpsiNomor) wrapOpsiNomor.hidden = false;
     nomorPratinjau = terpilih.nomor;
     form.elements.nomorGenerated.value = terpilih.nomor;
   };
@@ -176,8 +176,8 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     pesan.hidden = true;
     form.reset();
     panel.hidden = false;
-    opsiNomor.replaceChildren();
-    wrapOpsiNomor.hidden = true;
+    opsiNomor?.replaceChildren();
+    if (wrapOpsiNomor) wrapOpsiNomor.hidden = true;
     seqDipilih = null;
     const dibatalkan = item?.status === 'Dibatalkan';
     judul.textContent = item ? 'Detail/ubah surat keluar' : 'Tambah surat keluar';
