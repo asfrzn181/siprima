@@ -51,6 +51,8 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
   const simpan = document.querySelector('#save');
   const generate = document.querySelector('#generate-number');
   const tombolBatal = document.querySelector('#cancel');
+  const opsiNomor = document.querySelector('#nomor-options');
+  const wrapOpsiNomor = document.querySelector('#nomor-options-wrap');
   const bidangSaja = sesi.profile.role === 'bidang';
   const bolehBuat = punyaIzin(sesi.profile, 'surat_keluar.tulis');
   const bolehBatal = punyaIzin(sesi.profile, 'surat_keluar.batal');
@@ -59,6 +61,7 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
   const inputCari = form.elements.nomorCari;
   let masters = [];
   let nomorPratinjau = '';
+  let seqDipilih = null;
 
   const tampilPesan = (teks) => {
     pesan.textContent = teks;
@@ -97,12 +100,55 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     tombolBatal.hidden = bacaSaja || !item || !bolehBatal;
   };
 
+  const LABEL_SUMBER = { BOLONG: 'nomor kosong', BATAL: 'nomor batal' };
+
+  // Tampilkan nomor kosong/nomor batal yang tersedia pada tanggal tersebut
+  // agar pengguna bisa memilih nomor urut sendiri. Nomor baru (berikutnya)
+  // tetap dipakai otomatis bila tidak ada pilihan lain.
+  const renderOpsiNomor = (daftar, nomorDefault) => {
+    const modeBaru = !form.elements.id.value;
+    if (!modeBaru || !daftar.length) {
+      wrapOpsiNomor.hidden = true;
+      opsiNomor.replaceChildren();
+      seqDipilih = null;
+      return;
+    }
+    const terpilih = daftar.find((item) => item.nomor === nomorDefault) || daftar[0];
+    seqDipilih = Number(terpilih.seq);
+    opsiNomor.replaceChildren(
+      ...daftar.map((item) => {
+        const label = document.createElement('label');
+        label.className = 'check-option';
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = 'pilihSeq';
+        input.value = String(item.seq);
+        input.checked = Number(item.seq) === Number(terpilih.seq);
+        const teks = document.createElement('span');
+        const keterangan = LABEL_SUMBER[item.sumber];
+        teks.textContent = keterangan ? `${item.nomor} (${keterangan})` : item.nomor;
+        input.addEventListener('change', () => {
+          if (!input.checked) return;
+          seqDipilih = Number(item.seq);
+          nomorPratinjau = item.nomor;
+          form.elements.nomorGenerated.value = item.nomor;
+        });
+        label.append(input, teks);
+        return label;
+      })
+    );
+    wrapOpsiNomor.hidden = false;
+    nomorPratinjau = terpilih.nomor;
+    form.elements.nomorGenerated.value = terpilih.nomor;
+  };
+
   // Pratinjau hanya membaca data. Tidak ada INSERT/UPDATE sampai pengguna
   // menekan Simpan; nomor final tetap ditentukan server saat penyimpanan.
   const muatTersedia = async () => {
     if (!selectJenis.value || !form.elements.tglSurat.value) {
       nomorPratinjau = '';
       form.elements.nomorGenerated.value = '';
+      renderOpsiNomor([], '');
       return;
     }
     try {
@@ -114,11 +160,14 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
         backdate: Boolean(form.elements.backdate?.checked),
         sifat: form.elements.sifat.value
       });
+      const daftar = Array.isArray(hasil?.tersedia) ? hasil.tersedia : [];
       nomorPratinjau = hasil?.noSurat || '';
       form.elements.nomorGenerated.value = nomorPratinjau;
+      renderOpsiNomor(daftar, nomorPratinjau);
     } catch (error) {
       nomorPratinjau = '';
       form.elements.nomorGenerated.value = '';
+      renderOpsiNomor([], '');
       tampilPesan(error.message || 'Pratinjau nomor gagal dimuat.');
     }
   };
@@ -127,6 +176,9 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
     pesan.hidden = true;
     form.reset();
     panel.hidden = false;
+    opsiNomor.replaceChildren();
+    wrapOpsiNomor.hidden = true;
+    seqDipilih = null;
     const dibatalkan = item?.status === 'Dibatalkan';
     judul.textContent = item ? 'Detail/ubah surat keluar' : 'Tambah surat keluar';
     catatan.textContent = item
@@ -190,7 +242,8 @@ export const siapkanForm = ({ sesi, bidang, onSaved }) => {
       aksesBidang: [...document.querySelectorAll('input[name="aksesBidang"]:checked')].map(
         (input) => input.value
       ),
-      backdate: Boolean(form.elements.backdate?.checked)
+      backdate: Boolean(form.elements.backdate?.checked),
+      seq: seqDipilih || undefined
     };
   };
 

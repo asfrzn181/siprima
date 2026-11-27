@@ -4,6 +4,7 @@ import {
   MENU_NOMOR,
   bolehPakaiUlangNomor,
   defaultFormatMenu,
+  pilihSeqNomor,
   prefixSifat,
   renderNomor
 } from '../src/utils/nomor.js';
@@ -43,6 +44,25 @@ test('awalan nomor mengikuti klasifikasi sifat', () => {
     }),
     'T-900/4/BKPSDMD/III/2026'
   );
+});
+
+test('pilih nomor urut tertentu bila tersedia', () => {
+  const tersedia = [
+    { seq: 2, sumber: 'BOLONG', row: null },
+    { seq: 4, sumber: 'BATAL', row: {} }
+  ];
+  assert.deepEqual(pilihSeqNomor({ tersedia, maks: 5, bolehBaru: true, seqDiminta: 4 }), tersedia[1]);
+  assert.equal(pilihSeqNomor({ tersedia, maks: 5, bolehBaru: true, seqDiminta: 2 }).seq, 2);
+  assert.deepEqual(pilihSeqNomor({ tersedia, maks: 5, bolehBaru: true, seqDiminta: 6 }), {
+    seq: 6,
+    sumber: 'BARU',
+    row: null
+  });
+  assert.equal(pilihSeqNomor({ tersedia, maks: 5, bolehBaru: true, seqDiminta: 3 }), null);
+  assert.equal(pilihSeqNomor({ tersedia, maks: 5, bolehBaru: false, seqDiminta: 6 }), null);
+  assert.equal(pilihSeqNomor({ tersedia, maks: 5, bolehBaru: true }).seq, 2);
+  assert.equal(pilihSeqNomor({ tersedia: [], maks: 5, bolehBaru: true }).seq, 6);
+  assert.equal(pilihSeqNomor({ tersedia: [], maks: 5, bolehBaru: false }), null);
 });
 
 test('nomor urut tidak memakai nol di depan', () => {

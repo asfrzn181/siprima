@@ -29,6 +29,23 @@ export const golonganUsesKode = (golongan) => normalizeGolongan(golongan) !== 'S
 export const prefixSifat = (sifat) =>
   String(sifat || '').trim().toLowerCase() === 'rahasia' ? 'T-' : 'B-';
 
+// Pilih nomor yang akan dipakai. Bila pengguna memilih urutan tertentu
+// (nomor kosong/nomor batal), hormati pilihan itu selama masih tersedia.
+export const pilihSeqNomor = ({ tersedia = [], maks = 0, bolehBaru = false, seqDiminta = null }) => {
+  const diminta = Number(seqDiminta) || null;
+  if (diminta) {
+    const cocok = tersedia.find((item) => Number(item.seq) === diminta);
+    if (cocok) return cocok;
+    if (bolehBaru && diminta === Number(maks) + 1) {
+      return { seq: diminta, sumber: 'BARU', row: null };
+    }
+    return null;
+  }
+  if (tersedia.length) return tersedia[0];
+  if (bolehBaru) return { seq: Number(maks) + 1, sumber: 'BARU', row: null };
+  return null;
+};
+
 // Pola nomor mengikuti menu, bukan golongan jenis nomor. Nomor urut tidak
 // memakai nol di depan (1, 20, 333) dan kode bidang menggantikan bulan.
 export const defaultFormatMenu = (menu) => {

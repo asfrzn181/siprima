@@ -13,6 +13,7 @@ import {
   defaultFormatMenu,
   monthRoman,
   normalizeGolongan,
+  pilihSeqNomor,
   prefixSifat,
   renderNomor
 } from '../utils/nomor.js';
@@ -250,12 +251,6 @@ const kumpulkanTersedia = async ({ menu, tahun, tanggalAcuan, koneksi = null, al
   return { tersedia, maks, rows, bolehBaru, batasBaru };
 };
 
-const pilihSeq = (tersedia, maks, bolehBaru) => {
-  if (tersedia.length) return tersedia[0];
-  if (bolehBaru) return { seq: maks + 1, sumber: 'BARU', row: null };
-  return null;
-};
-
 const ambilNomor = async (id) => {
   const row = await one('SELECT * FROM letter_numbers WHERE id = ?', [id]);
   return row ? petaNomor(row) : null;
@@ -308,7 +303,8 @@ export const alokasikanDalamTransaksi = async (
     reservationIdLama = null,
     reservationMinutes = 15,
     allowBackdate = false,
-    sifat = ''
+    sifat = '',
+    seqDiminta = null
   }
 ) => {
   const menuFinal = normalisasiMenu(menu);
@@ -395,8 +391,18 @@ export const alokasikanDalamTransaksi = async (
     allowBackdate,
     lastSeq
   });
-  const pilihan = pilihSeq(tersedia, maks, bolehBaru);
+  // Pengguna boleh memilih nomor kosong/nomor batal tertentu dari daftar yang
+  // tersedia. Nomor baru (maks + 1) juga boleh dipilih bila tanggalnya valid.
+  const diminta = Number(seqDiminta) || null;
+  const pilihan = pilihSeqNomor({ tersedia, maks, bolehBaru, seqDiminta: diminta });
   if (!pilihan) {
+    if (diminta) {
+      throw new AppError(
+        409,
+        'NOMOR_TIDAK_TERSEDIA',
+        `Nomor urut ${diminta} tidak tersedia untuk Tanggal Surat ini. Pilih nomor lain atau muat ulang pratinjau.`
+      );
+    }
     throw new AppError(
       409,
       'NOMOR_TIDAK_TERSEDIA',
@@ -559,7 +565,8 @@ export const reservasiNomor = async ({
   idempotencyKey,
   metadata = {},
   reservationIdLama = null,
-  sifat = ''
+  sifat = '',
+  seq = null
 }) => {
   const konteks = await siapkanKonteks({ menu, jenisId, bidangKode });
   const tanggalSurat = tanggalMurni(tanggal);
@@ -582,7 +589,8 @@ export const reservasiNomor = async ({
       idempotencyKey: idemKey,
       reservationIdLama,
       reservationMinutes: pengaturan.reservationMinutes,
-      sifat
+      sifat,
+      seqDiminta: seq
     })
   );
 
@@ -773,7 +781,7 @@ export const terbitkanNomor = async ({ reservationId, payload, aktor }) =>
  * surat. Server selalu memilih nomor terkecil yang tersedia saat Simpan,
  * sehingga pratinjau di klien tidak pernah mengikat nomor.
  */
-export const buatSuratKeluarBernomor = async ({ jenisId, bidangKode, tanggal, payload, aktor, backdate = false }) => {
+export const buatSuratKeluarBernomor = async ({ jenisId, bidangKode, tanggal, payload, aktor, backdate = false, seq = null }) => {
   const konteks = await siapkanKonteks({
     menu: MENU_NOMOR.SURAT_KELUAR,
     jenisId,
@@ -793,7 +801,8 @@ export const buatSuratKeluarBernomor = async ({ jenisId, bidangKode, tanggal, pa
       metadata: { perihal: payload.hal || '', tujuan: payload.tujuan || '' },
       status: STATUS_NOMOR.ISSUED,
       allowBackdate: backdate,
-      sifat: payload.sifat || ''
+      sifat: payload.sifat || '',
+      seqDiminta: seq
     });
 
     const aktorData = dataAktor(aktor);

@@ -56,7 +56,8 @@ export const terbitkanSuratKeluar = ({ jenisId, bidangKode, tanggal, payload, pr
     tanggal,
     payload,
     aktor: aktorDari(profil),
-    backdate: Boolean(payload?.backdate)
+    backdate: Boolean(payload?.backdate),
+    seq: payload?.seq
   });
 
 export const terbitkan = async (payload, profil) => {
@@ -114,7 +115,8 @@ export const koreksi = async ({ suratId, payload, reason, profil }) => {
     aktor: aktorDari(profil),
     idempotencyKey: payload.idempotencyKey,
     metadata: { perihal: payload.hal, tujuan: payload.tujuan },
-    sifat: payload.sifat || lama.sifat
+    sifat: payload.sifat || lama.sifat,
+    seq: payload.seq
   });
   await voidNomor({
     letterNumberId: lama.letterNumberId,

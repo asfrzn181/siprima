@@ -14,7 +14,8 @@ export const skemaPayloadSuratKeluar = z.object({
   sifat: z.enum([SIFAT.BIASA, SIFAT.RAHASIA]).default(SIFAT.BIASA),
   tandaTangan: z.enum(['TTE', 'BASAH']).default('BASAH'),
   aksesBidang: z.array(z.string().trim().max(40)).default([]),
-  backdate: z.boolean().optional().default(false)
+  backdate: z.boolean().optional().default(false),
+  seq: z.coerce.number().int().min(1).optional()
 });
 
 export const skemaUbahSuratKeluar = z.object({
